@@ -1,0 +1,254 @@
+import { useState } from "react";
+import { Layout } from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { MapPin, Phone, Mail, Clock, Send, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const Contact = () => {
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  
+  const [formData, setFormData] = useState({
+    full_name: "",
+    phone: "",
+    text: "",
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Xalqaro telefon validatsiyasi
+  const validatePhone = (number: string) => {
+    const digitsOnly = number.replace(/\D/g, "");
+    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validatePhone(formData.phone)) {
+      toast({
+        variant: "destructive",
+        title: "Xatolik",
+        description: "Iltimos, telefon raqamini to'g'ri formatda kiriting.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${API_URL}/send/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Server error");
+
+      toast({
+        title: t("contact.form.success"),
+        description: t("contact.form.successDesc"),
+      });
+
+      setFormData({ full_name: "", phone: "", text: "" });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Xatolik",
+        description: "Xabar yuborishda xatolik yuz berdi.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const contactInfo = [
+    { 
+      icon: MapPin, 
+      title: t("contact.address.title"), 
+      value: t("contact.address.value") 
+    },
+    { 
+      icon: Phone, 
+      title: t("contact.phone.title"), 
+      value: "+998 90 123 45 67", 
+      link: "tel:+998901234567" 
+    },
+    { 
+      icon: Mail, 
+      title: t("contact.email.title"), 
+      value: "info@chorvador.uz", 
+      link: "mailto:info@chorvador.uz" 
+    },
+    { 
+      icon: Clock, 
+      title: t("contact.hours.title"), 
+      value: t("contact.hours.value") 
+    },
+  ];
+
+  return (
+    <Layout>
+      {/* Hero Section */}
+      <section className="gradient-hero py-12 md:py-20 animate-in fade-in duration-500">
+        <div className="container-main px-4 md:px-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
+            {t("contact.title")}
+          </h1>
+          <p className="text-base md:text-lg text-primary-foreground/90 max-w-2xl leading-relaxed">
+            {t("contact.subtitle")}
+          </p>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-20 bg-background">
+        <div className="container-main px-4 md:px-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-stretch">
+            
+            {/* CHAP TOMON: Contact Form */}
+            <div className="order-1 lg:order-1 group h-full">
+              <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
+                <h2 className="text-2xl font-bold text-foreground mb-6 italic">
+                  {t("contact.form.title")}
+                </h2>
+                
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {t("contact.form.name")} *
+                    </label>
+                    <Input
+                      required
+                      placeholder={t("contact.form.namePlaceholder")}
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      className="h-12 bg-background border-border focus:ring-1 focus:ring-primary transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {t("contact.form.phone")} *
+                    </label>
+                    <Input
+                      required
+                      type="number"
+                      placeholder="+998 90 123 45 67"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="h-12 bg-background border-border focus:ring-1 focus:ring-primary transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {t("contact.form.message")} *
+                    </label>
+                    <Textarea
+                      required
+                      placeholder={t("contact.form.messagePlaceholder")}
+                      value={formData.text}
+                      onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                      className="min-h-[150px] bg-background border-border focus:ring-1 focus:ring-primary transition-all resize-none"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-12 font-bold active:scale-[0.98] transition-transform shadow-sm"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Send className="w-5 h-5" />
+                        {t("contact.form.submit")}
+                      </span>
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </div>
+
+            {/* O'NG TOMON: Contact Info */}
+            <div className="order-2 lg:order-2 flex flex-col h-full">
+              <div className="lg:pl-6 mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 italic leading-tight">
+                  {t("contact.info.title")}
+                </h2>
+                <p className="text-muted-foreground leading-relaxed italic text-base md:text-lg">
+                  {t("contact.info.subtitle")}
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:gap-6 lg:pl-6 flex-1">
+                {contactInfo.map((item, idx) => (
+                  <motion.div 
+                    key={idx} 
+                    className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border group cursor-default"
+                    whileHover={{ 
+                      x: 10, 
+                      boxShadow: "0 10px 30px -10px hsl(207 66% 47% / 0.15)" 
+                    }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                      <item.icon className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">
+                        {item.title}
+                      </h3>
+                      {item.link ? (
+                        <a 
+                          href={item.link} 
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {item.value}
+                        </a>
+                      ) : (
+                        <p className="text-muted-foreground whitespace-pre-line">
+                          {item.value}
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Map Section */}
+          <div className="mt-16 md:mt-24">
+            <motion.div 
+              className="rounded-3xl overflow-hidden shadow-lg border border-border relative w-full h-[350px] md:h-[500px]"
+              whileHover={{ scale: 1.02 }} 
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d191885.25573979998!2d69.11455!3d41.311081!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2sTashkent%2C%20Uzbekistan!5e0!3m2!1sen!2s!4v1650000000000!5m2!1sen!2s"
+                className="w-full h-full border-0"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </Layout>
+  );
+};
+
+export default Contact;
