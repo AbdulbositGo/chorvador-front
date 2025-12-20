@@ -90,7 +90,7 @@ const ServiceDetail = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="min-h-[60vh] flex items-center justify-center pt-20">
           <div className="text-center space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
             <p className="text-muted-foreground">
@@ -105,7 +105,7 @@ const ServiceDetail = () => {
   if (error || !service) {
     return (
       <Layout>
-        <div className="container-main py-16 px-4">
+        <div className="container-main py-16 px-4 mt-20">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -133,7 +133,7 @@ const ServiceDetail = () => {
   return (
     <Layout>
       {/* Hero Section with Image */}
-      <section className="relative h-[40vh] md:h-[50vh] lg:h-[60vh] overflow-hidden">
+      <section className="relative min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] overflow-hidden pt-20 md:pt-24">
         {/* Background Image */}
         <motion.div 
           initial={{ scale: 1.1 }}
@@ -224,13 +224,10 @@ const ServiceDetail = () => {
                 <h2 className="text-2xl md:text-3xl font-bold mb-6">
                   {language === 'uz' ? 'Batafsil ma\'lumot' : language === 'ru' ? 'Подробная информация' : 'Detailed Information'}
                 </h2>
-                <div className="text-muted-foreground leading-relaxed whitespace-pre-line space-y-4">
-                  {service.description.split('\n\n').map((paragraph, index) => (
-                    <p key={index} className="text-base md:text-lg">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
+                <div 
+                  className="text-muted-foreground leading-relaxed space-y-4 [&_p]:text-base [&_p]:md:text-lg [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_strong]:font-bold [&_em]:italic [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-6 [&_h3]:mb-3"
+                  dangerouslySetInnerHTML={{ __html: service.description }}
+                />
               </div>
 
               {/* Features or Benefits (Optional) */}

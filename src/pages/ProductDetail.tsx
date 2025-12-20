@@ -31,6 +31,7 @@ const ProductDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -63,9 +64,9 @@ const ProductDetail = () => {
         const data: ApiProduct = await response.json();
         setProduct(data);
 
-        // Agar video bo'lsa, default showVideo ni true ga o'zgartirish
-        if (data.video) {
-          setShowVideo(true);
+        // Agar video bo'lmasa yoki rasmlar bo'lsa, rasmlarni ko'rsatish
+        if (!data.video && data.images && data.images.length > 0) {
+          setShowVideo(false);
         }
 
       } catch (err) {
@@ -92,6 +93,12 @@ const ProductDetail = () => {
     setCurrentImageIndex((prev) => 
       prev === product.images.length - 1 ? 0 : prev + 1
     );
+  };
+
+  const handleVideoError = () => {
+    console.warn('Video yuklashda xatolik. Rasmlarga qaytarilmoqda...');
+    setVideoError(true);
+    setShowVideo(false);
   };
 
   if (loading) {
@@ -140,10 +147,42 @@ const ProductDetail = () => {
     ? new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.real_price)
     : null;
   
-  const currentImage = product.images[currentImageIndex];
-  const hasVideo = product.video && product.video.trim() !== '';
+  // Chegirma foizini hisoblash: real_price - price
+  const discountPercent = product.has_discount && product.real_price > product.price
+    ? Math.round(((product.real_price - product.price) / product.real_price) * 100)
+    : 0;
+  
+  const currentImage = product.images && product.images.length > 0 ? product.images[currentImageIndex] : '';
+  
+  // YouTube URL ni embed formatga o'zgartirish
+  const getEmbedUrl = (url: string): string | null => {
+    if (!url) return null;
+    
+    // YouTube URL check
+    const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/;
+    const match = url.match(youtubeRegex);
+    
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    
+    // Agar YouTube bo'lmasa, oddiy video URL
+    return url;
+  };
+  
+  // Video URL tekshirish
+  const videoUrl = product.video ? getEmbedUrl(product.video) : null;
+  const isYouTube = product.video?.includes('youtube.com') || product.video?.includes('youtu.be');
+  const hasVideo = videoUrl && !videoError;
+    
   const hasImages = product.images && product.images.length > 0;
-  const hasSpecs = product.specs && product.specs.trim() !== '';
+  const hasSpecs = product.specs && typeof product.specs === 'string' && product.specs.trim() !== '';
+  
+  console.log('Original Video URL:', product.video);
+  console.log('Embed Video URL:', videoUrl);
+  console.log('Is YouTube:', isYouTube);
+  console.log('Has Video:', hasVideo);
+  console.log('Show Video:', showVideo);
 
   return (
     <Layout>
@@ -243,19 +282,47 @@ const ProductDetail = () => {
                       }}
                     />
                   ) : showVideo && hasVideo ? (
-                    <motion.video
-                      key="video"
-                      src={product.video}
-                      controls
-                      className="w-full h-full object-cover"
+                    <motion.div
+                      key="video-container"
+                      className="w-full h-full bg-black flex items-center justify-center"
                       initial={{ opacity: 0, scale: 1.1 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3 }}
-                      onError={(e) => {
-                        console.error('Video yuklashda xatolik:', e);
-                      }}
-                    />
+                    >
+                      {isYouTube ? (
+                        <iframe
+                          src={videoUrl || ''}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={product.title}
+                          onError={handleVideoError}
+                        />
+                      ) : (
+                        <video
+                          key={videoUrl}
+                          controls
+                          controlsList="nodownload"
+                          playsInline
+                          className="w-full h-full"
+                          style={{ objectFit: 'contain' }}
+                          onError={handleVideoError}
+                          onLoadStart={() => console.log('Video yuklanyapti:', videoUrl)}
+                          onLoadedData={() => console.log('Video yuklandi')}
+                          preload="auto"
+                          autoPlay={false}
+                        >
+                          <source src={videoUrl || ''} type="video/mp4" />
+                          {language === 'uz' 
+                            ? 'Brauzeringiz video formatini qo\'llab-quvvatlamaydi'
+                            : language === 'ru'
+                            ? 'Ваш браузер не поддерживает этот формат видео'
+                            : 'Your browser does not support the video format'
+                          }
+                        </video>
+                      )}
+                    </motion.div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                       <div className="text-center">
@@ -298,7 +365,7 @@ const ProductDetail = () => {
 
               {/* Thumbnail Gallery */}
               {!showVideo && product.images.length > 1 && (
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide pt-2 pl-2">
                   {product.images.map((img, index) => (
                     <button
                       key={index}
@@ -350,35 +417,25 @@ const ProductDetail = () => {
               )}
 
               {/* Price */}
-              <div className="space-y-2 bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl p-4 md:p-6">
-                {product.has_discount && formattedRealPrice ? (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl md:text-3xl text-muted-foreground line-through">
-                        {formattedRealPrice}
-                      </span>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-destructive text-destructive-foreground text-xs md:text-sm font-bold">
-                        -{Math.round(((product.real_price - product.price) / product.real_price) * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
-                        {formattedPrice}
-                      </span>
-                      <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
-                        {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+              <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
+                                  <div className="flex items-center gap-3">
+                    <span className="text-xl md:text-2xl text-muted-foreground line-through">
                       {formattedPrice}
                     </span>
-                    <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
-                      {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-bold">
+                      -{Math.round(((product.real_price - product.price) / product.real_price) * 100)}%
                     </span>
                   </div>
+
+                {product.has_discount && formattedRealPrice && (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                    {formattedRealPrice}
+                  </span>
+                  <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                    {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
+                  </span>
+                </div>
                 )}
               </div>
 
