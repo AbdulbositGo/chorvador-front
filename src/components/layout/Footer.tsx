@@ -45,21 +45,21 @@ export function Footer() {
             <div className="flex gap-3">
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"
+                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
                 aria-label="Facebook"
               >
                 <Facebook className="h-5 w-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"
+                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
                 aria-label="Instagram"
               >
                 <Instagram className="h-5 w-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"
+                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
                 aria-label="Telegram"
               >
                 <Send className="h-5 w-5" />
@@ -77,7 +77,7 @@ export function Footer() {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-primary-foreground/70 hover:text-secondary transition-colors"
+                    className="text-primary-foreground/70 hover:text-white transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -96,7 +96,7 @@ export function Footer() {
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-primary-foreground/70 hover:text-secondary transition-colors"
+                    className="text-primary-foreground/70 hover:text-white transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -114,7 +114,7 @@ export function Footer() {
               <li>
                 <a
                   href="tel:+998901234567"
-                  className="flex items-center gap-3 text-primary-foreground/70 hover:text-secondary transition-colors"
+                  className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <Phone className="h-5 w-5 flex-shrink-0" />
                   +998 90 123 45 67
@@ -123,7 +123,7 @@ export function Footer() {
               <li>
                 <a
                   href="mailto:info@chorvador.uz"
-                  className="flex items-center gap-3 text-primary-foreground/70 hover:text-secondary transition-colors"
+                  className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <Mail className="h-5 w-5 flex-shrink-0" />
                   info@chorvador.uz
@@ -145,10 +145,10 @@ export function Footer() {
             {t("footer.copyright")}
           </p>
           <div className="flex gap-6 text-sm">
-            <Link to="/privacy" className="text-primary-foreground/60 hover:text-secondary transition-colors">
+            <Link to="/privacy" className="text-primary-foreground/60 hover:text-white transition-colors">
               {t("footer.privacy")}
             </Link>
-            <Link to="/terms" className="text-primary-foreground/60 hover:text-secondary transition-colors">
+            <Link to="/terms" className="text-primary-foreground/60 hover:text-white transition-colors">
               {t("footer.terms")}
             </Link>
           </div>

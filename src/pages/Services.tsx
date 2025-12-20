@@ -1,237 +1,307 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { Truck, Wrench, Headphones, ShieldCheck, Tractor, Leaf, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ServiceCard } from "@/components/services/ServiceCard";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { motion } from "framer-motion";
-
-interface ServiceContent {
-  icon?: keyof typeof iconMap;
-  type?: 'delivery' | 'technical' | 'consulting' | 'warranty' | 'general';
-  features?: string[];
-  howItWorks?: { title: string; description: string }[];
-  pricing?: { name: string; value: string }[];
-  workingHours?: string;
-  phone?: string;
-  email?: string;
-  location?: string;
-  detailedDescription?: string;
-  additionalInfo?: string;
-}
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Service {
   id: number;
   title: string;
-  description: string;
-  content?: string | ServiceContent;
-  image?: string | null;
+  short_description: string;
+  image: string;
+  category?: string | CategoryObject;
+  categoryId?: string;
+  categoryName?: string;
 }
 
-interface PaginatedResponse {
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface CategoryObject {
+  id: number | string;
+  name: string;
+}
+
+interface ApiResponse {
   count: number;
   next: string | null;
   previous: string | null;
   results: Service[];
 }
 
-interface TransformedService {
-  id: number;
-  title: string;
-  description: string;
-  image?: string | null;
-  icon: keyof typeof iconMap;
-  type: 'delivery' | 'technical' | 'consulting' | 'warranty' | 'general';
-  features: string[];
-}
-
-const iconMap = {
-  Truck,
-  Wrench,
-  Headphones,
-  ShieldCheck,
-  Tractor,
-  Leaf,
-} as const;
-
 const Services = () => {
   const { t, language } = useLanguage();
-  
-  const [services, setServices] = useState<TransformedService[]>([]);
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [nextPage, setNextPage] = useState<string | null>(null);
-  const [previousPage, setPreviousPage] = useState<string | null>(null);
-  const [pageSize] = useState(9);
 
-  const getImageUrl = (imagePath: string | null | undefined) => {
-    if (!imagePath) return null;
-    
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-    
-    const BASE_URL = 'http://37.60.239.125:8009';
-    
-    if (imagePath.startsWith('/')) {
-      return `${BASE_URL}${imagePath}`;
-    }
-    
-    return `${BASE_URL}/${imagePath}`;
-  };
+  // SEO metadata
+  const pageTitle = t("services.page.title") || "Services";
+  const pageDescription = t("services.page.subtitle") || "Professional services tailored to your needs";
+  const siteName = "Your Company Name";
 
-  const fetchServices = async (page: number = 1) => {
-    console.log("🚀 Services: Fetching page", page);
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const API_URL = import.meta.env.VITE_API_URL;
-      const fullUrl = `${API_URL}/services/?page=${page}`;
-      
-      console.log("📡 Services: Request URL:", fullUrl);
-      
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Accept-Language': language,
-        },
-      });
-      
-      console.log("📥 Services: Response status:", response.status);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP xatolik! Status: ${response.status}`);
-      }
-      
-      const data: PaginatedResponse = await response.json();
-      console.log("✅ Services: Data keldi:", data);
-      
-      setTotalCount(data.count);
-      setNextPage(data.next);
-      setPreviousPage(data.previous);
-      
-      const transformedServices: TransformedService[] = data.results.map((service, index) => {
-        let parsedContent: ServiceContent = {};
-        
-        try {
-          if (service.content) {
-            parsedContent = typeof service.content === 'string' 
-              ? JSON.parse(service.content) 
-              : service.content;
-          }
-        } catch (e) {
-          console.warn(`⚠️ Content parse xatolik #${index + 1}:`, e);
-          parsedContent = {};
-        }
-        
-        let icon: keyof typeof iconMap = 'Wrench';
-        
-        if (parsedContent && parsedContent.icon && parsedContent.icon in iconMap) {
-          icon = parsedContent.icon;
-        }
-        
-        const type: TransformedService['type'] = 
-          (parsedContent && parsedContent.type) || 'general';
-        
-        const features = 
-          (parsedContent && Array.isArray(parsedContent.features)) 
-            ? parsedContent.features 
-            : [];
-        
-        return {
-          id: service.id || index,
-          title: service.title || 'Noma\'lum xizmat',
-          description: service.description || '',
-          image: getImageUrl(service.image),
-          icon,
-          type,
-          features,
-        };
-      });
-      
-      console.log("🎉 Barcha xizmatlar transform bo'ldi:", transformedServices);
-      setServices(transformedServices);
-      
-    } catch (err) {
-      console.error("❌ Services: XATOLIK:", err);
-      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // SEO meta taglarni dinamik o'zgartirish
   useEffect(() => {
-    fetchServices(currentPage);
-  }, [language, currentPage]);
+    document.title = `${pageTitle} | ${siteName}`;
+    
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', pageDescription);
+    
+    document.documentElement.lang = language;
+  }, [pageTitle, pageDescription, language, siteName]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  // Categories ni olish
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const API_URL = import.meta.env.VITE_API_URL;
+        
+        // Agar service categories endpoint mavjud bo'lsa
+        const response = await fetch(`${API_URL}/categories/?type=service`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Accept-Language': language,
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (Array.isArray(data)) {
+            const allCategories = [
+              { 
+                id: 'all', 
+                name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' 
+              },
+              ...data.map(cat => ({
+                id: cat.id.toString(),
+                name: cat.name
+              }))
+            ];
+            setCategories(allCategories);
+          }
+        } else {
+          // Agar endpoint yo'q bo'lsa, default categories
+          setCategories([
+            { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
+          ]);
+        }
+      } catch (err) {
+        console.error("Categories ERROR:", err);
+        setCategories([
+          { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
+        ]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
 
-  const totalPages = Math.ceil(totalCount / pageSize);
+    fetchCategories();
+  }, [language]);
+
+  // Services ni olish
+  useEffect(() => {
+    if (categoriesLoading) return;
+
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const API_URL = import.meta.env.VITE_API_URL;
+        const response = await fetch(`${API_URL}/services/`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Accept-Language': language,
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP xatolik! Status: ${response.status}`);
+        }
+        
+        const data: ApiResponse = await response.json();
+        
+        // Backend pagination formatida
+        const servicesArray: Service[] = data.results || [];
+        
+        // Transform services
+        const transformedServices = servicesArray.map(service => {
+          let categoryId = 'all';
+          let categoryName = '';
+          
+          if (service.category) {
+            if (typeof service.category === 'object' && service.category !== null) {
+              const catObj = service.category as CategoryObject;
+              categoryId = String(catObj.id);
+              categoryName = catObj.name || '';
+            } else if (typeof service.category === 'string') {
+              categoryName = service.category;
+              const foundCategory = categories.find(cat => 
+                cat.name.toLowerCase() === (service.category as string).toLowerCase()
+              );
+              if (foundCategory && foundCategory.id !== 'all') {
+                categoryId = String(foundCategory.id);
+              } else {
+                categoryId = service.category;
+              }
+            }
+          }
+          
+          return {
+            ...service,
+            categoryId,
+            categoryName,
+          };
+        });
+        
+        setServices(transformedServices);
+        
+      } catch (err) {
+        console.error("Services ERROR:", err);
+        setError(err instanceof Error ? err.message : 'Noma\'lum xatolik');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, [language, categories, categoriesLoading]);
+
+  // Filter funksiyasi
+  const filteredServices = services.filter((service) => {
+    const matchesSearch = 
+      service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.short_description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    let matchesCategory = false;
+    
+    if (selectedCategory === "all") {
+      matchesCategory = true;
+    } else {
+      const selectedCat = categories.find(cat => cat.id === selectedCategory);
+      
+      if (selectedCat) {
+        matchesCategory = 
+          service.categoryId === selectedCategory || 
+          service.categoryId === selectedCat.name ||
+          service.categoryName === selectedCat.name ||
+          (typeof service.category === 'string' && service.category === selectedCat.name);
+      }
+    }
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <Layout>
-      {/* Hero Section - Contact Page Style */}
-      <section className="relative py-12 md:py-20 bg-gradient-to-br from-[#2D79C4] via-[#2D79C4]/95 to-[#1e5a94] overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl" />
-        </div>
-        
-        <div className="container-main relative z-10 px-4 md:px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
-              {t("services.page.title")}
-            </h1>
-            <p className="text-base md:text-lg text-white/90 max-w-2xl leading-relaxed">
-              {t("services.page.subtitle")}
-            </p>
-          </motion.div>
+      <section className="gradient-hero py-16">
+        <div className="container-main">
+          <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-4">
+            {pageTitle}
+          </h1>
+          <p className="text-lg text-primary-foreground/90 max-w-2xl">
+            {pageDescription}
+          </p>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-12 md:py-20 bg-gradient-to-b from-white to-gray-50">
-        <div className="container-main px-4 md:px-6">
-          
-          {/* Total Count Badge - Left Aligned */}
-          {!loading && !error && (
-            <div className="mb-8">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center gap-3 px-5 py-3 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all"
-              >
-                <div className="w-2 h-2 rounded-full bg-[#2D79C4] animate-pulse" />
-                <span className="text-sm font-medium text-gray-600">
-                  {language === 'uz' ? 'Jami' : language === 'ru' ? 'Всего' : 'Total'}:
-                </span>
-                <span className="text-2xl font-bold text-[#2D79C4]">{totalCount}</span>
-                <span className="text-sm font-medium text-gray-600">
-                  {language === 'uz' ? 'ta xizmat' : language === 'ru' ? 'услуг' : 'services'}
-                </span>
-              </motion.div>
+      <section className="section-padding">
+        <div className="container-main">
+          {/* Search & Filter Controls */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder={language === 'uz' ? 'Xizmatlarni qidiring...' : language === 'ru' ? 'Поиск услуг...' : 'Search services...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12"
+                aria-label={language === 'uz' ? 'Xizmatlarni qidirish' : language === 'ru' ? 'Поиск услуг' : 'Search services'}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  aria-label="Clear search"
+                >
+                  <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                </button>
+              )}
             </div>
-          )}
+            <Button
+              variant="outline"
+              className="md:hidden"
+              onClick={() => setShowFilters(!showFilters)}
+              aria-label="Toggle filters"
+            >
+              <SlidersHorizontal className="w-5 h-5 mr-2" />
+              {language === 'uz' ? 'Filtrlar' : language === 'ru' ? 'Фильтры' : 'Filters'}
+            </Button>
+          </div>
+
+          {/* Category Filters */}
+          <nav 
+            className={cn(
+              "flex flex-wrap gap-2 mb-8",
+              !showFilters && "hidden md:flex"
+            )}
+            aria-label="Service categories"
+          >
+            {categoriesLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">
+                  {language === 'uz' ? 'Kategoriyalar yuklanmoqda...' : language === 'ru' ? 'Загрузка категорий...' : 'Loading categories...'}
+                </span>
+              </div>
+            ) : (
+              categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-medium transition-all",
+                    selectedCategory === category.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                  aria-pressed={selectedCategory === category.id}
+                  aria-label={`Filter by ${category.name}`}
+                >
+                  {category.name}
+                </button>
+              ))
+            )}
+          </nav>
 
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col justify-center items-center py-20">
-              <Loader2 className="w-12 h-12 animate-spin text-[#2D79C4] mb-4" />
-              <span className="text-gray-600 text-lg font-medium">
+            <div className="flex justify-center items-center py-16" role="status">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="ml-3 text-muted-foreground">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
               </span>
             </div>
@@ -239,196 +309,54 @@ const Services = () => {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-md mx-auto">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">⚠️</span>
-              </div>
-              <p className="text-red-600 font-semibold mb-2 text-lg">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 text-center" role="alert">
+              <p className="text-destructive font-medium mb-2">
                 {language === 'uz' ? 'Xatolik yuz berdi' : language === 'ru' ? 'Произошла ошибка' : 'An error occurred'}
               </p>
-              <p className="text-sm text-gray-600 mb-6">{error}</p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-[#2D79C4] text-white rounded-lg hover:bg-[#2D79C4]/90 transition-colors font-medium"
-              >
-                {language === 'uz' ? 'Qayta urinish' : language === 'ru' ? 'Повторить' : 'Try again'}
-              </button>
+              <p className="text-sm text-muted-foreground">{error}</p>
             </div>
+          )}
+
+          {/* Results Count */}
+          {!loading && !error && (
+            <p className="text-muted-foreground mb-6" role="status">
+              {filteredServices.length} {language === 'uz' ? 'ta xizmat topildi' : language === 'ru' ? 'найдено услуг' : 'services found'}
+            </p>
           )}
 
           {/* Services Grid */}
-          {!loading && !error && services.length > 0 && (
+          {!loading && !error && (
             <>
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12"
-              >
-                {services.map((service, index) => {
-                  const IconComponent = iconMap[service.icon];
-                  
-                  return (
-                    <motion.div
-                      key={service.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="group bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-[#2D79C4]/50 shadow-sm hover:shadow-xl transition-all duration-300"
+              {filteredServices.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredServices.map((service) => (
+                    <ServiceCard 
+                      key={service.id} 
+                      service={service}
+                      onClick={() => navigate(`/services/${service.id}`)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground text-lg">
+                    {language === 'uz' ? 'Hech narsa topilmadi' : language === 'ru' ? 'Ничего не найдено' : 'No services found'}
+                  </p>
+                  {(searchQuery || selectedCategory !== 'all') && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSelectedCategory("all");
+                      }}
+                      className="mt-4"
                     >
-                      {service.image && (
-                        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                          <img
-                            src={service.image}
-                            alt={service.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                          
-                          <div className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                            <IconComponent className="w-6 h-6 text-[#2D79C4]" />
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="p-6">
-                        {!service.image && (
-                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#2D79C4] to-[#1e5a94] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                            <IconComponent className="w-7 h-7 text-white" />
-                          </div>
-                        )}
-                        
-                        <h3 className="font-bold text-xl text-gray-900 mb-3 line-clamp-2 group-hover:text-[#2D79C4] transition-colors">
-                          {service.title}
-                        </h3>
-                        
-                        <p className="text-gray-600 text-sm leading-relaxed mb-5 line-clamp-3">
-                          {service.description}
-                        </p>
-                        
-                        {service.features && service.features.length > 0 && (
-                          <ul className="space-y-2 mb-5">
-                            {service.features.slice(0, 3).map((feature, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#2D79C4] mt-1.5 flex-shrink-0" />
-                                <span className="line-clamp-1">{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        
-                        <Link
-                          to={`/services/${service.id}`}
-                          className="inline-flex items-center gap-2 text-[#2D79C4] font-semibold text-sm hover:gap-3 transition-all group/link"
-                        >
-                          {t("services.more")}
-                          <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-                        </Link>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-gray-200">
-                  <div className="text-sm text-gray-600">
-                    {language === 'uz' ? 'Sahifa' : language === 'ru' ? 'Страница' : 'Page'}{' '}
-                    <span className="font-semibold text-[#2D79C4]">{currentPage}</span>
-                    {' '}{language === 'uz' ? 'dan' : language === 'ru' ? 'из' : 'of'}{' '}
-                    <span className="font-semibold">{totalPages}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={!previousPage}
-                      className={cn(
-                        "p-2 rounded-lg border transition-all",
-                        previousPage
-                          ? "border-gray-300 hover:border-[#2D79C4] hover:bg-[#2D79C4]/5 text-gray-700"
-                          : "border-gray-200 text-gray-400 cursor-not-allowed"
-                      )}
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                        if (
-                          page === 1 ||
-                          page === totalPages ||
-                          (page >= currentPage - 1 && page <= currentPage + 1)
-                        ) {
-                          return (
-                            <button
-                              key={page}
-                              onClick={() => handlePageChange(page)}
-                              className={cn(
-                                "w-10 h-10 rounded-lg font-medium transition-all",
-                                page === currentPage
-                                  ? "bg-[#2D79C4] text-white shadow-lg shadow-[#2D79C4]/30"
-                                  : "text-gray-700 hover:bg-gray-100 border border-gray-200"
-                              )}
-                            >
-                              {page}
-                            </button>
-                          );
-                        } else if (
-                          page === currentPage - 2 ||
-                          page === currentPage + 2
-                        ) {
-                          return (
-                            <span key={page} className="px-2 text-gray-400">
-                              ...
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={!nextPage}
-                      className={cn(
-                        "p-2 rounded-lg border transition-all",
-                        nextPage
-                          ? "border-gray-300 hover:border-[#2D79C4] hover:bg-[#2D79C4]/5 text-gray-700"
-                          : "border-gray-200 text-gray-400 cursor-not-allowed"
-                      )}
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div className="text-sm text-gray-600 hidden sm:block">
-                    {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)}{' '}
-                    {language === 'uz' ? 'dan' : language === 'ru' ? 'из' : 'of'}{' '}
-                    {totalCount}
-                  </div>
+                      {language === 'uz' ? 'Filtrlarni tozalash' : language === 'ru' ? 'Очистить фильтры' : 'Clear filters'}
+                    </Button>
+                  )}
                 </div>
               )}
             </>
-          )}
-
-          {/* Empty State */}
-          {!loading && !error && services.length === 0 && (
-            <div className="text-center py-20">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-5xl">🔍</span>
-              </div>
-              <p className="text-gray-500 text-lg font-medium mb-2">
-                {language === 'uz' ? 'Xizmatlar topilmadi' : language === 'ru' ? 'Услуги не найдены' : 'No services found'}
-              </p>
-              <p className="text-gray-400 text-sm">
-                {language === 'uz' ? 'Keyinroq qayta urinib ko\'ring' : language === 'ru' ? 'Попробуйте позже' : 'Try again later'}
-              </p>
-            </div>
           )}
         </div>
       </section>

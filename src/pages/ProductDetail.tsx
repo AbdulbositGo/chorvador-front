@@ -2,19 +2,24 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image, Video } from "lucide-react";
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
+// API'dan keladigan product detail struktura
 interface ApiProduct {
   id: number;
   title: string;
   price: number;
-  specs: Record<string, string> | string;
+  discount: number;
+  real_price: number;
+  has_discount: boolean;
+  specs: string;
+  short_description: string;
   description: string;
   images: string[];
-  videos?: string[];
   category: string;
+  video: string;
 }
 
 const ProductDetail = () => {
@@ -25,54 +30,46 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [mediaType, setMediaType] = useState<'images' | 'videos'>('images');
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     const fetchProductDetail = async () => {
-      if (!id) return;
-
-      console.log('🚀 ProductDetail: Fetching product:', id);
-      console.log('🌐 ProductDetail: Current language:', language);
-
       try {
         setLoading(true);
         setError(null);
 
-        const apiUrl = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL;
+        const apiUrl = import.meta.env.VITE_API_URL;
         
         if (!apiUrl) {
           throw new Error("API URL topilmadi. .env faylini tekshiring");
         }
 
+        const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
         const url = `${apiUrl}/products/${id}/`;
-        console.log('📡 ProductDetail: Fetching from:', url);
-
+      
         const response = await fetch(url, {
+          method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Accept-Language': language,
+            'Accept-Language': acceptLanguage,
           },
         });
-
-        console.log('📥 ProductDetail: Response status:', response.status);
 
         if (!response.ok) {
           throw new Error(`HTTP xatolik! Status: ${response.status}`);
         }
 
         const data: ApiProduct = await response.json();
-        console.log('✅ ProductDetail: Data received:', data);
         setProduct(data);
 
-        // Agar videolar bo'lsa, default mediaType ni videos ga o'zgartirish
-        if (data.videos && data.videos.length > 0) {
-          setMediaType('videos');
+        // Agar video bo'lsa, default showVideo ni true ga o'zgartirish
+        if (data.video) {
+          setShowVideo(true);
         }
 
       } catch (err) {
-        console.error("❌ ProductDetail: Error:", err);
+        console.error("ProductDetail Error:", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
         setError(errorMessage);
       } finally {
@@ -83,48 +80,27 @@ const ProductDetail = () => {
     fetchProductDetail();
   }, [id, language]);
 
-  const handlePrevMedia = () => {
+  const handlePrevImage = () => {
     if (!product) return;
-    if (mediaType === 'images') {
-      setCurrentImageIndex((prev) => 
-        prev === 0 ? product.images.length - 1 : prev - 1
-      );
-    } else {
-      setCurrentVideoIndex((prev) => 
-        prev === 0 ? (product.videos?.length || 1) - 1 : prev - 1
-      );
-    }
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? product.images.length - 1 : prev - 1
+    );
   };
 
-  const handleNextMedia = () => {
+  const handleNextImage = () => {
     if (!product) return;
-    if (mediaType === 'images') {
-      setCurrentImageIndex((prev) => 
-        prev === product.images.length - 1 ? 0 : prev + 1
-      );
-    } else {
-      setCurrentVideoIndex((prev) => 
-        prev === (product.videos?.length || 1) - 1 ? 0 : prev + 1
-      );
-    }
-  };
-
-  const handleMediaTypeChange = (type: 'images' | 'videos') => {
-    setMediaType(type);
-    if (type === 'images') {
-      setCurrentImageIndex(0);
-    } else {
-      setCurrentVideoIndex(0);
-    }
+    setCurrentImageIndex((prev) => 
+      prev === product.images.length - 1 ? 0 : prev + 1
+    );
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="container-main py-12 md:py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-12 md:py-16">
           <div className="flex justify-center items-center min-h-[300px] md:min-h-[400px]">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 md:w-10 md:h-10 animate-spin text-primary mx-auto mb-3" />
+              <Loader2 className="w-10 h-10 md:w-12 md:h-12 animate-spin text-primary mx-auto mb-4" />
               <span className="text-sm md:text-base text-muted-foreground">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
               </span>
@@ -138,15 +114,18 @@ const ProductDetail = () => {
   if (error || !product) {
     return (
       <Layout>
-        <div className="container-main py-12 md:py-16 px-4">
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 md:p-8 text-center max-w-2xl mx-auto">
-            <p className="text-destructive font-medium mb-2 text-base md:text-lg">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-12 md:py-16">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 md:p-8 text-center max-w-2xl mx-auto">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/20 mb-4">
+              <Package className="w-8 h-8 text-destructive" />
+            </div>
+            <p className="text-destructive font-semibold mb-2 text-base md:text-lg">
               {language === 'uz' ? 'Xatolik yuz berdi' : language === 'ru' ? 'Произошла ошибка' : 'An error occurred'}
             </p>
-            <p className="text-sm md:text-base text-muted-foreground mb-4">
+            <p className="text-sm md:text-base text-muted-foreground mb-6">
               {error || (language === 'uz' ? 'Mahsulot topilmadi' : language === 'ru' ? 'Продукт не найден' : 'Product not found')}
             </p>
-            <Button onClick={() => navigate("/products")} variant="outline" className="w-full sm:w-auto">
+            <Button onClick={() => navigate("/products")} className="w-full sm:w-auto">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("product.backToProducts")}
             </Button>
@@ -157,21 +136,20 @@ const ProductDetail = () => {
   }
 
   const formattedPrice = new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.price);
+  const formattedRealPrice = product.has_discount 
+    ? new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.real_price)
+    : null;
+  
   const currentImage = product.images[currentImageIndex];
-  const currentVideo = product.videos?.[currentVideoIndex];
-  const hasVideos = product.videos && product.videos.length > 0;
+  const hasVideo = product.video && product.video.trim() !== '';
   const hasImages = product.images && product.images.length > 0;
-
-  // Specs ni tekshirish
-  const hasSpecs = product.specs && 
-    (typeof product.specs === 'string' || 
-     (typeof product.specs === 'object' && Object.keys(product.specs).length > 0));
+  const hasSpecs = product.specs && product.specs.trim() !== '';
 
   return (
     <Layout>
       {/* Breadcrumb */}
-      <section className="bg-gradient-to-b from-muted/30 to-background py-4 md:py-8 border-b">
-        <div className="container-main px-4">
+      <section className="bg-gradient-to-b from-muted/30 to-background py-4 md:py-6 lg:py-8 border-b">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <Button
             variant="ghost"
             onClick={() => navigate("/products")}
@@ -196,7 +174,7 @@ const ProductDetail = () => {
               {t("nav.products")}
             </button>
             <span className="text-muted-foreground">/</span>
-            <span className="text-foreground font-medium truncate max-w-[150px] md:max-w-none">
+            <span className="text-foreground font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-none">
               {product.title}
             </span>
           </nav>
@@ -204,9 +182,9 @@ const ProductDetail = () => {
       </section>
 
       {/* Product Detail */}
-      <section className="py-6 md:py-12 lg:py-16">
-        <div className="container-main px-4">
-          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-16">
+      <section className="py-6 md:py-10 lg:py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 xl:gap-16">
             {/* Media Gallery */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
@@ -215,32 +193,32 @@ const ProductDetail = () => {
               className="space-y-3 md:space-y-4"
             >
               {/* Media Type Tabs */}
-              {hasVideos && hasImages && (
+              {hasVideo && hasImages && (
                 <div className="flex gap-2 mb-3">
                   <button
-                    onClick={() => handleMediaTypeChange('images')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
-                      mediaType === 'images'
+                    onClick={() => setShowVideo(false)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      !showVideo
                         ? 'bg-primary text-primary-foreground shadow-lg'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
-                    <Image className="w-4 h-4" />
-                    <span className="text-sm">
+                    <ImageIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>
                       {language === 'uz' ? 'Rasmlar' : language === 'ru' ? 'Изображения' : 'Images'}
                     </span>
                   </button>
                   <button
-                    onClick={() => handleMediaTypeChange('videos')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
-                      mediaType === 'videos'
+                    onClick={() => setShowVideo(true)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      showVideo
                         ? 'bg-primary text-primary-foreground shadow-lg'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
-                    <Video className="w-4 h-4" />
-                    <span className="text-sm">
-                      {language === 'uz' ? 'Videolar' : language === 'ru' ? 'Видео' : 'Videos'}
+                    <Video className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>
+                      {language === 'uz' ? 'Video' : language === 'ru' ? 'Видео' : 'Video'}
                     </span>
                   </button>
                 </div>
@@ -249,7 +227,7 @@ const ProductDetail = () => {
               {/* Main Media Display */}
               <div className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted shadow-lg">
                 <AnimatePresence mode="wait">
-                  {mediaType === 'images' && hasImages ? (
+                  {!showVideo && hasImages ? (
                     <motion.img
                       key={`img-${currentImageIndex}`}
                       src={currentImage}
@@ -264,10 +242,10 @@ const ProductDetail = () => {
                         target.src = 'https://placehold.co/800x800/e5e7eb/6b7280?text=No+Image';
                       }}
                     />
-                  ) : mediaType === 'videos' && hasVideos && currentVideo ? (
+                  ) : showVideo && hasVideo ? (
                     <motion.video
-                      key={`video-${currentVideoIndex}`}
-                      src={currentVideo}
+                      key="video"
+                      src={product.video}
                       controls
                       className="w-full h-full object-cover"
                       initial={{ opacity: 0, scale: 1.1 }}
@@ -280,55 +258,55 @@ const ProductDetail = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      {language === 'uz' ? 'Media topilmadi' : language === 'ru' ? 'Медиа не найдено' : 'No media found'}
+                      <div className="text-center">
+                        <Package className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 opacity-50" />
+                        <p className="text-sm md:text-base">
+                          {language === 'uz' ? 'Media topilmadi' : language === 'ru' ? 'Медиа не найдено' : 'No media found'}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </AnimatePresence>
                 
                 {/* Counter Badge */}
-                {((mediaType === 'images' && product.images.length > 1) || 
-                  (mediaType === 'videos' && hasVideos && (product.videos?.length || 0) > 1)) && (
-                  <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-black/70 text-white text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-full font-medium">
-                    {mediaType === 'images' 
-                      ? `${currentImageIndex + 1} / ${product.images.length}`
-                      : `${currentVideoIndex + 1} / ${product.videos?.length || 0}`
-                    }
+                {!showVideo && product.images.length > 1 && (
+                  <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-black/70 text-white text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-full font-medium backdrop-blur-sm">
+                    {currentImageIndex + 1} / {product.images.length}
                   </div>
                 )}
                 
                 {/* Navigation Arrows */}
-                {((mediaType === 'images' && product.images.length > 1) || 
-                  (mediaType === 'videos' && hasVideos && (product.videos?.length || 0) > 1)) && (
+                {!showVideo && product.images.length > 1 && (
                   <>
                     <button
-                      onClick={handlePrevMedia}
-                      className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 active:scale-95"
+                      onClick={handlePrevImage}
+                      className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 active:scale-95 hover:scale-110"
                       aria-label="Previous"
                     >
-                      <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                      <ChevronLeft className="w-4 h-4 md:w-6 md:h-6" />
                     </button>
                     <button
-                      onClick={handleNextMedia}
-                      className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 active:scale-95"
+                      onClick={handleNextImage}
+                      className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 active:scale-95 hover:scale-110"
                       aria-label="Next"
                     >
-                      <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                      <ChevronRight className="w-4 h-4 md:w-6 md:h-6" />
                     </button>
                   </>
                 )}
               </div>
 
               {/* Thumbnail Gallery */}
-              {mediaType === 'images' && product.images.length > 1 && (
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide p-2">
+              {!showVideo && product.images.length > 1 && (
+                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {product.images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-md md:rounded-lg overflow-hidden transition-all duration-300 ${
+                      className={`relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-md md:rounded-lg overflow-hidden transition-all duration-300 ${
                         currentImageIndex === index 
-                          ? 'ring-2 ring-primary ring-offset-2 scale-100' 
-                          : 'ring-1 ring-border opacity-70 hover:opacity-100 active:scale-95'
+                          ? 'ring-2 ring-primary ring-offset-2 scale-105' 
+                          : 'ring-1 ring-border opacity-70 hover:opacity-100 hover:scale-105 active:scale-95'
                       }`}
                     >
                       <img
@@ -344,28 +322,6 @@ const ProductDetail = () => {
                   ))}
                 </div>
               )}
-
-              {/* Video Thumbnails */}
-              {mediaType === 'videos' && hasVideos && (product.videos?.length || 0) > 1 && (
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {product.videos?.map((video, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentVideoIndex(index)}
-                      className={`relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-md md:rounded-lg overflow-hidden transition-all duration-300 flex items-center justify-center bg-muted ${
-                        currentVideoIndex === index 
-                          ? 'ring-2 ring-primary ring-offset-2 scale-105' 
-                          : 'ring-1 ring-border opacity-70 hover:opacity-100 active:scale-95'
-                      }`}
-                    >
-                      <Video className="w-6 h-6 text-muted-foreground" />
-                      <span className="absolute bottom-1 right-1 text-xs bg-black/70 text-white px-1 rounded">
-                        {index + 1}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </motion.div>
 
             {/* Product Info */}
@@ -376,75 +332,83 @@ const ProductDetail = () => {
               className="space-y-4 md:space-y-6"
             >
               {/* Category Badge */}
-              <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 rounded-full bg-primary/10 text-primary text-xs md:text-sm font-medium">
+              <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary text-xs md:text-sm font-semibold">
+                <Tag className="w-3 h-3 md:w-4 md:h-4" />
                 {product.category}
               </div>
 
-              {/* Title & Price */}
-              <div className="space-y-2 md:space-y-3">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground leading-tight">
-                  {product.title}
-                </h1>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
-                    {formattedPrice}
-                  </span>
-                  <span className="text-lg md:text-xl text-muted-foreground">
-                    {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
-                  </span>
-                </div>
+              {/* Title */}
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+                {product.title}
+              </h1>
+
+              {/* Short Description */}
+              {product.short_description && (
+                <p className="text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed">
+                  {product.short_description}
+                </p>
+              )}
+
+              {/* Price */}
+              <div className="space-y-2 bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl p-4 md:p-6">
+                {product.has_discount && formattedRealPrice ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl md:text-3xl text-muted-foreground line-through">
+                        {formattedRealPrice}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full bg-destructive text-destructive-foreground text-xs md:text-sm font-bold">
+                        -{Math.round(((product.real_price - product.price) / product.real_price) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                        {formattedPrice}
+                      </span>
+                      <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                        {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                      {formattedPrice}
+                    </span>
+                    <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                      {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Specs */}
               {hasSpecs && (
                 <div className="border-t pt-4 md:pt-6">
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 text-foreground">
+                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground flex items-center gap-2">
+                    <Package className="w-5 h-5" />
                     {language === 'uz' ? 'Xususiyatlar' : language === 'ru' ? 'Характеристики' : 'Specifications'}
                   </h2>
-                  {typeof product.specs === 'string' ? (
-                    <div 
-                      className="text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: product.specs }}
-                    />
-                  ) : (
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-                      {Object.entries(product.specs).map(([key, value]) => {
-                        const displayValue = typeof value === 'object' && value !== null 
-                          ? JSON.stringify(value) 
-                          : String(value || '');
-                        
-                        return (
-                          <div 
-                            key={key} 
-                            className="grid grid-cols-[minmax(100px,auto)_1fr] gap-3 p-3 md:p-3.5 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <span className="text-xs md:text-sm font-medium text-muted-foreground capitalize">
-                              {key.replace(/_/g, ' ')}:
-                            </span>
-                            <span className="text-xs md:text-sm font-semibold text-foreground break-words">
-                              {displayValue}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div 
+                    className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm max-w-none bg-muted/20 rounded-lg p-4 md:p-6"
+                    dangerouslySetInnerHTML={{ __html: product.specs }}
+                  />
                 </div>
               )}
 
-            </motion.div>
               {/* Description */}
               {product.description && (
-                <div >
-                  <h2 className="text-lg md:text-xl font-semibold mb-3 text-foreground">
+                <div className="border-t pt-4 md:pt-6">
+                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground">
                     {language === 'uz' ? 'Tavsif' : language === 'ru' ? 'Описание' : 'Description'}
                   </h2>
                   <div 
-                    className="text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm"
+                    className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: product.description }}
                   />
                 </div>
               )}
+            </motion.div>
           </div>
         </div>
       </section>

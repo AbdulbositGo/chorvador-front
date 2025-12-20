@@ -13,21 +13,23 @@ interface DashboardResponse {
   services: ApiService[];
 }
 
-// API'dan keladigan product struktura
+// API'dan keladigan product struktura (yangilangan)
 interface ApiProduct {
   id: number;
   title: string;
-  price: number;
   image: string;
-  discount?: boolean;
-  category?: string;
+  price: number;
+  short_description: string;
+  has_discount: boolean;
+  category: string;
 }
 
 interface ApiService {
   id: number;
   title: string;
-  description: string;
+  short_description: string;
   image: string;
+  category: string;
 }
 
 // Ichki ishlatish uchun struktura
@@ -38,6 +40,7 @@ interface Product {
   price: number;
   image: string;
   description: string;
+  hasDiscount?: boolean;
 }
 
 export function FeaturedProducts() {
@@ -49,12 +52,10 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        console.log('=== START FETCHING DASHBOARD ===');
         setLoading(true);
         setError(null);
         
         const apiUrl = import.meta.env.VITE_API_URL;
-        console.log('1. API URL:', apiUrl);
         
         if (!apiUrl) {
           throw new Error("API URL topilmadi. .env faylini tekshiring");
@@ -62,10 +63,6 @@ export function FeaturedProducts() {
         
         // Language kodini to'g'ri formatga o'tkazish
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
-        
-        console.log('2. Language:', language);
-        console.log('3. Accept-Language header:', acceptLanguage);
-        console.log('4. Full URL:', `${apiUrl}/dashboard/`);
         
         const response = await fetch(`${apiUrl}/dashboard/`, {
           method: 'GET',
@@ -75,10 +72,7 @@ export function FeaturedProducts() {
             "Content-Type": "application/json"
           }
         });
-        
-        console.log('5. Response status:', response.status);
-        console.log('6. Response ok:', response.ok);
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Response error:', errorText);
@@ -86,51 +80,37 @@ export function FeaturedProducts() {
         }
         
         const rawData: DashboardResponse = await response.json();
-        console.log('7. RAW DATA:', rawData);
         
         // Products arrayni olish
         const data: ApiProduct[] = rawData.products || [];
-        console.log('8. Products data:', data);
-        console.log('9. Total products:', data.length);
         
         if (!Array.isArray(data)) {
           console.error('Products is not an array:', data);
           throw new Error('Noto\'g\'ri ma\'lumot formati');
         }
-        
-        // Barcha mahsulotlarni log qilish
-        console.log('10. All products:', data.map(p => ({
-          id: p.id,
-          title: p.title,
-          discount: p.discount
-        })));
-        
-        // Discount bor mahsulotlarni yoki birinchi 6 tasini olish
+              
+        // Birinchi 6 ta mahsulotni olish
         const featuredProducts: Product[] = data
           .slice(0, 6)
           .map(product => ({
             id: product.id.toString(),
             name: product.title,
-            category: product.category || "Umumiy",
+            category: product.category,
             price: product.price,
             image: product.image.startsWith('http') 
               ? product.image 
               : `${apiUrl}${product.image}`,
-            description: "", // API'da description yo'q
+            description: product.short_description,
+            hasDiscount: product.has_discount
           }));
-        
-        console.log('11. Featured products:', featuredProducts);
-        console.log('12. Featured products count:', featuredProducts.length);
-        console.log('=== SETTING PRODUCTS TO STATE ===');
+
         setProducts(featuredProducts);
-        console.log('=== END FETCHING ===');
         
       } catch (err) {
         console.error("!!! ERROR !!!", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
         setError(errorMessage);
       } finally {
-        console.log('=== SETTING LOADING FALSE ===');
         setLoading(false);
       }
     };
@@ -139,24 +119,32 @@ export function FeaturedProducts() {
   }, [language]);
 
   return (
-    <section className="section-padding" >
-      <div className="container-main">
+    <section className="py-12 sm:py-16 lg:py-20 bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <ScrollReveal>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
-            <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
+            <div className="flex-1">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
                 {t("products.badge")}
               </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight">
                 {t("products.title")}
               </h2>
-              <p className="mt-3 text-muted-foreground max-w-2xl">
+              <p className="mt-2 sm:mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
                 {t("products.subtitle")}
               </p>
             </div>
-            <motion.div whileHover={{ x: 5 }} transition={{ type: "spring", stiffness: 400 }}>
-              <Button asChild variant="outline" className="self-start md:self-auto group">
-                <Link to="/products" className="flex items-center gap-2">
+            <motion.div 
+              whileHover={{ x: 5 }} 
+              transition={{ type: "spring", stiffness: 400 }}
+              className="w-full md:w-auto"
+            >
+              <Button 
+                asChild 
+                variant="outline" 
+                className="w-full md:w-auto group hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                <Link to="/products" className="flex items-center justify-center gap-2">
                   {t("products.viewAll")}
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
@@ -166,19 +154,25 @@ export function FeaturedProducts() {
         </ScrollReveal>
 
         {loading && (
-          <div className="flex justify-center items-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-3 text-muted-foreground">{t("products.page.loading")}</span>
+          <div className="flex flex-col justify-center items-center py-12 sm:py-16">
+            <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-primary" />
+            <span className="mt-3 text-sm sm:text-base text-muted-foreground">
+              {t("products.page.loading")}
+            </span>
           </div>
         )}
 
         {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 text-center">
-            <p className="text-destructive font-medium mb-2">Xatolik yuz berdi</p>
-            <p className="text-sm text-muted-foreground">{error}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 sm:p-6 text-center">
+            <p className="text-destructive font-medium mb-2 text-sm sm:text-base">
+              Xatolik yuz berdi
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4">
+              {error}
+            </p>
             <button 
               onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              className="w-full sm:w-auto px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm sm:text-base"
             >
               Qayta urinish
             </button>
@@ -186,7 +180,10 @@ export function FeaturedProducts() {
         )}
 
         {!loading && !error && products.length > 0 && (
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.1}>
+          <StaggerContainer 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" 
+            staggerDelay={0.1}
+          >
             {products.map((product) => (
               <StaggerItem key={product.id}>
                 <ProductCard product={product} />
@@ -196,8 +193,8 @@ export function FeaturedProducts() {
         )}
 
         {!loading && !error && products.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
+          <div className="text-center py-12 sm:py-16">
+            <p className="text-muted-foreground text-base sm:text-lg">
               Hozircha featured mahsulotlar mavjud emas
             </p>
           </div>

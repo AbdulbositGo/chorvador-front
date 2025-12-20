@@ -63,7 +63,7 @@ export function HeroSlider() {
 
   if (loading) {
     return (
-      <section className="relative h-[calc(100vh-4rem)] flex items-center justify-center bg-[#2D79C4]">
+      <section className="relative h-full flex items-center justify-center bg-[#2D79C4]">
         <Loader2 className="w-12 h-12 animate-spin text-white" />
       </section>
     );
