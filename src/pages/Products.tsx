@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Search, SlidersHorizontal, X, Loader2, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// API Response strukturasi
 interface ProductsResponse {
   count: number;
   next: string | null;
@@ -15,7 +15,6 @@ interface ProductsResponse {
   results: ApiProduct[];
 }
 
-// API'dan keladigan product struktura
 interface ApiProduct {
   id: number;
   title: string;
@@ -26,7 +25,6 @@ interface ApiProduct {
   category: string;
 }
 
-// Ichki product struktura
 interface Product {
   id: string;
   name: string;
@@ -39,7 +37,6 @@ interface Product {
   hasDiscount: boolean;
 }
 
-// Category struktura
 interface Category {
   id: string;
   name: string;
@@ -47,6 +44,7 @@ interface Category {
 
 const Products = () => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -56,7 +54,6 @@ const Products = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Categories ni olish
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -88,7 +85,6 @@ const Products = () => {
           throw new Error("Categories data array formatida emas");
         }
         
-        // "All" kategoriyasini qo'shish
         const allCategories: Category[] = [
           { 
             id: 'all', 
@@ -114,7 +110,6 @@ const Products = () => {
     fetchCategories();
   }, [language]);
 
-  // Products ni olish
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -143,8 +138,6 @@ const Products = () => {
         }
         
         const data: ProductsResponse = await response.json();
-        
-        // Results arrayni olish
         const productsArray: ApiProduct[] = data.results || [];
         
         if (!Array.isArray(productsArray)) {
@@ -152,11 +145,9 @@ const Products = () => {
         }
 
         const transformedProducts: Product[] = productsArray.map(product => {
-          // Category nomini olish
           let categoryId = 'all';
           const categoryName = product.category || '';
           
-          // Categories ro'yxatidan ID ni topish
           const foundCategory = categories.find(cat => 
             cat.name.toLowerCase() === categoryName.toLowerCase()
           );
@@ -193,13 +184,15 @@ const Products = () => {
       }
     };
 
-    // Categories yuklangandan keyin products ni olish
     if (!categoriesLoading) {
       fetchProducts();
     }
   }, [language, categoriesLoading, categories]);
 
-  // Filter funksiyasi
+  const handleProductClick = (productId: string) => {
+    navigate(`/products/${productId}`);
+  };
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch = 
       (product.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -278,7 +271,7 @@ const Products = () => {
                   key={category.id}
                   onClick={() => {
                     setSelectedCategory(category.id);
-                    setShowFilters(false); // Mobile'da filterlarni yopish
+                    setShowFilters(false);
                   }}
                   className={cn(
                     "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200",
@@ -338,7 +331,13 @@ const Products = () => {
               {filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <div 
+                      key={product.id} 
+                      onClick={() => handleProductClick(product.id)}
+                      className="cursor-pointer"
+                    >
+                      <ProductCard product={product} />
+                    </div>
                   ))}
                 </div>
               ) : (

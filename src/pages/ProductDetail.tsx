@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package } from "lucide-react";
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package, CheckCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,7 +13,7 @@ interface ApiProduct {
   discount: number;
   real_price: number;
   has_discount: boolean;
-  specs: string;
+  specs: Record<string, string> | string;
   short_description: string;
   description: string;
   images: string[];
@@ -168,7 +168,28 @@ const ProductDetail = () => {
   const isYouTube = product.video?.includes('youtube.com') || product.video?.includes('youtu.be');
   const hasVideo = videoUrl && !videoError;
   const hasImages = product.images && product.images.length > 0;
-  const hasSpecs = product.specs && typeof product.specs === 'string' && product.specs.trim() !== '';
+  
+  // Specs ni object ga aylantirish
+  const getSpecsObject = (): Record<string, string> | null => {
+    if (!product.specs) return null;
+    
+    if (typeof product.specs === 'string') {
+      try {
+        return JSON.parse(product.specs);
+      } catch {
+        return null;
+      }
+    }
+    
+    if (typeof product.specs === 'object' && product.specs !== null) {
+      return product.specs;
+    }
+    
+    return null;
+  };
+  
+  const specsObject = getSpecsObject();
+  const hasSpecs = specsObject && Object.keys(specsObject).length > 0;
 
   return (
     <Layout>
@@ -434,22 +455,40 @@ const ProductDetail = () => {
               </div>
 
               {/* Specs */}
-              {hasSpecs && (
+              {hasSpecs && specsObject && (
                 <div className="border-t pt-4 md:pt-6">
                   <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground flex items-center gap-2">
                     <Package className="w-5 h-5" />
                     {language === 'uz' ? 'Xususiyatlar' : language === 'ru' ? 'Характеристики' : 'Specifications'}
                   </h2>
-                  <div 
-                    className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm max-w-none bg-muted/20 rounded-lg p-4 md:p-6"
-                    dangerouslySetInnerHTML={{ __html: product.specs }}
-                  />
+                  <div className="bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl border border-border overflow-hidden">
+                    <div className="divide-y divide-border">
+                      {Object.entries(specsObject).map(([key, value], index) => (
+                        <motion.div
+                          key={key}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.03 }}
+                          className="flex items-center justify-between px-4 md:px-6 py-3 hover:bg-primary/5 transition-colors group"
+                        >
+                          <span className="text-xs md:text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                            {key}
+                          </span>
+                          <span className="text-sm md:text-base font-semibold text-foreground text-right ml-4">
+                            {value}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Description */}
+
+            </motion.div>
+                          {/* Description */}
               {product.description && (
-                <div className="border-t pt-4 md:pt-6">
+                <div>
                   <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground">
                     {language === 'uz' ? 'Tavsif' : language === 'ru' ? 'Описание' : 'Description'}
                   </h2>
@@ -459,7 +498,6 @@ const ProductDetail = () => {
                   />
                 </div>
               )}
-            </motion.div>
           </div>
         </div>
       </section>
