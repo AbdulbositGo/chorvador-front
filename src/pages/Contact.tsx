@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { MapPin, Phone, Mail, Clock, Send, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 
 const Contact = () => {
-  const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -20,7 +19,33 @@ const Contact = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Xalqaro telefon validatsiyasi
+  // SEO Metadata
+  useEffect(() => {
+    const pageTitle = language === 'uz' 
+      ? 'Bog\'lanish | Chorvador' 
+      : language === 'ru' 
+      ? 'Контакты | Chorvador' 
+      : 'Contact | Chorvador';
+    
+    const pageDescription = language === 'uz'
+      ? 'Biz bilan bog\'laning. Savollaringiz bormi? Biz sizga yordam berishga tayyormiz.'
+      : language === 'ru'
+      ? 'Свяжитесь с нами. Есть вопросы? Мы готовы помочь вам.'
+      : 'Contact us. Have questions? We are ready to help you.';
+
+    document.title = pageTitle;
+    
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', pageDescription);
+    
+    document.documentElement.lang = language;
+  }, [language]);
+
   const validatePhone = (number: string) => {
     const digitsOnly = number.replace(/\D/g, "");
     return digitsOnly.length >= 7 && digitsOnly.length <= 15;
@@ -30,11 +55,21 @@ const Contact = () => {
     e.preventDefault();
 
     if (!validatePhone(formData.phone)) {
-      toast({
-        variant: "destructive",
-        title: "Xatolik",
-        description: "Iltimos, telefon raqamini to'g'ri formatda kiriting.",
-      });
+      toast.error(
+        language === 'uz' 
+          ? "Iltimos, telefon raqamini to'g'ri formatda kiriting" 
+          : language === 'ru'
+          ? "Пожалуйста, введите номер телефона в правильном формате"
+          : "Please enter phone number in correct format",
+        {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
       return;
     }
 
@@ -50,18 +85,39 @@ const Contact = () => {
 
       if (!response.ok) throw new Error("Server error");
 
-      toast({
-        title: t("contact.form.success"),
-        description: t("contact.form.successDesc"),
-      });
+      toast.success(
+        language === 'uz'
+          ? "Xabaringiz muvaffaqiyatli yuborildi!"
+          : language === 'ru'
+          ? "Ваше сообщение успешно отправлено!"
+          : "Your message has been sent successfully!",
+        {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
 
       setFormData({ full_name: "", phone: "", text: "" });
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Xatolik",
-        description: "Xabar yuborishda xatolik yuz berdi.",
-      });
+      toast.error(
+        language === 'uz'
+          ? "Xabar yuborishda xatolik yuz berdi"
+          : language === 'ru'
+          ? "Произошла ошибка при отправке сообщения"
+          : "An error occurred while sending the message",
+        {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -95,7 +151,7 @@ const Contact = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="gradient-hero py-12 md:py-20 animate-in fade-in duration-500">
+      <section className="gradient-hero py-12 md:py-20">
         <div className="container-main px-4 md:px-6">
           <h1 className="text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
             {t("contact.title")}
@@ -110,10 +166,10 @@ const Contact = () => {
         <div className="container-main px-4 md:px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-stretch">
             
-            {/* CHAP TOMON: Contact Form */}
-            <div className="order-1 lg:order-1 group h-full">
+            {/* Contact Form */}
+            <div className="order-1 lg:order-1 h-full">
               <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
-                <h2 className="text-2xl font-bold text-foreground mb-6 italic">
+                <h2 className="text-2xl font-bold text-foreground mb-6">
                   {t("contact.form.title")}
                 </h2>
                 
@@ -137,7 +193,7 @@ const Contact = () => {
                     </label>
                     <Input
                       required
-                      type="number"
+                      type="tel"
                       placeholder="+998 90 123 45 67"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -177,13 +233,13 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* O'NG TOMON: Contact Info */}
+            {/* Contact Info */}
             <div className="order-2 lg:order-2 flex flex-col h-full">
               <div className="lg:pl-6 mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 italic leading-tight">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 leading-tight">
                   {t("contact.info.title")}
                 </h2>
-                <p className="text-muted-foreground leading-relaxed italic text-base md:text-lg">
+                <p className="text-muted-foreground leading-relaxed text-base md:text-lg">
                   {t("contact.info.subtitle")}
                 </p>
               </div>
@@ -242,6 +298,7 @@ const Contact = () => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
+                title="Location Map"
               />
             </motion.div>
           </div>

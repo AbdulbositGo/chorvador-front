@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/ProductCard";
@@ -7,13 +7,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/ScrollReveal";
 import { motion } from "framer-motion";
 
-// Dashboard API'dan keladigan struktura
 interface DashboardResponse {
   products: ApiProduct[];
   services: ApiService[];
 }
 
-// API'dan keladigan product struktura (yangilangan)
 interface ApiProduct {
   id: number;
   title: string;
@@ -32,7 +30,6 @@ interface ApiService {
   category: string;
 }
 
-// Ichki ishlatish uchun struktura
 interface Product {
   id: string;
   name: string;
@@ -45,6 +42,7 @@ interface Product {
 
 export function FeaturedProducts() {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +56,9 @@ export function FeaturedProducts() {
         const apiUrl = import.meta.env.VITE_API_URL;
         
         if (!apiUrl) {
-          throw new Error("API URL topilmadi. .env faylini tekshiring");
+          throw new Error("API URL topilmadi");
         }
         
-        // Language kodini to'g'ri formatga o'tkazish
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
         
         const response = await fetch(`${apiUrl}/dashboard/`, {
@@ -74,22 +71,16 @@ export function FeaturedProducts() {
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Response error:', errorText);
           throw new Error(`HTTP xatolik! Status: ${response.status}`);
         }
         
         const rawData: DashboardResponse = await response.json();
-        
-        // Products arrayni olish
         const data: ApiProduct[] = rawData.products || [];
         
         if (!Array.isArray(data)) {
-          console.error('Products is not an array:', data);
           throw new Error('Noto\'g\'ri ma\'lumot formati');
         }
               
-        // Birinchi 6 ta mahsulotni olish
         const featuredProducts: Product[] = data
           .slice(0, 6)
           .map(product => ({
@@ -107,7 +98,7 @@ export function FeaturedProducts() {
         setProducts(featuredProducts);
         
       } catch (err) {
-        console.error("!!! ERROR !!!", err);
+        console.error("ERROR:", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
         setError(errorMessage);
       } finally {
@@ -117,6 +108,10 @@ export function FeaturedProducts() {
 
     fetchFeaturedProducts();
   }, [language]);
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/products/${productId}`);
+  };
 
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-background">
@@ -186,7 +181,9 @@ export function FeaturedProducts() {
           >
             {products.map((product) => (
               <StaggerItem key={product.id}>
-                <ProductCard product={product} />
+                <div onClick={() => handleProductClick(product.id)} className="cursor-pointer">
+                  <ProductCard product={product} />
+                </div>
               </StaggerItem>
             ))}
           </StaggerContainer>

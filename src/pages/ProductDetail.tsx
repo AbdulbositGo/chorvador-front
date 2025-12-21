@@ -6,7 +6,6 @@ import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Vide
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-// API'dan keladigan product detail struktura
 interface ApiProduct {
   id: number;
   title: string;
@@ -42,7 +41,7 @@ const ProductDetail = () => {
         const apiUrl = import.meta.env.VITE_API_URL;
         
         if (!apiUrl) {
-          throw new Error("API URL topilmadi. .env faylini tekshiring");
+          throw new Error("API URL topilmadi");
         }
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
@@ -64,7 +63,6 @@ const ProductDetail = () => {
         const data: ApiProduct = await response.json();
         setProduct(data);
 
-        // Agar video bo'lmasa yoki rasmlar bo'lsa, rasmlarni ko'rsatish
         if (!data.video && data.images && data.images.length > 0) {
           setShowVideo(false);
         }
@@ -96,7 +94,6 @@ const ProductDetail = () => {
   };
 
   const handleVideoError = () => {
-    console.warn('Video yuklashda xatolik. Rasmlarga qaytarilmoqda...');
     setVideoError(true);
     setShowVideo(false);
   };
@@ -142,23 +139,21 @@ const ProductDetail = () => {
     );
   }
 
+  // Price va discount hisoblash
+  const hasValidDiscount = product.has_discount && product.discount > 0;
+  
   const formattedPrice = new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.price);
-  const formattedRealPrice = product.has_discount 
+  const formattedRealPrice = hasValidDiscount
     ? new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.real_price)
     : null;
   
-  // Chegirma foizini hisoblash: real_price - price
-  const discountPercent = product.has_discount && product.real_price > product.price
-    ? Math.round(((product.real_price - product.price) / product.real_price) * 100)
-    : 0;
+  const discountPercent = hasValidDiscount ? product.discount : 0;
   
   const currentImage = product.images && product.images.length > 0 ? product.images[currentImageIndex] : '';
   
-  // YouTube URL ni embed formatga o'zgartirish
   const getEmbedUrl = (url: string): string | null => {
     if (!url) return null;
     
-    // YouTube URL check
     const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/;
     const match = url.match(youtubeRegex);
     
@@ -166,23 +161,14 @@ const ProductDetail = () => {
       return `https://www.youtube.com/embed/${match[1]}`;
     }
     
-    // Agar YouTube bo'lmasa, oddiy video URL
     return url;
   };
   
-  // Video URL tekshirish
   const videoUrl = product.video ? getEmbedUrl(product.video) : null;
   const isYouTube = product.video?.includes('youtube.com') || product.video?.includes('youtu.be');
   const hasVideo = videoUrl && !videoError;
-    
   const hasImages = product.images && product.images.length > 0;
   const hasSpecs = product.specs && typeof product.specs === 'string' && product.specs.trim() !== '';
-  
-  console.log('Original Video URL:', product.video);
-  console.log('Embed Video URL:', videoUrl);
-  console.log('Is YouTube:', isYouTube);
-  console.log('Has Video:', hasVideo);
-  console.log('Show Video:', showVideo);
 
   return (
     <Layout>
@@ -308,8 +294,6 @@ const ProductDetail = () => {
                           className="w-full h-full"
                           style={{ objectFit: 'contain' }}
                           onError={handleVideoError}
-                          onLoadStart={() => console.log('Video yuklanyapti:', videoUrl)}
-                          onLoadedData={() => console.log('Video yuklandi')}
                           preload="auto"
                           autoPlay={false}
                         >
@@ -418,24 +402,34 @@ const ProductDetail = () => {
 
               {/* Price */}
               <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
-                                  <div className="flex items-center gap-3">
-                    <span className="text-xl md:text-2xl text-muted-foreground line-through">
+                {hasValidDiscount && formattedRealPrice ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl md:text-2xl text-muted-foreground line-through">
+                        {formattedPrice}
+                      </span>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-bold">
+                        -{discountPercent}%
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                        {formattedRealPrice}
+                      </span>
+                      <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                        {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
                       {formattedPrice}
                     </span>
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-bold">
-                      -{Math.round(((product.real_price - product.price) / product.real_price) * 100)}%
+                    <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                      {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
                     </span>
                   </div>
-
-                {product.has_discount && formattedRealPrice && (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
-                    {formattedRealPrice}
-                  </span>
-                  <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
-                    {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
-                  </span>
-                </div>
                 )}
               </div>
 

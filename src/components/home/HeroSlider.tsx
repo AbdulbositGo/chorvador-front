@@ -63,7 +63,7 @@ export function HeroSlider() {
 
   if (loading) {
     return (
-      <section className="relative h-full flex items-center justify-center bg-[#2D79C4]">
+      <section className="relative h-screen flex items-center justify-center bg-[#2D79C4]">
         <Loader2 className="w-12 h-12 animate-spin text-white" />
       </section>
     );
@@ -71,7 +71,7 @@ export function HeroSlider() {
 
   if (slides.length === 0) {
     return (
-      <section className="relative h-[calc(100vh-4rem)] flex items-center justify-center bg-[#2D79C4]">
+      <section className="relative h-screen flex items-center justify-center bg-[#2D79C4]">
         <p className="text-white text-lg">Bannerlar topilmadi</p>
       </section>
     );
@@ -80,23 +80,23 @@ export function HeroSlider() {
   const slide = slides[currentSlide];
 
   return (
-    <section className="relative overflow-hidden h-[calc(100vh-4rem)] bg-black">
-      <AnimatePresence mode="wait">
+    <section className="relative overflow-hidden h-screen bg-black -mt-16 pt-16">
+      <AnimatePresence mode="sync" initial={false}>
         <motion.div
           key={currentSlide}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
           className="absolute inset-0 cursor-pointer"
           onClick={handleSlideClick}
         >
           {/* Background Image */}
           <motion.div 
             className="absolute inset-0"
-            initial={{ scale: 1.1 }}
+            initial={{ scale: 1.05 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.5 }}
           >
             <img 
               src={slide.image} 
@@ -111,14 +111,14 @@ export function HeroSlider() {
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
               className="max-w-3xl text-white"
             >
               {/* Title */}
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.7 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
                 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl"
               >
                 {slide.title}
@@ -128,7 +128,7 @@ export function HeroSlider() {
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
                 className="text-xl md:text-2xl text-white/90 font-light leading-relaxed"
               >
                 {slide.description}
@@ -144,7 +144,7 @@ export function HeroSlider() {
           e.stopPropagation();
           prevSlide();
         }}
-        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[#fff]/0 backdrop-blur-lg text-white hidden md:flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
+        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-lg text-white hidden md:flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-7 h-7" />
@@ -155,7 +155,7 @@ export function HeroSlider() {
           e.stopPropagation();
           nextSlide();
         }}
-        className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[#fff]/0 backdrop-blur-lg text-white hidden md:flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
+        className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-lg text-white hidden md:flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
         aria-label="Next slide"
       >
         <ChevronRight className="w-7 h-7" />
