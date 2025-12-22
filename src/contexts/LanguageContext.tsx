@@ -182,6 +182,9 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.email.title": "Email",
     "contact.hours.title": "Ish vaqti",
     "contact.hours.value": "Dushanba - Shanba: 09:00 - 18:00\nYakshanba: Dam olish kuni",
+    "viewDetails": "Batafsil ko'rish",
+    "learnMore": "Ko'proq o'rganish",
+
     
     // 404
     "404.title": "404",
@@ -395,6 +398,8 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.email.title": "Email",
     "contact.hours.title": "Рабочее время",
     "contact.hours.value": "Понедельник - Суббота: 09:00 - 18:00\nВоскресенье: Выходной",
+    "viewDetails": "Подробнее",
+    "learnMore": "Узнать больше",
     
     // 404
     "404.title": "404",
@@ -611,6 +616,8 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.email.title": "Email",
     "contact.hours.title": "Working Hours",
     "contact.hours.value": "Monday - Saturday: 09:00 - 18:00\nSunday: Closed",
+    "viewDetails": "View Details",
+    "learnMore": "Learn More",
     
     // 404
     "404.title": "404",

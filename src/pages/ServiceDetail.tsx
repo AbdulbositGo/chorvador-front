@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Loader2, Phone, Mail, MapPin } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Check, Clock, Shield, Award } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
 
@@ -28,7 +29,6 @@ const ServiceDetail = () => {
         if (service) {
             const pageTitle = service.title;
             const siteName = "Your Company Name";
-
             document.title = `${pageTitle} | ${siteName}`;
 
             let metaDescription = document.querySelector('meta[name="description"]');
@@ -38,7 +38,6 @@ const ServiceDetail = () => {
                 document.head.appendChild(metaDescription);
             }
             metaDescription.setAttribute('content', service.short_description);
-
             document.documentElement.lang = language;
         }
     }, [service, language]);
@@ -50,7 +49,6 @@ const ServiceDetail = () => {
             try {
                 setLoading(true);
                 setError(null);
-
                 const apiUrl = import.meta.env.VITE_API_URL;
 
                 if (!apiUrl) {
@@ -58,7 +56,6 @@ const ServiceDetail = () => {
                 }
 
                 const url = `${apiUrl}/services/${id}/`;
-
                 const response = await fetch(url, {
                     headers: {
                         'Accept': 'application/json',
@@ -108,11 +105,8 @@ const ServiceDetail = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-destructive/10 border-2 border-destructive/20 rounded-2xl p-8 text-center max-w-2xl mx-auto"
+                        className="bg-destructive/10 border border-destructive/20 rounded-xl p-8 text-center max-w-2xl mx-auto"
                     >
-                        <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-4">
-                            <span className="text-3xl">⚠️</span>
-                        </div>
                         <h2 className="text-2xl font-bold text-destructive mb-2">
                             {language === 'uz' ? 'Xatolik yuz berdi' : language === 'ru' ? 'Произошла ошибка' : 'An error occurred'}
                         </h2>
@@ -129,203 +123,210 @@ const ServiceDetail = () => {
         );
     }
 
+    const benefits = [
+        {
+            icon: Shield,
+            title: language === 'uz' ? 'Sifat kafolati' : language === 'ru' ? 'Гарантия качества' : 'Quality Guarantee',
+            description: language === 'uz' ? '100% sifatli xizmat' : language === 'ru' ? '100% качество' : '100% Quality'
+        },
+        {
+            icon: Clock,
+            title: language === 'uz' ? 'Tez bajarish' : language === 'ru' ? 'Быстрое выполнение' : 'Fast Delivery',
+            description: language === 'uz' ? 'O\'z vaqtida topshirish' : language === 'ru' ? 'Своевременная доставка' : 'On-time delivery'
+        },
+        {
+            icon: Award,
+            title: language === 'uz' ? 'Professional jamoa' : language === 'ru' ? 'Профессиональная команда' : 'Professional Team',
+            description: language === 'uz' ? 'Tajribali mutaxassislar' : language === 'ru' ? 'Опытные специалисты' : 'Expert specialists'
+        }
+    ];
+
     return (
         <Layout>
             {/* Hero Section with Image */}
-            <section className="relative min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] overflow-hidden pt-20 md:pt-24">
-                {/* Background Image */}
-                <motion.div
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.8 }}
-                    className="absolute inset-0"
-                >
-                    <img
-                        src={service.image}
-                        alt={service.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'https://placehold.co/1920x1080/8b5cf6/ffffff?text=Service';
-                        }}
-                    />
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-black/30to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-transparent to-white/40" />
-                </motion.div>
-
-                {/* Content Over Image */}
-                <div className="relative h-full container-main px-4 flex flex-col justify-end pb-8 md:pb-12">
+            <section className="relative pt-20 md:pt-24">
+                <div className="container-main px-4">
                     {/* Back Button */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
                         className="mb-6"
                     >
                         <Button
-                            variant="secondary"
+                            variant="ghost"
                             onClick={() => navigate("/services")}
-                            className="backdrop-blur-sm bg-background/80 hover:bg-background/90"
+                            className="hover:bg-muted"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Back'}
                         </Button>
                     </motion.div>
 
-                    {/* Category Badge */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="mb-4"
-                    >
-                        <Badge className="px-4 py-2 text-sm font-semibold backdrop-blur-sm bg-primary/90">
-                            {service.category}
-                        </Badge>
-                    </motion.div>
+                    {/* Hero Content */}
+                    <div className="grid lg:grid-cols-5 gap-8 pb-12">
+                        {/* Left Content - 3 columns */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="lg:col-span-3 space-y-6"
+                        >
+                            <div className="space-y-4">
+                                <Badge className="px-4 py-1.5">
+                                    {service.category}
+                                </Badge>
 
-                    {/* Title */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="text-3xl md:text-4xl lg:text-6xl font-bold text-foreground mb-4 max-w-4xl"
-                    >
-                        {service.title}
-                    </motion.h1>
+                                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                                    {service.title}
+                                </h1>
 
-                    {/* Short Description */}
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                        className="text-lg md:text-xl text-muted-foreground max-w-3xl"
-                    >
-                        {service.short_description}
-                    </motion.p>
+                                <p className="text-xl text-muted-foreground leading-relaxed">
+                                    {service.short_description}
+                                </p>
+                            </div>
+
+
+                        </motion.div>
+
+                        {/* Right Image - 2 columns */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="lg:col-span-2"
+                        >
+                            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
+                                <img
+                                    src={service.image}
+                                    alt={service.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = 'https://placehold.co/800x600/8b5cf6/ffffff?text=Service';
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                            </div>
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Benefits Section */}
+            <section className="py-8 bg-muted/30">
+                <div className="container-main px-4">
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {benefits.map((benefit, index) => (
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                            >
+                                <Card className="h-full hover:shadow-lg transition-shadow">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                                <benefit.icon className="w-6 h-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold mb-1">{benefit.title}</h3>
+                                                <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
             {/* Main Content */}
-            <section className="py-12 md:py-16 lg:py-20">
+            <section className="py-12 md:py-16">
                 <div className="container-main px-4">
-                    <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
-                        {/* Left Column - Description */}
+                    <div className="grid lg:grid-cols-3 gap-8">
+                        {/* Description - 2 columns */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.6 }}
-                            className="lg:col-span-2 space-y-8"
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="lg:col-span-2"
                         >
-                            {/* Description Section */}
-                            <div className="prose prose-lg max-w-none">
-                                <h2 className="text-2xl md:text-3xl font-bold mb-6">
-                                    {language === 'uz' ? 'Batafsil ma\'lumot' : language === 'ru' ? 'Подробная информация' : 'Detailed Information'}
-                                </h2>
-                                <div
-                                    className="text-muted-foreground leading-relaxed space-y-4 [&_p]:text-base [&_p]:md:text-lg [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_strong]:font-bold [&_em]:italic [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-6 [&_h3]:mb-3"
-                                    dangerouslySetInnerHTML={{ __html: service.description }}
-                                />
-                            </div>
-
-                            {/* Features or Benefits */}
-                            <div className="border-t pt-8">
-                                <h3 className="text-xl md:text-2xl font-bold mb-4">
-                                    {language === 'uz' ? 'Nima uchun bizni tanlaysiz?' : language === 'ru' ? 'Почему выбирают нас?' : 'Why Choose Us?'}
-                                </h3>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    {[
-                                        { icon: '✓', text: language === 'uz' ? 'Professional xizmat' : language === 'ru' ? 'Профессиональное обслуживание' : 'Professional Service' },
-                                        { icon: '✓', text: language === 'uz' ? 'Sifat kafolati' : language === 'ru' ? 'Гарантия качества' : 'Quality Guarantee' },
-                                        { icon: '✓', text: language === 'uz' ? 'Tez bajarish' : language === 'ru' ? 'Быстрое выполнение' : 'Fast Delivery' },
-                                        { icon: '✓', text: language === 'uz' ? 'Hamyonbop narxlar' : language === 'ru' ? 'Доступные цены' : 'Affordable Prices' },
-                                    ].map((item, index) => (
-                                        <div key={index} className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
-                                            <span className="text-2xl text-primary">{item.icon}</span>
-                                            <span className="text-sm font-medium">{item.text}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <Card>
+                                <CardContent className="p-8">
+                                    <h2 className="text-2xl font-bold mb-6">
+                                        {language === 'uz' ? 'Xizmat haqida' : language === 'ru' ? 'О услуге' : 'About Service'}
+                                    </h2>
+                                    <div
+                                        className="prose prose-lg max-w-none text-muted-foreground [&_p]:mb-4 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_strong]:font-bold [&_strong]:text-foreground [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-foreground"
+                                        dangerouslySetInnerHTML={{ __html: service.description }}
+                                    />
+                                </CardContent>
+                            </Card>
                         </motion.div>
 
-                        {/* Right Column - Contact Card */}
+                        {/* Contact Sidebar - 1 column */}
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.7 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
                             className="lg:col-span-1"
                         >
                             <div className="sticky top-24 space-y-6">
                                 {/* Contact Card */}
-                                <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20 rounded-2xl p-6 md:p-8 space-y-6">
-                                    <h3 className="text-2xl font-bold">
-                                        {language === 'uz' ? 'Bog\'lanish' : language === 'ru' ? 'Связаться с нами' : 'Get in Touch'}
-                                    </h3>
+                                <Card className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-0">
+                                    <CardContent className="p-6 space-y-5">
+                                        <h3 className="text-xl font-bold">
+                                            {language === 'uz' ? 'Bog\'laning' : language === 'ru' ? 'Свяжитесь с нами' : 'Contact Us'}
+                                        </h3>
 
-                                    <p className="text-muted-foreground">
-                                        {language === 'uz'
-                                            ? 'Savollaringiz bormi? Biz bilan bog\'laning!'
-                                            : language === 'ru'
-                                                ? 'Есть вопросы? Свяжитесь с нами!'
-                                                : 'Have questions? Contact us!'}
-                                    </p>
+                                        <div className="space-y-3">
+                                            <a
+                                                href="tel:+998901234567"
+                                                className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
+                                            >
+                                                <Phone className="w-5 h-5" />
+                                                <div className="flex-1">
+                                                    <p className="text-xs opacity-90">
+                                                        {language === 'uz' ? 'Telefon' : language === 'ru' ? 'Телефон' : 'Phone'}
+                                                    </p>
+                                                    <p className="font-semibold">+998 90 123 45 67</p>
+                                                </div>
+                                            </a>
 
-                                    {/* Contact Info */}
-                                    <div className="space-y-4">
-                                        <a
-                                            href="tel:+998901234567"
-                                            className="flex items-center gap-4 p-4 bg-background rounded-xl hover:shadow-md transition-all group"
-                                        >
-                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                                <Phone className="w-5 h-5 text-primary" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-xs text-muted-foreground font-medium mb-1">
-                                                    {language === 'uz' ? 'Telefon' : language === 'ru' ? 'Телефон' : 'Phone'}
-                                                </p>
-                                                <p className="font-bold">+998 90 123 45 67</p>
-                                            </div>
-                                        </a>
+                                            <a
+                                                href="mailto:info@example.com"
+                                                className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
+                                            >
+                                                <Mail className="w-5 h-5" />
+                                                <div className="flex-1">
+                                                    <p className="text-xs opacity-90">Email</p>
+                                                    <p className="font-semibold text-sm">info@example.com</p>
+                                                </div>
+                                            </a>
 
-                                        <a
-                                            href="mailto:info@example.com"
-                                            className="flex items-center gap-4 p-4 bg-background rounded-xl hover:shadow-md transition-all group"
-                                        >
-                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                                <Mail className="w-5 h-5 text-primary" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-xs text-muted-foreground font-medium mb-1">
-                                                    {language === 'uz' ? 'Email' : language === 'ru' ? 'Эл. почта' : 'Email'}
-                                                </p>
-                                                <p className="font-bold">info@example.com</p>
-                                            </div>
-                                        </a>
-
-                                        <div className="flex items-center gap-4 p-4 bg-background rounded-xl">
-                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <MapPin className="w-5 h-5 text-primary" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-xs text-muted-foreground font-medium mb-1">
-                                                    {language === 'uz' ? 'Manzil' : language === 'ru' ? 'Адрес' : 'Address'}
-                                                </p>
-                                                <p className="font-bold text-sm">Tashkent, Uzbekistan</p>
+                                            <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg">
+                                                <MapPin className="w-5 h-5" />
+                                                <div className="flex-1">
+                                                    <p className="text-xs opacity-90">
+                                                        {language === 'uz' ? 'Manzil' : language === 'ru' ? 'Адрес' : 'Address'}
+                                                    </p>
+                                                    <p className="font-semibold text-sm">Tashkent, Uzbekistan</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* CTA Button */}
-                                    <Button
-                                        onClick={() => navigate("/contact")}
-                                        className="w-full h-12 text-base font-semibold"
-                                        size="lg"
-                                    >
-                                        {language === 'uz' ? 'Buyurtma berish' : language === 'ru' ? 'Заказать услугу' : 'Order Service'}
-                                    </Button>
-                                </div>
+                                        <Button
+                                            onClick={() => navigate("/contact")}
+                                            className="w-full bg-white text-primary hover:bg-white/90"
+                                        >
+                                            {language === 'uz' ? 'Buyurtma berish' : language === 'ru' ? 'Заказать' : 'Order Now'}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                                {/* Why Choose Us */}
                             </div>
                         </motion.div>
                     </div>

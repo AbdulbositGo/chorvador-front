@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ServiceCardProps {
   service: {
@@ -14,6 +15,8 @@ interface ServiceCardProps {
 }
 
 export const ServiceCard = ({ service, onClick }: ServiceCardProps) => {
+  const { t } = useLanguage();
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -64,7 +67,7 @@ export const ServiceCard = ({ service, onClick }: ServiceCardProps) => {
 
           {/* Read More Link */}
           <div className="flex items-center gap-2 text-primary font-semibold text-sm pt-3 border-t group-hover:gap-4 transition-all">
-            <span>{service.categoryName ? 'View Details' : 'Learn More'}</span>
+            <span>{service.categoryName ? t('viewDetails') : t('learnMore')}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-300" />
           </div>
         </CardContent>

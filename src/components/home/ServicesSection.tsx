@@ -102,7 +102,6 @@ export function ServicesSection() {
         const data: ApiService[] = dashboardData.services || [];
         
         if (!Array.isArray(data)) {
-          console.error('Services is not an array:', data);
           throw new Error('Noto\'g\'ri ma\'lumot formati');
         }
         

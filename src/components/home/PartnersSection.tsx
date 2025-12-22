@@ -40,7 +40,6 @@ export function PartnersSection() {
         setPartners(data);
         
       } catch (err) {
-        console.error("Hamkorlarni yuklashda xatolik:", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
         setError(errorMessage);
       } finally {
