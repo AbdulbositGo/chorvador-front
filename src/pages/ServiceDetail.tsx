@@ -284,7 +284,7 @@ const ServiceDetail = () => {
 
                                         <div className="space-y-3">
                                             <a
-                                                href="tel:+998901234567"
+                                                href="tel:+998712266596"
                                                 className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
                                             >
                                                 <Phone className="w-5 h-5" />
@@ -297,13 +297,13 @@ const ServiceDetail = () => {
                                             </a>
 
                                             <a
-                                                href="mailto:info@example.com"
+                                                href="mailto:chorvador@chorvador.uz"
                                                 className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
                                             >
                                                 <Mail className="w-5 h-5" />
                                                 <div className="flex-1">
                                                     <p className="text-xs opacity-90">Email</p>
-                                                    <p className="font-semibold text-sm">info@example.com</p>
+                                                    <p className="font-semibold text-sm">chorvador@chorvador.uz</p>
                                                 </div>
                                             </a>
 

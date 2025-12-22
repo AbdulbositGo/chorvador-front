@@ -21,7 +21,7 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.services.title": "Xizmatlar - Chorvador.uz | Yetkazib berish, Texnik xizmat",
     "meta.services.description": "Yetkazib berish, texnik xizmat, maslahat, kafolat xizmatlari. Fermerlar uchun to'liq qo'llab-quvvatlash.",
     "meta.contact.title": "Bog'lanish - Chorvador.uz | Aloqa Ma'lumotlari",
-    "meta.contact.description": "Chorvador.uz bilan bog'laning. Toshkent, Chilonzor. Tel: +998 90 123 45 67",
+    "meta.contact.description": "Chorvador.uz bilan bog'laning. Toshkent, Chilonzor. Tel:  +998 71 226 65 96",
     
     // Navigation
     "nav.home": "Bosh sahifa",
@@ -167,7 +167,7 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.form.name": "Ismingiz",
     "contact.form.namePlaceholder": "Ismingizni kiriting",
     "contact.form.phone": "Telefon raqam",
-    "contact.form.phonePlaceholder": "+998 90 123 45 67",
+    "contact.form.phonePlaceholder": "+998 71 226 65 96",
     "contact.form.message": "Xabar",
     "contact.form.messagePlaceholder": "Xabaringizni yozing...",
     "contact.form.submit": "Xabar yuborish",
@@ -202,8 +202,8 @@ const translations: Record<Language, Record<string, string>> = {
     "location.title": "Bizning manzilimiz",
     "location.subtitle": "Bizning ofisimizga tashrif buyuring yoki bog'laning",
     "location.address": "Toshkent shahri, Chilonzor tumani, Bunyodkor ko'chasi, 15-uy",
-    "location.phone": "+998 90 123 45 67",
-    "location.email": "info@chorvador.uz",
+    "location.phone": "+998 71 226 65 96",
+    "location.email": "chorvador@chorvador.uz",
     "location.cta": "Bog'lanish",
     
     // Footer
@@ -240,7 +240,7 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.services.title": "Услуги - Chorvador.uz | Доставка, Техобслуживание",
     "meta.services.description": "Доставка, техобслуживание, консультации, гарантия. Полная поддержка фермеров.",
     "meta.contact.title": "Контакты - Chorvador.uz | Связаться с Нами",
-    "meta.contact.description": "Свяжитесь с Chorvador.uz. Ташкент, Чиланзар. Тел: +998 90 123 45 67",
+    "meta.contact.description": "Свяжитесь с Chorvador.uz. Ташкент, Чиланзар. Тел: +998 71 226 65 96",
     
     // Navigation
     "nav.home": "Главная",
@@ -383,7 +383,7 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.form.name": "Ваше имя",
     "contact.form.namePlaceholder": "Введите ваше имя",
     "contact.form.phone": "Телефон",
-    "contact.form.phonePlaceholder": "+998 90 123 45 67",
+    "contact.form.phonePlaceholder": "+998 71 226 65 96",
     "contact.form.message": "Сообщение",
     "contact.form.messagePlaceholder": "Напишите ваше сообщение...",
     "contact.form.submit": "Отправить сообщение",
@@ -417,8 +417,8 @@ const translations: Record<Language, Record<string, string>> = {
     "location.title": "Наш адрес",
     "location.subtitle": "Посетите наш офис или свяжитесь с нами",
     "location.address": "г. Ташкент, Чиланзарский район, ул. Бунёдкор, дом 15",
-    "location.phone": "+998 90 123 45 67",
-    "location.email": "info@chorvador.uz",
+    "location.phone": "+998 71 226 65 96",
+    "location.email": "chorvador@chorvador.uz",
     "location.cta": "Связаться",
     
     // Footer
@@ -455,7 +455,7 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.services.title": "Services - Chorvador.uz | Delivery, Technical Service",
     "meta.services.description": "Delivery, technical service, consultation, warranty services. Full support for farmers.",
     "meta.contact.title": "Contact - Chorvador.uz | Get in Touch",
-    "meta.contact.description": "Contact Chorvador.uz. Tashkent, Chilanzar. Tel: +998 90 123 45 67",
+    "meta.contact.description": "Contact Chorvador.uz. Tashkent, Chilanzar. Tel: +998 71 226 65 96",
     
     // Navigation
     "nav.home": "Home",
@@ -601,7 +601,7 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.form.name": "Your Name",
     "contact.form.namePlaceholder": "Enter your name",
     "contact.form.phone": "Phone Number",
-    "contact.form.phonePlaceholder": "+998 90 123 45 67",
+    "contact.form.phonePlaceholder": "+998 71 226 65 96",
     "contact.form.message": "Message",
     "contact.form.messagePlaceholder": "Write your message...",
     "contact.form.submit": "Send Message",
@@ -635,8 +635,8 @@ const translations: Record<Language, Record<string, string>> = {
     "location.title": "Our Location",
     "location.subtitle": "Visit our office or get in touch",
     "location.address": "Tashkent, Chilanzar district, Bunyodkor street, building 15",
-    "location.phone": "+998 90 123 45 67",
-    "location.email": "info@chorvador.uz",
+    "location.phone": "+998 71 226 65 96",
+    "location.email": "chorvador@chorvador.uz",
     "location.cta": "Contact Us",
     
     // Footer

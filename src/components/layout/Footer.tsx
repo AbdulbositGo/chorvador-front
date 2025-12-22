@@ -113,26 +113,26 @@ export function Footer() {
             <ul className="space-y-4">
               <li>
                 <a
-                  href="tel:+998901234567"
+                  href="tel:+ + +998712266596"
                   className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <Phone className="h-5 w-5 flex-shrink-0" />
-                  +998 90 123 45 67
+                   +998 71 226-65-96
                 </a>
               </li>
               <li>
                 <a
-                  href="mailto:info@chorvador.uz"
+                  href="mailto:chorvador@chorvador.uz"
                   className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <Mail className="h-5 w-5 flex-shrink-0" />
-                  info@chorvador.uz
+                  chorvador@chorvador.uz
                 </a>
               </li>
               <li>
                 <span className="flex items-start gap-3 text-primary-foreground/70">
                   <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                  {t("footer.contact.address")}
+                  g.Toshkent, ul. Axmad Universitet 22,
                 </span>
               </li>
             </ul>
