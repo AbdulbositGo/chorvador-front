@@ -53,6 +53,10 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -124,27 +128,36 @@ const Products = () => {
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
 
-        const response = await fetch(`${apiUrl}/products/`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Accept-Language': acceptLanguage,
-          },
-        });
+        // Fetch all pages
+        let allProducts: ApiProduct[] = [];
+        let nextUrl: string | null = `${apiUrl}/products/`;
         
-        if (!response.ok) {
-          throw new Error(`HTTP xatolik! Status: ${response.status}`);
+        while (nextUrl) {
+          const response = await fetch(nextUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Accept-Language': acceptLanguage,
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP xatolik! Status: ${response.status}`);
+          }
+          
+          const data: ProductsResponse = await response.json();
+          const productsArray: ApiProduct[] = data.results || [];
+          
+          allProducts = [...allProducts, ...productsArray];
+          nextUrl = data.next;
         }
         
-        const data: ProductsResponse = await response.json();
-        const productsArray: ApiProduct[] = data.results || [];
-        
-        if (!Array.isArray(productsArray)) {
+        if (!Array.isArray(allProducts)) {
           throw new Error("Ma'lumot noto'g'ri formatda");
         }
 
-        const transformedProducts: Product[] = productsArray.map(product => {
+        const transformedProducts: Product[] = allProducts.map(product => {
           let categoryId = 'all';
           const categoryName = product.category || '';
           
@@ -174,11 +187,13 @@ const Products = () => {
         });
         
         setProducts(transformedProducts);
+        setIsInitialLoad(false);
         
       } catch (err) {
         console.error("Products XATOLIK:", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
         setError(errorMessage);
+        setIsInitialLoad(false);
       } finally {
         setLoading(false);
       }
@@ -203,12 +218,36 @@ const Products = () => {
     return matchesSearch && matchesCategory;
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    // Smooth scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchQuery, selectedCategory]);
+
+  // Smooth scroll to top when changing pages
+  useEffect(() => {
+    const element = document.getElementById('products-grid');
+    if (element && currentPage > 1) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentPage]);
+
+  // Display categories (show only first row initially)
+  const visibleCategories = showAllCategories ? categories : categories.slice(0, 6);
+
   return (
     <Layout>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
               {t("products.page.title")}
             </h1>
@@ -224,19 +263,19 @@ const Products = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           
           {/* Search & Filter Toggle */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder={t("products.search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
+                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base transition-all duration-300"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors animate-in fade-in zoom-in duration-200"
                   aria-label="Clear search"
                 >
                   <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" />
@@ -255,42 +294,59 @@ const Products = () => {
 
           {/* Categories Filter */}
           <div className={cn(
-            "flex flex-wrap gap-2 mb-6 sm:mb-8",
-            !showFilters && "hidden sm:flex"
+            "mb-6 sm:mb-8 transition-all duration-300",
+            !showFilters && "hidden sm:block"
           )}>
-            {categoriesLoading ? (
-              <div className="flex items-center gap-2 text-muted-foreground py-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-xs sm:text-sm">
-                  {language === 'uz' ? 'Kategoriyalar yuklanmoqda...' : language === 'ru' ? 'Загрузка категорий...' : 'Loading categories...'}
-                </span>
-              </div>
-            ) : (
-              categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    setShowFilters(false);
-                  }}
-                  className={cn(
-                    "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200",
-                    selectedCategory === category.id
-                      ? "bg-primary text-primary-foreground shadow-md scale-105"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:scale-105"
+            <div className="flex flex-wrap gap-2">
+              {categoriesLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground py-2 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-xs sm:text-sm">
+                    {language === 'uz' ? 'Kategoriyalar yuklanmoqda...' : language === 'ru' ? 'Загрузка категорий...' : 'Loading categories...'}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {visibleCategories.map((category, index) => (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        setSelectedCategory(category.id);
+                        setShowFilters(false);
+                      }}
+                      className={cn(
+                        "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                        selectedCategory === category.id
+                          ? "bg-primary text-primary-foreground shadow-md scale-105"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80 hover:scale-105"
+                      )}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                  {categories.length > 6 && (
+                    <button
+                      onClick={() => setShowAllCategories(!showAllCategories)}
+                      className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-all duration-300 border border-dashed border-muted-foreground/30 hover:scale-105 hover:border-solid animate-in fade-in slide-in-from-bottom-2"
+                      style={{ animationDelay: `${visibleCategories.length * 50}ms` }}
+                    >
+                      {showAllCategories 
+                        ? (language === 'uz' ? 'Kamroq' : language === 'ru' ? 'Меньше' : 'Less')
+                        : `+ ${categories.length - 6} ${language === 'uz' ? 'ko\'proq' : language === 'ru' ? 'еще' : 'more'}`
+                      }
+                    </button>
                   )}
-                >
-                  {category.name}
-                </button>
-              ))
-            )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24">
+            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500">
               <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" />
-              <span className="text-sm sm:text-base text-muted-foreground">
+              <span className="text-sm sm:text-base text-muted-foreground animate-pulse">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
               </span>
             </div>
@@ -298,8 +354,8 @@ const Products = () => {
 
           {/* Error State */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4 animate-in zoom-in duration-300">
                 <X className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" />
               </div>
               <p className="text-destructive font-semibold mb-2 text-base sm:text-lg">
@@ -316,11 +372,16 @@ const Products = () => {
           )}
 
           {/* Results Count */}
-          {!loading && !error && (
-            <div className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6">
+          {!loading && !error && filteredProducts.length > 0 && (
+            <div id="products-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500">
               <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               <p className="text-sm sm:text-base font-medium">
                 {filteredProducts.length} {t("products.found")}
+                {filteredProducts.length > itemsPerPage && (
+                  <span className="text-muted-foreground/70 ml-2">
+                    ({startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} {language === 'uz' ? 'ko\'rsatilmoqda' : language === 'ru' ? 'показано' : 'shown'})
+                  </span>
+                )}
               </p>
             </div>
           )}
@@ -328,20 +389,68 @@ const Products = () => {
           {/* Products Grid */}
           {!loading && !error && (
             <>
-              {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {filteredProducts.map((product) => (
-                    <div 
-                      key={product.id} 
-                      onClick={() => handleProductClick(product.id)}
-                      className="cursor-pointer"
-                    >
-                      <ProductCard product={product} />
+              {currentProducts.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {currentProducts.map((product, index) => (
+                      <div 
+                        key={product.id} 
+                        onClick={() => handleProductClick(product.id)}
+                        className="cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
+                        style={{ animationDelay: `${index * 75}ms` }}
+                      >
+                        <ProductCard 
+                          product={product} 
+                          hidePrice={product.price === null || product.price === 0}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {filteredProducts.length > itemsPerPage && (
+                    <div className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
+                      >
+                        {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Previous'}
+                      </Button>
+                      
+                      <div className="flex gap-1 sm:gap-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={cn(
+                              "h-9 sm:h-10 w-9 sm:w-10 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 hover:scale-110",
+                              currentPage === page
+                                ? "bg-primary text-primary-foreground shadow-md scale-105"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            )}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
+                      >
+                        {language === 'uz' ? 'Keyingi' : language === 'ru' ? 'Далее' : 'Next'}
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               ) : (
-                <div className="text-center py-16 sm:py-20 lg:py-24">
+                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500">
                   <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted mb-4 sm:mb-6">
                     <Package className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
                   </div>

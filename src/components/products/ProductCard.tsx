@@ -17,9 +17,10 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
+  hidePrice?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, hidePrice = false }: ProductCardProps) {
   const { t } = useLanguage();
   
   const formatPrice = (price: number) => {
@@ -71,7 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
             asChild
             size="sm"
             variant="secondary"
-            className="hover:scale-110 transition-transform bg-primary/90 hover:bg-[  rgba(255,255,255,0.8)] text-white"
+            className="hover:scale-110 transition-transform bg-primary/90 hover:bg-[rgba(5,134,214,0.52)] text-white"
           >
             <Link to={`/products/${product.id}`}>
               <Eye className="w-4 h-4 mr-1" />
@@ -89,11 +90,13 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
         </Link>
-        <div className="mt-auto">
-          <span className="text-xl font-bold text-primary">
-            {formatPrice(product.price)}
-          </span>
-        </div>
+        {!hidePrice && (
+          <div className="mt-auto">
+            <span className="text-xl font-bold text-primary">
+              {formatPrice(product.price)}
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
