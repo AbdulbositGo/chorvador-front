@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Facebook, Instagram, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Instagram, Send, Twitter, Linkedin } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export function Footer() {
@@ -26,6 +26,34 @@ export function Footer() {
     ],
   };
 
+  const socialLinks = [
+    {
+      name: "Facebook",
+      href: "https://www.facebook.com/sharer.php?u=https://www.chorvador.uz/kontakty.html",
+      icon: Facebook,
+    },
+    {
+      name: "Twitter",
+      href: "http://twitter.com/share?url=https://www.chorvador.uz/kontakty.html&text=Chorvador.uz",
+      icon: Twitter,
+    },
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/chorvadoruz?igsh=ZnV1a3NzbnRnb3hu",
+      icon: Instagram,
+    },
+    {
+      name: "LinkedIn",
+      href: "http://www.linkedin.com/shareArticle?mini=true&url=https://www.chorvador.uz/kontakty.html",
+      icon: Linkedin,
+    },
+    {
+      name: "Telegram",
+      href: "https://t.me/chorvadoruz",
+      icon: Send,
+    },
+  ];
+
   return (
     <footer id="footer" className="bg-primary-dark text-primary-foreground">
       <div className="container-main py-14">
@@ -42,28 +70,19 @@ export function Footer() {
             <p className="text-primary-foreground/80 mb-6 leading-relaxed">
               {t("footer.description")}
             </p>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
-                aria-label="Facebook"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
-                aria-label="Instagram"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
-                aria-label="Telegram"
-              >
-                <Send className="h-5 w-5" />
-              </a>
+            <div className="flex gap-3 flex-wrap">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center hover:bg-white hover:text-secondary-foreground transition-all duration-300"
+                  aria-label={social.name}
+                >
+                  <social.icon className="h-5 w-5" />
+                </a>
+              ))}
             </div>
           </div>
 
@@ -113,11 +132,20 @@ export function Footer() {
             <ul className="space-y-4">
               <li>
                 <a
-                  href="tel:+ + +998712266596"
+                  href="tel:+998712266596"
                   className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <Phone className="h-5 w-5 flex-shrink-0" />
-                   +998 71 226-65-96
+                  +998 71 226 65 96
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+998974440016"
+                  className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
+                >
+                  <Phone className="h-5 w-5 flex-shrink-0" />
+                  +998 97 444 00 16
                 </a>
               </li>
               <li>
@@ -130,10 +158,15 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <span className="flex items-start gap-3 text-primary-foreground/70">
+                <a
+                  href="https://www.google.com/maps?ll=41.350498,69.264383&z=17&t=m&hl=uz&gl=US&mapclient=embed&cid=3984649803725302337"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 text-primary-foreground/70 hover:text-white transition-colors"
+                >
                   <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                  g.Toshkent, ul. Axmad Universitet 22,
-                </span>
+                  <span>g.Toshkent, ul. Axmad Universitet 22</span>
+                </a>
               </li>
             </ul>
           </div>

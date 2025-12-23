@@ -9,9 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ApiProduct {
   id: number;
   title: string;
-  price: number;
+  price: number | null;
   discount: number;
-  real_price: number;
+  real_price: number | null;
   has_discount: boolean;
   specs: Record<string, string> | string;
   short_description: string;
@@ -139,11 +139,17 @@ const ProductDetail = () => {
     );
   }
 
-  // Price va discount hisoblash
-  const hasValidDiscount = product.has_discount && product.discount > 0;
+  // Price mavjudligini tekshirish
+  const hasPrice = product.price !== null && product.price !== undefined;
   
-  const formattedPrice = new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.price);
-  const formattedRealPrice = hasValidDiscount
+  // Price va discount hisoblash
+  const hasValidDiscount = hasPrice && product.has_discount && product.discount > 0 && product.real_price !== null;
+  
+  const formattedPrice = hasPrice 
+    ? new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.price!)
+    : null;
+    
+  const formattedRealPrice = hasValidDiscount && product.real_price !== null
     ? new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'uz-UZ').format(product.real_price)
     : null;
   
@@ -421,38 +427,40 @@ const ProductDetail = () => {
                 </p>
               )}
 
-              {/* Price */}
-              <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
-                {hasValidDiscount && formattedRealPrice ? (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl md:text-2xl text-muted-foreground line-through">
-                        {formattedPrice}
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-bold">
-                        -{discountPercent}%
-                      </span>
-                    </div>
+              {/* Price - Faqat price mavjud bo'lsa ko'rsatiladi */}
+              {hasPrice && (
+                <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
+                  {hasValidDiscount && formattedRealPrice ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl md:text-2xl text-muted-foreground line-through">
+                          {formattedPrice}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-bold">
+                          -{discountPercent}%
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                          {formattedRealPrice}
+                        </span>
+                        <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                          {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
-                        {formattedRealPrice}
+                        {formattedPrice}
                       </span>
                       <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
                         {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
                       </span>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
-                      {formattedPrice}
-                    </span>
-                    <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
-                      {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
-                    </span>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Specs */}
               {hasSpecs && specsObject && (

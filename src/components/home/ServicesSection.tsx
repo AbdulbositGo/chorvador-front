@@ -105,16 +105,7 @@ export function ServicesSection() {
           throw new Error('Noto\'g\'ri ma\'lumot formati');
         }
         
-        // Rasmlar URL'larini tekshirish
-        data.forEach((service, index) => {
-          const finalUrl = getImageUrl(service.image);
-          console.log(`Service ${index + 1}:`, {
-            id: service.id,
-            title: service.title,
-            originalImage: service.image,
-            finalImageUrl: finalUrl
-          });
-        });
+    
         
         setServices(data.slice(0, 4));
       } catch (err) {

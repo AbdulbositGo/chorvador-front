@@ -22,7 +22,7 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.services.description": "Yetkazib berish, texnik xizmat, maslahat, kafolat xizmatlari. Fermerlar uchun to'liq qo'llab-quvvatlash.",
     "meta.contact.title": "Bog'lanish - Chorvador.uz | Aloqa Ma'lumotlari",
     "meta.contact.description": "Chorvador.uz bilan bog'laning. Toshkent, Chilonzor. Tel:  +998 71 226 65 96",
-    
+
     // Navigation
     "nav.home": "Bosh sahifa",
     "nav.about": "Biz haqimizda",
@@ -32,7 +32,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.login": "Kirish",
     "nav.order": "Buyurtma berish",
     "nav.workHours": "Ish vaqti: 09:00 - 18:00",
-    
+
     // Hero
     "hero.slide1.title": "Qishloq xo'jaligining ishonchli hamkori",
     "hero.slide1.subtitle": "Eng sifatli texnika va uskunalar",
@@ -51,13 +51,13 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.slide4.description": "Mineral va organik o'g'itlar, o'simliklarni himoya qilish vositalari",
     "hero.slide4.cta": "Ko'proq bilish",
     "hero.contact": "Bog'lanish",
-    
+
     // Stats
     "stats.customers": "Mamnun mijozlar",
     "stats.products": "Mahsulot turlari",
     "stats.experience": "Yillik tajriba",
     "stats.regions": "Viloyatlarda xizmat",
-    
+
     // Featured Products
     "products.badge": "Mahsulotlar",
     "products.title": "Tanlangan mahsulotlar",
@@ -80,7 +80,7 @@ const translations: Record<Language, Record<string, string>> = {
     "products.categories.ogitlar": "O'g'itlar",
     "products.categories.chorvachilik": "Chorvachilik",
     "products.categories.sugorish": "Sug'orish uskunalari",
-    
+
     // Product Detail
     "product.backToProducts": "Mahsulotlarga qaytish",
     "product.price": "so'm",
@@ -93,7 +93,14 @@ const translations: Record<Language, Record<string, string>> = {
     "product.video": "Video ko'rsatma",
     "product.similar": "O'xshash mahsulotlar",
     "products.page.loading": "Yuklanmoqda...",
-    
+
+
+    "about1.title": "Biz haqimizda",
+    "about1.intro": "oilaviy korxona brendi bo'lib, o'z faoliyatini 2008 yilda xorijdan mobil sigir sog'ish apparatlarini import qilish va ularga texnik xizmat ko'rsatish bilan boshlagan.",
+    "about1.current": "Hozirgi kunda chorvachilik majmualarini loyihalashdan boshlab, sut ishlab chiqarish bilan bog'liq barcha asbob-uskuna va jihozlarni taklif etadi.",
+    "about1.dealer": "Korxona dunyoning yetakchi bir qancha sut ishlab chiqarish va uni qayta ishlash bilan bog'liq barcha jarayon uskunalarni ishlab chiqaruvchi kompaniyalarining O'zbekistondagi rasmiy dileri va hamkori hisoblanadi.",
+
+
     // Services
     "services.badge": "Xizmatlar",
     "services.title": "Bizning xizmatlarimiz",
@@ -137,7 +144,7 @@ const translations: Record<Language, Record<string, string>> = {
     "services.analysis.feature1": "Laboratoriya tahlili",
     "services.analysis.feature2": "Tavsiyalar",
     "services.analysis.feature3": "Bepul namuna olish",
-    
+
     // About
     "about.title": "Biz haqimizda",
     "about.subtitle": "Chorvador.uz — O'zbekiston bo'ylab qishloq xo'jaligi va chorvachilik mahsulotlarining ishonchli yetkazib beruvchisi",
@@ -159,7 +166,7 @@ const translations: Record<Language, Record<string, string>> = {
     "about.values.reliability.desc": "20+ yillik tajriba va minglab mamnun mijozlar",
     "about.values.professionalism.title": "Professionallik",
     "about.values.professionalism.desc": "Malakali mutaxassislar jamoasi va professional xizmat ko'rsatish",
-    
+
     // Contact
     "contact.title": "Bog'lanish",
     "contact.subtitle": "Savollaringiz bormi? Biz bilan bog'laning va mutaxassislarimiz sizga yordam beradi",
@@ -185,18 +192,18 @@ const translations: Record<Language, Record<string, string>> = {
     "viewDetails": "Batafsil ko'rish",
     "learnMore": "Ko'proq o'rganish",
 
-    
+
     // 404
     "404.title": "404",
     "404.subtitle": "Kechirasiz! Sahifa topilmadi",
     "404.description": "Siz qidirayotgan sahifa mavjud emas yoki ko'chirilgan bo'lishi mumkin.",
     "404.home": "Bosh sahifaga qaytish",
-    
+
     // Partners
     "partners.badge": "Hamkorlar",
     "partners.title": "Hamkor kompaniyalar",
     "partners.subtitle": "Dunyo va mahalliy yetakchi kompaniyalar bilan hamkorlik qilamiz",
-    
+
     // Location
     "location.badge": "Manzil",
     "location.title": "Bizning manzilimiz",
@@ -205,7 +212,7 @@ const translations: Record<Language, Record<string, string>> = {
     "location.phone": "+998 71 226 65 96",
     "location.email": "chorvador@chorvador.uz",
     "location.cta": "Bog'lanish",
-    
+
     // Footer
     "footer.description": "O'zbekiston bo'ylab qishloq xo'jaligi va chorvachilik mahsulotlarining ishonchli yetkazib beruvchisi.",
     "footer.company.title": "Kompaniya",
@@ -241,7 +248,7 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.services.description": "Доставка, техобслуживание, консультации, гарантия. Полная поддержка фермеров.",
     "meta.contact.title": "Контакты - Chorvador.uz | Связаться с Нами",
     "meta.contact.description": "Свяжитесь с Chorvador.uz. Ташкент, Чиланзар. Тел: +998 71 226 65 96",
-    
+
     // Navigation
     "nav.home": "Главная",
     "nav.about": "О нас",
@@ -251,7 +258,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.login": "Войти",
     "nav.order": "Заказать",
     "nav.workHours": "Рабочее время: 09:00 - 18:00",
-    
+
     // Hero
     "hero.slide1.title": "Надёжный партнёр сельского хозяйства",
     "hero.slide1.subtitle": "Качественная техника и оборудование",
@@ -270,13 +277,13 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.slide4.description": "Минеральные и органические удобрения, средства защиты растений",
     "hero.slide4.cta": "Узнать больше",
     "hero.contact": "Связаться",
-    
+
     // Stats
     "stats.customers": "Довольных клиентов",
     "stats.products": "Видов продукции",
     "stats.experience": "Лет опыта",
     "stats.regions": "Регионов обслуживания",
-    
+
     // Featured Products
     "products.badge": "Продукты",
     "products.title": "Избранные продукты",
@@ -299,7 +306,7 @@ const translations: Record<Language, Record<string, string>> = {
     "products.categories.ogitlar": "Удобрения",
     "products.categories.chorvachilik": "Животноводство",
     "products.categories.sugorish": "Оросительное оборудование",
-    
+
     // Product Detail
     "product.backToProducts": "Вернуться к продуктам",
     "product.price": "сум",
@@ -312,7 +319,15 @@ const translations: Record<Language, Record<string, string>> = {
     "product.video": "Видео инструкция",
     "product.similar": "Похожие товары",
     "products.page.loading": "Загрузка...",
-    
+
+
+    "about1.title": "О нас",
+    "about1.intro": "семейный бренд предприятия, начавший свою деятельность в 2008 году с импорта мобильных доильных аппаратов из-за рубежа и предоставления технического обслуживания для них.",
+    "about1.current": "В настоящее время предлагает все оборудование и устройства, связанные с производством молока, начиная с проектирования животноводческих комплексов.",
+    "about1.dealer": "Предприятие является официальным дилером и партнером в Узбекистане нескольких ведущих мировых компаний-производителей оборудования для всех технологических процессов, связанных с производством и переработкой молока.",
+
+
+
     // Services
     "services.badge": "Услуги",
     "services.title": "Наши услуги",
@@ -356,7 +371,7 @@ const translations: Record<Language, Record<string, string>> = {
     "services.analysis.feature1": "Лабораторный анализ",
     "services.analysis.feature2": "Рекомендации",
     "services.analysis.feature3": "Бесплатный отбор проб",
-    
+
     // About
     "about.title": "О нас",
     "about.subtitle": "Chorvador.uz — надёжный поставщик сельскохозяйственной и животноводческой продукции по всему Узбекистану",
@@ -375,7 +390,7 @@ const translations: Record<Language, Record<string, string>> = {
     "about.values.reliability.desc": "20+ лет опыта и тысячи довольных клиентов",
     "about.values.professionalism.title": "Профессионализм",
     "about.values.professionalism.desc": "Команда квалифицированных специалистов и профессиональный сервис",
-    
+
     // Contact
     "contact.title": "Контакты",
     "contact.subtitle": "Есть вопросы? Свяжитесь с нами, и наши специалисты вам помогут",
@@ -400,18 +415,18 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.hours.value": "Понедельник - Суббота: 09:00 - 18:00\nВоскресенье: Выходной",
     "viewDetails": "Подробнее",
     "learnMore": "Узнать больше",
-    
+
     // 404
     "404.title": "404",
     "404.subtitle": "Извините! Страница не найдена",
     "404.description": "Страница, которую вы ищете, не существует или была перемещена.",
     "404.home": "Вернуться на главную",
-    
+
     // Partners
     "partners.badge": "Партнёры",
     "partners.title": "Компании-партнёры",
     "partners.subtitle": "Сотрудничаем с ведущими мировыми и местными компаниями",
-    
+
     // Location
     "location.badge": "Адрес",
     "location.title": "Наш адрес",
@@ -420,29 +435,29 @@ const translations: Record<Language, Record<string, string>> = {
     "location.phone": "+998 71 226 65 96",
     "location.email": "chorvador@chorvador.uz",
     "location.cta": "Связаться",
-    
+
     // Footer
-  "footer.description": "Надежный поставщик сельскохозяйственной и животноводческой продукции по всему Узбекистану.",
-  "footer.company.title": "Компания",
-  "footer.company.about": "О нас",
-  "footer.company.services": "Услуги",
-  "footer.company.products": "Продукция",
-  "footer.company.contact": "Контакты",
-  "footer.products.title": "Продукция",
-  "footer.products.machinery": "Сельскохозяйственная техника",
-  "footer.products.livestock": "Животноводческая продукция",
-  "footer.products.fertilizers": "Удобрения и химические вещества",
-  "footer.products.seeds": "Семена",
-  "footer.services.title": "Услуги",
-  "footer.services.technical": "Техническое обслуживание",
-  "footer.services.consulting": "Консультационные услуги",
-  "footer.services.delivery": "Доставка",
-  "footer.services.warranty": "Гарантийное обслуживание",
-  "footer.contact.title": "Контакты",
-  "footer.contact.address": "г. Ташкент, Чиланзарский район, улица Бунёдкор, дом 15",
-  "footer.copyright": "© 2024 Chorvador.uz. Все права защищены.",
-  "footer.privacy": "Политика конфиденциальности",
-  "footer.terms": "Условия использования"
+    "footer.description": "Надежный поставщик сельскохозяйственной и животноводческой продукции по всему Узбекистану.",
+    "footer.company.title": "Компания",
+    "footer.company.about": "О нас",
+    "footer.company.services": "Услуги",
+    "footer.company.products": "Продукция",
+    "footer.company.contact": "Контакты",
+    "footer.products.title": "Продукция",
+    "footer.products.machinery": "Сельскохозяйственная техника",
+    "footer.products.livestock": "Животноводческая продукция",
+    "footer.products.fertilizers": "Удобрения и химические вещества",
+    "footer.products.seeds": "Семена",
+    "footer.services.title": "Услуги",
+    "footer.services.technical": "Техническое обслуживание",
+    "footer.services.consulting": "Консультационные услуги",
+    "footer.services.delivery": "Доставка",
+    "footer.services.warranty": "Гарантийное обслуживание",
+    "footer.contact.title": "Контакты",
+    "footer.contact.address": "г. Ташкент, Чиланзарский район, улица Бунёдкор, дом 15",
+    "footer.copyright": "© 2024 Chorvador.uz. Все права защищены.",
+    "footer.privacy": "Политика конфиденциальности",
+    "footer.terms": "Условия использования"
   },
   en: {
     // SEO Meta
@@ -456,7 +471,7 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.services.description": "Delivery, technical service, consultation, warranty services. Full support for farmers.",
     "meta.contact.title": "Contact - Chorvador.uz | Get in Touch",
     "meta.contact.description": "Contact Chorvador.uz. Tashkent, Chilanzar. Tel: +998 71 226 65 96",
-    
+
     // Navigation
     "nav.home": "Home",
     "nav.about": "About Us",
@@ -466,7 +481,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.login": "Login",
     "nav.order": "Order Now",
     "nav.workHours": "Working hours: 09:00 - 18:00",
-    
+
     // Hero
     "hero.slide1.title": "Reliable Partner in Agriculture",
     "hero.slide1.subtitle": "Quality Equipment & Machinery",
@@ -485,13 +500,13 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.slide4.description": "Mineral and organic fertilizers, plant protection products",
     "hero.slide4.cta": "Learn More",
     "hero.contact": "Contact Us",
-    
+
     // Stats
     "stats.customers": "Happy Customers",
     "stats.products": "Product Types",
     "stats.experience": "Years Experience",
     "stats.regions": "Regions Served",
-    
+
     // Featured Products
     "products.badge": "Products",
     "products.title": "Featured Products",
@@ -514,7 +529,7 @@ const translations: Record<Language, Record<string, string>> = {
     "products.categories.ogitlar": "Fertilizers",
     "products.categories.chorvachilik": "Livestock",
     "products.categories.sugorish": "Irrigation Equipment",
-    
+
     // Product Detail
     "product.backToProducts": "Back to Products",
     "product.price": "sum",
@@ -527,7 +542,7 @@ const translations: Record<Language, Record<string, string>> = {
     "product.video": "Video Guide",
     "product.similar": "Similar Products",
     "products.page.loading": "Loading...",
-    
+
     // Services
     "services.badge": "Services",
     "services.title": "Our Services",
@@ -571,7 +586,12 @@ const translations: Record<Language, Record<string, string>> = {
     "services.analysis.feature1": "Laboratory analysis",
     "services.analysis.feature2": "Recommendations",
     "services.analysis.feature3": "Free sampling",
-    
+
+    "about1.title": "About Us",
+    "about1.intro": "is a family business brand that started its activities in 2008 by importing mobile milking machines from abroad and providing technical service for them.",
+    "about1.current": "Currently offers all equipment and devices related to milk production, starting from the design of livestock complexes.",
+    "about1.dealer": "The company is an official dealer and partner in Uzbekistan of several leading global manufacturers of equipment for all technological processes related to milk production and processing.",
+
     // About
     "about.title": "About Us",
     "about.subtitle": "Chorvador.uz — a reliable supplier of agricultural and livestock products throughout Uzbekistan",
@@ -593,7 +613,7 @@ const translations: Record<Language, Record<string, string>> = {
     "about.values.reliability.desc": "20+ years of experience and thousands of satisfied customers",
     "about.values.professionalism.title": "Professionalism",
     "about.values.professionalism.desc": "Team of qualified specialists and professional service",
-    
+
     // Contact
     "contact.title": "Contact",
     "contact.subtitle": "Have questions? Contact us and our specialists will help you",
@@ -618,18 +638,18 @@ const translations: Record<Language, Record<string, string>> = {
     "contact.hours.value": "Monday - Saturday: 09:00 - 18:00\nSunday: Closed",
     "viewDetails": "View Details",
     "learnMore": "Learn More",
-    
+
     // 404
     "404.title": "404",
     "404.subtitle": "Sorry! Page not found",
     "404.description": "The page you are looking for doesn't exist or has been moved.",
     "404.home": "Return to Home",
-    
+
     // Partners
     "partners.badge": "Partners",
     "partners.title": "Partner Companies",
     "partners.subtitle": "We work with leading global and local companies",
-    
+
     // Location
     "location.badge": "Location",
     "location.title": "Our Location",
@@ -638,29 +658,29 @@ const translations: Record<Language, Record<string, string>> = {
     "location.phone": "+998 71 226 65 96",
     "location.email": "chorvador@chorvador.uz",
     "location.cta": "Contact Us",
-    
+
     // Footer
-  "footer.description": "A reliable supplier of agricultural and livestock products across Uzbekistan.",
-  "footer.company.title": "Company",
-  "footer.company.about": "About Us",
-  "footer.company.services": "Services",
-  "footer.company.products": "Products",
-  "footer.company.contact": "Contact",
-  "footer.products.title": "Products",
-  "footer.products.machinery": "Agricultural Machinery",
-  "footer.products.livestock": "Livestock Products",
-  "footer.products.fertilizers": "Fertilizers and Chemicals",
-  "footer.products.seeds": "Seeds",
-  "footer.services.title": "Services",
-  "footer.services.technical": "Technical Support",
-  "footer.services.consulting": "Consulting Services",
-  "footer.services.delivery": "Delivery",
-  "footer.services.warranty": "Warranty Service",
-  "footer.contact.title": "Contact",
-  "footer.contact.address": "15 Bunyodkor Street, Chilonzor District, Tashkent, Uzbekistan",
-  "footer.copyright": "© 2024 Chorvador.uz. All rights reserved.",
-  "footer.privacy": "Privacy Policy",
-  "footer.terms": "Terms of Use"
+    "footer.description": "A reliable supplier of agricultural and livestock products across Uzbekistan.",
+    "footer.company.title": "Company",
+    "footer.company.about": "About Us",
+    "footer.company.services": "Services",
+    "footer.company.products": "Products",
+    "footer.company.contact": "Contact",
+    "footer.products.title": "Products",
+    "footer.products.machinery": "Agricultural Machinery",
+    "footer.products.livestock": "Livestock Products",
+    "footer.products.fertilizers": "Fertilizers and Chemicals",
+    "footer.products.seeds": "Seeds",
+    "footer.services.title": "Services",
+    "footer.services.technical": "Technical Support",
+    "footer.services.consulting": "Consulting Services",
+    "footer.services.delivery": "Delivery",
+    "footer.services.warranty": "Warranty Service",
+    "footer.contact.title": "Contact",
+    "footer.contact.address": "15 Bunyodkor Street, Chilonzor District, Tashkent, Uzbekistan",
+    "footer.copyright": "© 2024 Chorvador.uz. All rights reserved.",
+    "footer.privacy": "Privacy Policy",
+    "footer.terms": "Terms of Use"
   },
 };
 

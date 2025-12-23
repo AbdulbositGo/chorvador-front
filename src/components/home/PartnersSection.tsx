@@ -23,7 +23,6 @@ export function PartnersSection() {
         setLoading(true);
         setError(null);
         
-        // Get API URL from .env
         const apiUrl = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL;
         
         if (!apiUrl) {
@@ -58,7 +57,7 @@ export function PartnersSection() {
         <div className="container-main">
           <div className="flex justify-center items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="ml-3 text-muted-foreground">{t("partners.page.loading")}</span>
+            <span className="ml-3 text-muted-foreground">{t("products.page.loading")}</span>
           </div>
         </div>
       </section>
@@ -79,8 +78,11 @@ export function PartnersSection() {
   }
 
   if (partners.length === 0) {
-    return null; // Don't show section if no partners
+    return null;
   }
+
+  // Duplicate partners for seamless infinite loop
+  const duplicatedPartners = [...partners, ...partners, ...partners];
 
   return (
     <section className="section-padding bg-muted/30">
@@ -99,53 +101,65 @@ export function PartnersSection() {
           </div>
         </ScrollReveal>
 
-        <StaggerContainer 
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6" 
-          staggerDelay={0.08}
-        >
-          {partners.map((partner) => (
-            <StaggerItem key={partner.id}>
-              <div className="flex flex-col gap-3">
-                <a
-                  href={partner.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <motion.div
-                    className="group rounded-2xl bg-card border border-border overflow-hidden cursor-pointer relative"
-                    whileHover={{ 
-                      y: -8, 
-                      boxShadow: "0 25px 50px -12px hsl(207 66% 47% / 0.25)", 
-                      borderColor: "hsl(207, 66%, 47%)" 
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        {/* Carousel Container */}
+        <div className="relative overflow-hidden">
+          {/* Gradient overlays with glow effect */}
+          <div className="absolute left-0 top-0 bottom-0 w-32 md:w-40 bg-gradient-to-r from-muted/30 via-muted/10 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-32 md:w-40 bg-gradient-to-l from-muted/30 via-muted/10 to-transparent z-10 pointer-events-none" />
+          
+          {/* Desktop glow shadows */}
+          <div className="hidden md:block absolute left-0 top-0 bottom-0 w-24 shadow-[inset_40px_0_60px_-20px_rgba(255,255,255,0.3)] dark:shadow-[inset_40px_0_60px_-20px_rgba(0,0,0,0.5)] z-10 pointer-events-none" />
+          <div className="hidden md:block absolute right-0 top-0 bottom-0 w-24 shadow-[inset_-40px_0_60px_-20px_rgba(255,255,255,0.3)] dark:shadow-[inset_-40px_0_60px_-20px_rgba(0,0,0,0.5)] z-10 pointer-events-none" />
+          
+          <motion.div
+            className="flex gap-4 md:gap-6"
+            animate={{
+              x: ["0%", "-33.333%"],
+            }}
+            transition={{
+              x: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: partners.length * 2.5,
+                ease: "linear",
+              },
+            }}
+          >
+            {duplicatedPartners.map((partner, index) => (
+              <div
+                key={`${partner.id}-${index}`}
+                className="flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px]"
+              >
+                <div className="flex flex-col gap-3">
+                  <a
+                    href={partner.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                    <div className="relative w-full h-16 overflow-hidden">
-                      <motion.img
-                        src={partner.logo}
-                        alt={partner.name}
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.3 }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = defaultLogo;
-                        }}
-                      />
+                    <div className="rounded-2xl bg-card border border-border overflow-hidden cursor-pointer relative">
+                      <div className="relative w-full h-16 overflow-hidden">
+                        <img
+                          src={partner.logo}
+                          alt={partner.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = defaultLogo;
+                          }}
+                        />
+                      </div>
                     </div>
-                  </motion.div>
-                </a>
-                
-                <p className="text-sm font-medium text-foreground text-center truncate px-2">
-                  {partner.name}
-                </p>
+                  </a>
+                  
+                  <p className="text-sm font-medium text-foreground text-center truncate px-2">
+                    {partner.name}
+                  </p>
+                </div>
               </div>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
+            ))}
+          </motion.div>
+        </div>
       </div>
     </section>
   );

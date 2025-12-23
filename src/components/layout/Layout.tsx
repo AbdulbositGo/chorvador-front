@@ -16,7 +16,7 @@ export function Layout({
   title,
   description,
   keywords,
-  image = "/og-image.jpg"
+  image = "/og-image.png"
 }: LayoutProps) {
   const { language } = useLanguage();
 

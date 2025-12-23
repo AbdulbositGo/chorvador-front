@@ -123,6 +123,13 @@ const Contact = () => {
     }
   };
 
+  const phoneNumbers = [
+    { value: "+998 71 226 65 96", link: "tel:+998712266596" },
+    { value: "+998 91 192-07-55", link: "tel:+998911920755" },
+    { value: "+998 97 444 00 16", link: "tel:+998974440016" },
+    { value: "+998 94 647 10 03", link: "tel:+998946471003" },
+  ];
+
   const contactInfo = [
     { 
       icon: MapPin, 
@@ -132,8 +139,7 @@ const Contact = () => {
     { 
       icon: Phone, 
       title: t("contact.phone.title"), 
-      value: "+998 71 226 65 96", 
-      link: "tel:+998712266596" 
+      isPhoneGrid: true
     },
     { 
       icon: Mail, 
@@ -167,8 +173,8 @@ const Contact = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-stretch">
             
             {/* Contact Form */}
-            <div className="order-1 lg:order-1 h-full">
-              <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
+            <div className="order-1 lg:order-1">
+              <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-sm hover:shadow-md transition-all duration-300">
                 <h2 className="text-2xl font-bold text-foreground mb-6">
                   {t("contact.form.title")}
                 </h2>
@@ -261,11 +267,24 @@ const Contact = () => {
                     <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                       <item.icon className="w-6 h-6 text-primary-foreground" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-foreground mb-1">
                         {item.title}
                       </h3>
-                      {item.link ? (
+                      {item.isPhoneGrid ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                          {phoneNumbers.map((phone, phoneIdx) => (
+                            <a
+                              key={phoneIdx}
+                              href={phone.link}
+                              className="flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:text-white transition-all p-3 rounded-lg border border-border hover:border-[#2D79C4] hover:bg-[#2D79C4] hover:shadow-md"
+                            >
+                              <Phone className="w-4 h-4" />
+                              {phone.value}
+                            </a>
+                          ))}
+                        </div>
+                      ) : item.link ? (
                         <a 
                           href={item.link} 
                           className="text-muted-foreground hover:text-primary transition-colors"
