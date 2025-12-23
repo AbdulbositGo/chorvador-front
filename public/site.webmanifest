@@ -1,22 +1,21 @@
 {
-  "name": "Chorvador.uz - Qishloq xo'jaligi mahsulotlari",
-  "short_name": "Chorvador.uz",
-  "description": "Qishloq xo'jaligi va chorvachilik mahsulotlari",
+  "name": "Chorvador",
+  "short_name": "Chorvador",
   "icons": [
     {
-      "src": "/android-chrome-192x192.png",
+      "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "theme_color": "#2D79C4",
-  "background_color": "#ffffff",
-  "display": "standalone",
-  "start_url": "/",
-  "scope": "/"
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "display": "standalone"
 }

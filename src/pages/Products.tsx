@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
@@ -55,8 +55,91 @@ const Products = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const itemsPerPage = 8;
+
+  // SEO metadata based on language
+  const seoData = useMemo(() => {
+    const pageTitle = language === 'uz' 
+      ? 'Mahsulotlar | Bizning Do\'kon'
+      : language === 'ru' 
+      ? 'Продукты | Наш Магазин'
+      : 'Products | Our Store';
+    
+    const pageDescription = language === 'uz'
+      ? 'Yuqori sifatli mahsulotlar katalogi. Turli toifadagi mahsulotlarni ko\'ring va xarid qiling.'
+      : language === 'ru'
+      ? 'Каталог качественных продуктов. Просматривайте и покупайте товары различных категорий.'
+      : 'Browse our catalog of high-quality products across various categories.';
+
+    return { pageTitle, pageDescription };
+  }, [language]);
+
+  // Get selected category name for SEO
+  const selectedCategoryName = useMemo(() => {
+    const category = categories.find(cat => cat.id === selectedCategory);
+    return category?.name || '';
+  }, [selectedCategory, categories]);
+
+  // Update document title and meta tags
+  useEffect(() => {
+    document.title = seoData.pageTitle;
+    
+    // Update or create meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', seoData.pageDescription);
+
+    // Update or create Open Graph tags
+    const updateOrCreateMetaTag = (property: string, content: string) => {
+      let meta = document.querySelector(`meta[property="${property}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('property', property);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    updateOrCreateMetaTag('og:title', seoData.pageTitle);
+    updateOrCreateMetaTag('og:description', seoData.pageDescription);
+    updateOrCreateMetaTag('og:type', 'website');
+    updateOrCreateMetaTag('og:url', window.location.href);
+
+    // Twitter Card tags
+    const updateOrCreateTwitterTag = (name: string, content: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    updateOrCreateTwitterTag('twitter:card', 'summary_large_image');
+    updateOrCreateTwitterTag('twitter:title', seoData.pageTitle);
+    updateOrCreateTwitterTag('twitter:description', seoData.pageDescription);
+
+    // Add keywords if category selected
+    if (selectedCategoryName && selectedCategory !== 'all') {
+      const keywords = `${selectedCategoryName}, products, ${language === 'uz' ? 'mahsulotlar' : language === 'ru' ? 'продукты' : 'products'}`;
+      updateOrCreateTwitterTag('keywords', keywords);
+    }
+
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.href = window.location.href;
+
+  }, [seoData, selectedCategoryName, selectedCategory, language]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -102,7 +185,6 @@ const Products = () => {
         
         setCategories(allCategories);
       } catch (err) {
-        console.error("Categories ERROR:", err);
         setCategories([
           { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
         ]);
@@ -128,7 +210,6 @@ const Products = () => {
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
 
-        // Fetch all pages
         let allProducts: ApiProduct[] = [];
         let nextUrl: string | null = `${apiUrl}/products/`;
         
@@ -187,13 +268,10 @@ const Products = () => {
         });
         
         setProducts(transformedProducts);
-        setIsInitialLoad(false);
         
       } catch (err) {
-        console.error("Products XATOLIK:", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
         setError(errorMessage);
-        setIsInitialLoad(false);
       } finally {
         setLoading(false);
       }
@@ -204,30 +282,78 @@ const Products = () => {
     }
   }, [language, categoriesLoading, categories]);
 
-  const handleProductClick = (productId: string) => {
+  const handleProductClick = useCallback((productId: string) => {
     navigate(`/products/${productId}`);
-  };
+  }, [navigate]);
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = 
-      (product.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // Memoized filtered products for better performance
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = 
+        (product.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, selectedCategory]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  // Memoized pagination
+  const { totalPages, startIndex, endIndex, currentProducts } = useMemo(() => {
+    const total = Math.ceil(filteredProducts.length / itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const current = filteredProducts.slice(start, end);
+    
+    return {
+      totalPages: total,
+      startIndex: start,
+      endIndex: end,
+      currentProducts: current
+    };
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Add structured data for current products
+  useEffect(() => {
+    if (currentProducts.length === 0) return;
+
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "itemListElement": currentProducts.map((product, index) => ({
+        "@type": "ListItem",
+        "position": startIndex + index + 1,
+        "item": {
+          "@type": "Product",
+          "name": product.name,
+          "description": product.description,
+          "image": product.image,
+          "offers": {
+            "@type": "Offer",
+            "price": product.price,
+            "priceCurrency": "UZS"
+          }
+        }
+      }))
+    };
+
+    let scriptTag = document.querySelector('script[type="application/ld+json"]');
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(structuredData);
+
+    return () => {
+      scriptTag?.remove();
+    };
+  }, [currentProducts, startIndex]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-    // Smooth scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchQuery, selectedCategory]);
 
@@ -239,8 +365,11 @@ const Products = () => {
     }
   }, [currentPage]);
 
-  // Display categories (show only first row initially)
-  const visibleCategories = showAllCategories ? categories : categories.slice(0, 6);
+  // Memoized visible categories
+  const visibleCategories = useMemo(() => 
+    showAllCategories ? categories : categories.slice(0, 6),
+    [showAllCategories, categories]
+  );
 
   return (
     <Layout>
@@ -271,6 +400,7 @@ const Products = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base transition-all duration-300"
+                aria-label={t("products.search")}
               />
               {searchQuery && (
                 <button
@@ -286,6 +416,8 @@ const Products = () => {
               variant="outline"
               className="sm:hidden h-11 font-medium"
               onClick={() => setShowFilters(!showFilters)}
+              aria-label={t("products.filters")}
+              aria-expanded={showFilters}
             >
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               {t("products.filters")}
@@ -293,10 +425,13 @@ const Products = () => {
           </div>
 
           {/* Categories Filter */}
-          <div className={cn(
-            "mb-6 sm:mb-8 transition-all duration-300",
-            !showFilters && "hidden sm:block"
-          )}>
+          <nav 
+            className={cn(
+              "mb-6 sm:mb-8 transition-all duration-300",
+              !showFilters && "hidden sm:block"
+            )}
+            aria-label="Product categories"
+          >
             <div className="flex flex-wrap gap-2">
               {categoriesLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground py-2 animate-pulse">
@@ -321,6 +456,8 @@ const Products = () => {
                           : "bg-muted text-muted-foreground hover:bg-muted/80 hover:scale-105"
                       )}
                       style={{ animationDelay: `${index * 50}ms` }}
+                      aria-pressed={selectedCategory === category.id}
+                      aria-label={`Filter by ${category.name}`}
                     >
                       {category.name}
                     </button>
@@ -330,6 +467,8 @@ const Products = () => {
                       onClick={() => setShowAllCategories(!showAllCategories)}
                       className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-all duration-300 border border-dashed border-muted-foreground/30 hover:scale-105 hover:border-solid animate-in fade-in slide-in-from-bottom-2"
                       style={{ animationDelay: `${visibleCategories.length * 50}ms` }}
+                      aria-expanded={showAllCategories}
+                      aria-label={showAllCategories ? 'Show less categories' : 'Show more categories'}
                     >
                       {showAllCategories 
                         ? (language === 'uz' ? 'Kamroq' : language === 'ru' ? 'Меньше' : 'Less')
@@ -340,11 +479,11 @@ const Products = () => {
                 </>
               )}
             </div>
-          </div>
+          </nav>
 
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status" aria-live="polite">
               <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" />
               <span className="text-sm sm:text-base text-muted-foreground animate-pulse">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
@@ -354,7 +493,7 @@ const Products = () => {
 
           {/* Error State */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500" role="alert">
               <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4 animate-in zoom-in duration-300">
                 <X className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" />
               </div>
@@ -373,7 +512,7 @@ const Products = () => {
 
           {/* Results Count */}
           {!loading && !error && filteredProducts.length > 0 && (
-            <div id="products-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500">
+            <div id="products-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500" role="status" aria-live="polite">
               <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               <p className="text-sm sm:text-base font-medium">
                 {filteredProducts.length} {t("products.found")}
@@ -391,36 +530,41 @@ const Products = () => {
             <>
               {currentProducts.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" role="list">
                     {currentProducts.map((product, index) => (
-                      <div 
+                      <article 
                         key={product.id} 
                         onClick={() => handleProductClick(product.id)}
                         className="cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
                         style={{ animationDelay: `${index * 75}ms` }}
+                        role="listitem"
                       >
                         <ProductCard 
                           product={product} 
                           hidePrice={product.price === null || product.price === 0}
                         />
-                      </div>
+                      </article>
                     ))}
                   </div>
 
                   {/* Pagination */}
                   {filteredProducts.length > itemsPerPage && (
-                    <div className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                    <nav 
+                      className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                      aria-label="Pagination"
+                    >
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
+                        aria-label="Previous page"
                       >
                         {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Previous'}
                       </Button>
                       
-                      <div className="flex gap-1 sm:gap-2">
+                      <div className="flex gap-1 sm:gap-2" role="list">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                           <button
                             key={page}
@@ -431,6 +575,8 @@ const Products = () => {
                                 ? "bg-primary text-primary-foreground shadow-md scale-105"
                                 : "bg-muted text-muted-foreground hover:bg-muted/80"
                             )}
+                            aria-label={`Go to page ${page}`}
+                            aria-current={currentPage === page ? 'page' : undefined}
                           >
                             {page}
                           </button>
@@ -443,14 +589,15 @@ const Products = () => {
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
+                        aria-label="Next page"
                       >
                         {language === 'uz' ? 'Keyingi' : language === 'ru' ? 'Далее' : 'Next'}
                       </Button>
-                    </div>
+                    </nav>
                   )}
                 </>
               ) : (
-                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500">
+                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status">
                   <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted mb-4 sm:mb-6">
                     <Package className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
                   </div>
