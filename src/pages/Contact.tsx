@@ -200,7 +200,7 @@ const Contact = () => {
                     <Input
                       required
                       type="tel"
-                      placeholder="+998 94 161 66 62"
+                      placeholder="+998 71 226 65 96"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="h-12 bg-background border-border focus:ring-1 focus:ring-primary transition-all"
