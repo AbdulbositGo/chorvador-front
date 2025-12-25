@@ -138,19 +138,30 @@ export function HeroSlider() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Arrows */}
-      <button
+{/* Navigation Arrows */}
+      {/* <button
         onClick={(e) => {
           e.stopPropagation();
           prevSlide();
         }}
-        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-lg text-white hidden md:flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
+        className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-lg text-white flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
         aria-label="Previous slide"
       >
-        <ChevronLeft className="w-7 h-7" />
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
       </button>
       
       <button
+        onClick={(e) => {
+          e.stopPropagation();
+          nextSlide();
+        }}
+        className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-lg text-white flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+      </button> */}
+      
+      {/* <button
         onClick={(e) => {
           e.stopPropagation();
           nextSlide();
@@ -159,7 +170,7 @@ export function HeroSlider() {
         aria-label="Next slide"
       >
         <ChevronRight className="w-7 h-7" />
-      </button>
+      </button> */}
 
       {/* Progress Dots */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-20">
