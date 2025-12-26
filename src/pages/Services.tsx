@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Search, SlidersHorizontal, X, Loader2, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Helmet } from "react-helmet-async";
 
 interface Service {
   id: number;
@@ -51,24 +52,19 @@ const Services = () => {
   const itemsPerPage = 8;
 
   // SEO metadata
-  const pageTitle = t("services.page.title") || "Services";
-  const pageDescription = t("services.page.subtitle") || "Professional services tailored to your needs";
   const siteName = "Your Company Name";
+  const siteUrl = "https://yourwebsite.com";
+  
+  const pageTitle = t("services.page.title") || "Professional Services";
+  const pageDescription = t("services.page.subtitle") || "Discover our comprehensive range of professional services tailored to meet your business needs and drive success.";
+  const pageKeywords = language === 'uz' 
+    ? "xizmatlar, professional xizmatlar, biznes xizmatlar, konsalting"
+    : language === 'ru'
+    ? "услуги, профессиональные услуги, бизнес услуги, консалтинг"
+    : "services, professional services, business services, consulting, solutions";
 
-  // SEO meta taglarni dinamik o'zgartirish
-  useEffect(() => {
-    document.title = `${pageTitle} | ${siteName}`;
-    
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', pageDescription);
-    
-    document.documentElement.lang = language;
-  }, [pageTitle, pageDescription, language, siteName]);
+  const currentUrl = `${siteUrl}/services${currentPage > 1 ? `?page=${currentPage}` : ''}`;
+  const canonicalUrl = `${siteUrl}/services`;
 
   // Categories ni olish
   useEffect(() => {
@@ -120,7 +116,7 @@ const Services = () => {
     fetchCategories();
   }, [language]);
 
-  // Services ni olish - FIXED: Barcha sahifalarni yuklash
+  // Services ni olish
   useEffect(() => {
     if (categoriesLoading) return;
 
@@ -137,7 +133,6 @@ const Services = () => {
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
 
-        // FIXED: Barcha sahifalarni yuklash (Products page kabi)
         let allServices: Service[] = [];
         let nextUrl: string | null = `${API_URL}/services/`;
         
@@ -168,7 +163,6 @@ const Services = () => {
           throw new Error("Ma'lumot noto'g'ri formatda");
         }
         
-        // Transform services
         const transformedServices = allServices.map(service => {
           let categoryId = 'all';
           let categoryName = '';
@@ -245,14 +239,6 @@ const Services = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentServices = filteredServices.slice(startIndex, endIndex);
 
-  // Debug pagination
-  console.log('Pagination:', {
-    total: services.length,
-    filtered: filteredServices.length,
-    pages: totalPages,
-    current: currentPage
-  });
-
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -267,11 +253,113 @@ const Services = () => {
     }
   }, [currentPage]);
 
-  // Display categories (show only first row initially)
+  // Display categories
   const visibleCategories = showAllCategories ? categories : categories.slice(0, 6);
+
+  // Generate structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": pageTitle,
+    "description": pageDescription,
+    "numberOfItems": filteredServices.length,
+    "itemListElement": currentServices.map((service, index) => ({
+      "@type": "ListItem",
+      "position": startIndex + index + 1,
+      "item": {
+        "@type": "Service",
+        "@id": `${siteUrl}/services/${service.id}`,
+        "name": service.title,
+        "description": service.short_description,
+        "image": service.image,
+        "provider": {
+          "@type": "Organization",
+          "name": siteName
+        }
+      }
+    }))
+  };
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": language === 'uz' ? 'Bosh sahifa' : language === 'ru' ? 'Главная' : 'Home',
+        "item": siteUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": pageTitle,
+        "item": canonicalUrl
+      }
+    ]
+  };
 
   return (
     <Layout>
+      <Helmet>
+        {/* Basic Meta Tags */}
+        <html lang={language} />
+        <title>{pageTitle} | {siteName}</title>
+        <meta name="description" content={pageDescription} />
+        <meta name="keywords" content={pageKeywords} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={canonicalUrl} />
+        
+        {/* Alternate Languages */}
+        <link rel="alternate" hrefLang="uz" href={`${siteUrl}/uz/services`} />
+        <link rel="alternate" hrefLang="ru" href={`${siteUrl}/ru/services`} />
+        <link rel="alternate" hrefLang="en" href={`${siteUrl}/en/services`} />
+        <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content={siteName} />
+        <meta property="og:title" content={`${pageTitle} | ${siteName}`} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={currentUrl} />
+        <meta property="og:locale" content={language === 'uz' ? 'uz_UZ' : language === 'ru' ? 'ru_RU' : 'en_US'} />
+        {currentServices.length > 0 && (
+          <meta property="og:image" content={currentServices[0].image} />
+        )}
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        
+        {/* Twitter Card Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${pageTitle} | ${siteName}`} />
+        <meta name="twitter:description" content={pageDescription} />
+        {currentServices.length > 0 && (
+          <meta name="twitter:image" content={currentServices[0].image} />
+        )}
+        
+        {/* Additional SEO Tags */}
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="author" content={siteName} />
+        <meta name="revisit-after" content="7 days" />
+        
+        {/* Pagination Meta Tags */}
+        {currentPage > 1 && (
+          <link rel="prev" href={`${siteUrl}/services?page=${currentPage - 1}`} />
+        )}
+        {currentPage < totalPages && (
+          <link rel="next" href={`${siteUrl}/services?page=${currentPage + 1}`} />
+        )}
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbData)}
+        </script>
+      </Helmet>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -427,28 +515,35 @@ const Services = () => {
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {currentServices.map((service, index) => (
-                      <div 
+                      <article 
                         key={service.id}
                         className="cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
                         style={{ animationDelay: `${index * 75}ms` }}
+                        itemScope
+                        itemType="https://schema.org/Service"
                       >
                         <ServiceCard 
                           service={service}
                           onClick={() => navigate(`/services/${service.id}`)}
                         />
-                      </div>
+                      </article>
                     ))}
                   </div>
 
-                  {/* Pagination - Products page kabi */}
+                  {/* Pagination */}
                   {filteredServices.length > itemsPerPage && (
-                    <div className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                    <nav 
+                      className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                      role="navigation"
+                      aria-label="Pagination"
+                    >
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
+                        aria-label="Previous page"
                       >
                         {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Previous'}
                       </Button>
@@ -464,6 +559,8 @@ const Services = () => {
                                 ? "bg-primary text-primary-foreground shadow-md scale-105"
                                 : "bg-muted text-muted-foreground hover:bg-muted/80"
                             )}
+                            aria-label={`Page ${page}`}
+                            aria-current={currentPage === page ? 'page' : undefined}
                           >
                             {page}
                           </button>
@@ -476,10 +573,11 @@ const Services = () => {
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
+                        aria-label="Next page"
                       >
                         {language === 'uz' ? 'Keyingi' : language === 'ru' ? 'Далее' : 'Next'}
                       </Button>
-                    </div>
+                    </nav>
                   )}
                 </>
               ) : (

@@ -33,6 +33,35 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.order": "Buyurtma berish",
     "nav.workHours": "Ish vaqti: 09:00 - 18:00",
 
+     // Common
+    "common.loading": "Yuklanmoqda",
+    "common.error": "Xatolik",
+    "common.errorOccurred": "Xatolik yuz berdi",
+    "common.tryAgain": "Qayta urinish",
+    "common.home": "Bosh sahifa",
+    
+    // SEO - Home
+    "seo.home.title": "Chorvadon - Chorvachilik Mahsulotlari va Xizmatlari",
+    "seo.home.description": "Chorvadon - chorvachilik uchun yuqori sifatli mahsulotlar va professional xizmatlar. Yem-xashak, dori-darmonlar, asbob-uskunalar va ko'proq.",
+    "seo.home.keywords": "chorvachilik, yem-xashak, dori-darmonlar, chorva mollari, qo'y, sigir, tovuq, Toshkent, O'zbekiston",
+    
+    // Products - Index Page
+    "index.products.badge": "Mahsulotlar",
+    "index.products.title": "Premium Mahsulotlar",
+    "index.products.subtitle": "Chorvachilik uchun yuqori sifatli mahsulotlar keng assortimenti",
+    "index.products.viewAll": "Barcha mahsulotlarni ko'rish",
+    "index.products.noProducts": "Hozircha mahsulotlar mavjud emas",
+    "index.products.loading": "Yuklanmoqda",
+    
+    // Services - Index Page
+    "index.services.badge": "Xizmatlar",
+    "index.services.title": "Professional Xizmatlarimiz",
+    "index.services.subtitle": "Chorvachilik sohasida kompleks yechimlar va texnik qo'llab-quvvatlash",
+    "index.services.viewAll": "Barcha xizmatlarni ko'rish",
+    "index.services.more": "Batafsil",
+    "index.services.noServices": "Hozircha xizmatlar mavjud emas",
+
+
     // Hero
     "hero.slide1.title": "Qishloq xo'jaligining ishonchli hamkori",
     "hero.slide1.subtitle": "Eng sifatli texnika va uskunalar",
@@ -235,6 +264,8 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.copyright": "© 2024 Chorvador.uz. Barcha huquqlar himoyalangan.",
     "footer.privacy": "Maxfiylik siyosati",
     "footer.terms": "Foydalanish shartlari",
+
+    "index.noProducts": "Hozircha mahsulotlar mavjud emas"
   },
   ru: {
     // SEO Meta
@@ -277,6 +308,36 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.slide4.description": "Минеральные и органические удобрения, средства защиты растений",
     "hero.slide4.cta": "Узнать больше",
     "hero.contact": "Связаться",
+
+
+     // Common
+    "common.loading": "Загрузка",
+    "common.error": "Ошибка",
+    "common.errorOccurred": "Произошла ошибка",
+    "common.tryAgain": "Попробовать снова",
+    "common.home": "Главная",
+    
+    // SEO - Home
+    "seo.home.title": "Chorvadon - Животноводческие Товары и Услуги",
+    "seo.home.description": "Chorvadon - высококачественные товары и профессиональные услуги для животноводства. Корма, лекарства, оборудование и многое другое.",
+    "seo.home.keywords": "животноводство, корма, лекарства, скот, овцы, коровы, куры, Ташкент, Узбекистан",
+    
+    // Products - Index Page
+    "index.products.badge": "Продукция",
+    "index.products.title": "Премиум Продукция",
+    "index.products.subtitle": "Широкий ассортимент высококачественной продукции для животноводства",
+    "index.products.viewAll": "Посмотреть все продукты",
+    "index.products.noProducts": "Продукты пока недоступны",
+    "index.products.loading": "Загрузка",
+    
+    // Services - Index Page
+    "index.services.badge": "Услуги",
+    "index.services.title": "Наши Профессиональные Услуги",
+    "index.services.subtitle": "Комплексные решения и техническая поддержка в животноводстве",
+    "index.services.viewAll": "Посмотреть все услуги",
+    "index.services.more": "Подробнее",
+    "index.services.noServices": "Услуги пока недоступны",
+
 
     // Stats
     "stats.customers": "Довольных клиентов",
@@ -457,7 +518,9 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.contact.address": "г. Ташкент, Чиланзарский район, улица Бунёдкор, дом 15",
     "footer.copyright": "© 2024 Chorvador.uz. Все права защищены.",
     "footer.privacy": "Политика конфиденциальности",
-    "footer.terms": "Условия использования"
+    "footer.terms": "Условия использования",
+
+    "index.noProducts": "Продукты пока недоступны"
   },
   en: {
     // SEO Meta
@@ -506,6 +569,35 @@ const translations: Record<Language, Record<string, string>> = {
     "stats.products": "Product Types",
     "stats.experience": "Years Experience",
     "stats.regions": "Regions Served",
+
+     // Common
+    "common.loading": "Loading",
+    "common.error": "Error",
+    "common.errorOccurred": "An error occurred",
+    "common.tryAgain": "Try again",
+    "common.home": "Home",
+    
+    // SEO - Home
+    "seo.home.title": "Chorvadon - Livestock Products and Services",
+    "seo.home.description": "Chorvadon - high-quality products and professional services for livestock farming. Feed, medicines, equipment and more.",
+    "seo.home.keywords": "livestock, animal feed, veterinary medicines, cattle, sheep, cows, chickens, Tashkent, Uzbekistan",
+    
+    // Products - Index Page
+    "index.products.badge": "Products",
+    "index.products.title": "Premium Products",
+    "index.products.subtitle": "Wide range of high-quality products for livestock farming",
+    "index.products.viewAll": "View all products",
+    "index.products.noProducts": "No products available yet",
+    "index.products.loading": "Loading",
+    
+    // Services - Index Page
+    "index.services.badge": "Services",
+    "index.services.title": "Our Professional Services",
+    "index.services.subtitle": "Comprehensive solutions and technical support in livestock farming",
+    "index.services.viewAll": "View all services",
+    "index.services.more": "Learn more",
+    "index.services.noServices": "No services available yet",
+
 
     // Featured Products
     "products.badge": "Products",
@@ -680,7 +772,11 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.contact.address": "15 Bunyodkor Street, Chilonzor District, Tashkent, Uzbekistan",
     "footer.copyright": "© 2024 Chorvador.uz. All rights reserved.",
     "footer.privacy": "Privacy Policy",
-    "footer.terms": "Terms of Use"
+    "footer.terms": "Terms of Use",
+
+    "index.noProducts": "No products available yet"
+    
+
   },
 };
 

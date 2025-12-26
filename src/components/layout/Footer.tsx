@@ -39,7 +39,7 @@ export function Footer() {
     },
     {
       name: "Instagram",
-      href: "https://www.instagram.com/chorvadoruz?igsh=ZnV1a3NzbnRnb3hu",
+      href: "https://www.instagram.com/chorvadoruz",
       icon: Instagram,
     },
     {
