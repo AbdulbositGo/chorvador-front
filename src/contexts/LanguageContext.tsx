@@ -492,7 +492,7 @@ const translations: Record<Language, Record<string, string>> = {
     "location.badge": "Адрес",
     "location.title": "Наш адрес",
     "location.subtitle": "Посетите наш офис или свяжитесь с нами",
-    "location.address": "г. Ташкент, Чиланзарский район, ул. Бунёдкор, дом 15",
+    "location.address": "g.Toshkent, ul. Axmad Universitet 22",
     "location.phone": "+998 71 226 65 96",
     "location.email": "chorvador@chorvador.uz",
     "location.cta": "Связаться",
