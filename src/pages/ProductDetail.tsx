@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package, CheckCircle } from "lucide-react";
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -31,6 +31,7 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -63,10 +64,6 @@ const ProductDetail = () => {
         const data: ApiProduct = await response.json();
         setProduct(data);
 
-        if (!data.video && data.images && data.images.length > 0) {
-          setShowVideo(false);
-        }
-
       } catch (err) {
         console.error("ProductDetail Error:", err);
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
@@ -96,6 +93,24 @@ const ProductDetail = () => {
   const handleVideoError = () => {
     setVideoError(true);
     setShowVideo(false);
+  };
+
+  const handleImageClick = () => {
+    setIsImageZoomed(true);
+  };
+
+  const handleCloseZoom = () => {
+    setIsImageZoomed(false);
+  };
+
+  const handleZoomedPrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handlePrevImage();
+  };
+
+  const handleZoomedNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleNextImage();
   };
 
   if (loading) {
@@ -139,10 +154,7 @@ const ProductDetail = () => {
     );
   }
 
-  // Price mavjudligini tekshirish
   const hasPrice = product.price !== null && product.price !== undefined;
-  
-  // Price va discount hisoblash
   const hasValidDiscount = hasPrice && product.has_discount && product.discount > 0 && product.real_price !== null;
   
   const formattedPrice = hasPrice 
@@ -175,7 +187,6 @@ const ProductDetail = () => {
   const hasVideo = videoUrl && !videoError;
   const hasImages = product.images && product.images.length > 0;
   
-  // Specs ni object ga aylantirish
   const getSpecsObject = (): Record<string, string> | null => {
     if (!product.specs) return null;
     
@@ -199,6 +210,61 @@ const ProductDetail = () => {
 
   return (
     <Layout>
+      {/* Zoomed Image Modal */}
+      <AnimatePresence>
+        {isImageZoomed && hasImages && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+            onClick={handleCloseZoom}
+          >
+            <button
+              onClick={handleCloseZoom}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+              aria-label="Close"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
+            <motion.img
+              key={`zoomed-${currentImageIndex}`}
+              src={currentImage}
+              alt={`${product.title} - ${currentImageIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {product.images.length > 1 && (
+              <>
+                <button
+                  onClick={handleZoomedPrev}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={handleZoomedNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white text-sm px-4 py-2 rounded-full font-medium backdrop-blur-sm">
+                  {currentImageIndex + 1} / {product.images.length}
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Breadcrumb */}
       <section className="bg-gradient-to-b from-muted/30 to-background py-4 md:py-6 lg:py-8 border-b">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -244,7 +310,7 @@ const ProductDetail = () => {
               transition={{ duration: 0.5 }}
               className="space-y-3 md:space-y-4"
             >
-              {/* Media Type Tabs */}
+              {/* Media Type Tabs - Faqat video va rasmlar ikkalasi ham bo'lsa */}
               {hasVideo && hasImages && (
                 <div className="flex gap-2 mb-3">
                   <button
@@ -284,11 +350,12 @@ const ProductDetail = () => {
                       key={`img-${currentImageIndex}`}
                       src={currentImage}
                       alt={`${product.title} - ${currentImageIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
                       initial={{ opacity: 0, scale: 1.1 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3 }}
+                      onClick={handleImageClick}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = 'https://placehold.co/800x800/e5e7eb/6b7280?text=No+Image';
@@ -427,7 +494,7 @@ const ProductDetail = () => {
                 </p>
               )}
 
-              {/* Price - Faqat price mavjud bo'lsa ko'rsatiladi */}
+              {/* Price */}
               {hasPrice && (
                 <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
                   {hasValidDiscount && formattedRealPrice ? (
@@ -492,9 +559,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-
-            </motion.div>
-                          {/* Description */}
+              {/* Description */}
               {product.description && (
                 <div>
                   <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground">
@@ -506,6 +571,7 @@ const ProductDetail = () => {
                   />
                 </div>
               )}
+            </motion.div>
           </div>
         </div>
       </section>

@@ -197,7 +197,7 @@ const About = () => {
             </article>
             <figure className="relative">
               <img
-                src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&q=80"
+                src="/about_img.jpg"
                 alt={`${t("about.title")} - kompaniya tarixi`}
                 loading="lazy"
                 width="600"
@@ -205,41 +205,10 @@ const About = () => {
                 className="rounded-2xl shadow-hero w-full"
               />
               <div className="absolute -bottom-6 -left-6 bg-secondary text-secondary-foreground p-6 rounded-2xl shadow-lg">
-                <div className="text-4xl font-bold" aria-label="20 yildan ortiq tajriba">20+</div>
+                <div className="text-4xl font-bold" aria-label="20 yildan ortiq tajriba">10+</div>
                 <div className="text-sm font-medium">{t("about.history.years")}</div>
               </div>
             </figure>
-          </div>
-        </div>
-      </section>
-
-      {/* Mission & Vision */}
-      <section className="section-padding bg-muted/30" aria-labelledby="mission-vision-heading">
-        <div className="container-main">
-          <h2 id="mission-vision-heading" className="sr-only">Missiya va Viziya</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <article className="bg-card rounded-2xl p-8 border border-border card-hover">
-              <div className="w-14 h-14 rounded-xl gradient-hero flex items-center justify-center mb-6" aria-hidden="true">
-                <Target className="w-7 h-7 text-primary-foreground" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">
-                {t("about.mission.title")}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {t("about.mission.desc")}
-              </p>
-            </article>
-            <article className="bg-card rounded-2xl p-8 border border-border card-hover">
-              <div className="w-14 h-14 rounded-xl gradient-gold flex items-center justify-center mb-6" aria-hidden="true">
-                <Eye className="w-7 h-7 text-secondary-foreground" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">
-                {t("about.vision.title")}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {t("about.vision.desc")}
-              </p>
-            </article>
           </div>
         </div>
       </section>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 interface Banner {
   title: string;
@@ -15,7 +15,8 @@ export function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
-  const { language } = useLanguage();
+  const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set());
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -33,6 +34,15 @@ export function HeroSlider() {
         
         const data: Banner[] = await response.json();
         setSlides(data);
+        
+        // Rasmlarni oldindan yuklash
+        data.forEach((banner, index) => {
+          const img = new Image();
+          img.onload = () => {
+            setImagesLoaded(prev => new Set(prev).add(index));
+          };
+          img.src = banner.image;
+        });
       } catch (err) {
         console.error('Error fetching banners:', err);
       } finally {
@@ -55,7 +65,7 @@ export function HeroSlider() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
-  const handleSlideClick = () => {
+  const handleButtonClick = () => {
     if (slides[currentSlide]?.link) {
       window.location.href = slides[currentSlide].link;
     }
@@ -78,117 +88,87 @@ export function HeroSlider() {
   }
 
   const slide = slides[currentSlide];
+  const isCurrentImageLoaded = imagesLoaded.has(currentSlide);
 
   return (
     <section className="relative overflow-hidden h-screen bg-black -mt-16 pt-16">
-      <AnimatePresence mode="sync" initial={false}>
-        <motion.div
-          key={currentSlide}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="absolute inset-0 cursor-pointer"
-          onClick={handleSlideClick}
-        >
-          {/* Background Image */}
-          <motion.div 
-            className="absolute inset-0"
-            initial={{ scale: 1.05 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <img 
-              src={slide.image} 
-              alt={slide.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-          </motion.div>
+      {/* All slides - hidden preload */}
+      {slides.map((s, index) => (
+        <img 
+          key={`preload-${index}`}
+          src={s.image} 
+          alt=""
+          className="hidden"
+          loading="eager"
+        />
+      ))}
 
-          {/* Content */}
-          <div className="container mx-auto px-4 h-full relative z-10 flex items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-              className="max-w-3xl text-white"
-            >
-              {/* Title */}
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl"
-              >
-                {slide.title}
-              </motion.h1>
+      {/* Current Slide */}
+      <div className="absolute inset-0">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={slide.image} 
+            alt={slide.title}
+            className="w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
+            style={{
+              opacity: isCurrentImageLoaded ? 1 : 0,
+              transition: 'opacity 0.3s ease-in-out'
+            }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.opacity = '1';
+              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%232D79C4" width="1920" height="1080"/%3E%3C/svg%3E';
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+        </div>
 
-              {/* Description */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="text-xl md:text-2xl text-white/90 font-light leading-relaxed"
+        {/* Content */}
+        <div className="container mx-auto px-4 h-full relative z-10 flex items-center">
+          <div className="max-w-3xl text-white">
+            {/* Title */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl">
+              {slide.title}
+            </h1>
+
+            {/* Description */}
+            <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-8">
+              {slide.description}
+            </p>
+
+            {/* Batafsil Button */}
+            {slide.link && (
+              <Button
+                onClick={handleButtonClick}
+                size="lg"
+                className="bg-[#2D79C4]/20 hover:bg-[#2D79C4]/90 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
               >
-                {slide.description}
-              </motion.p>
-            </motion.div>
+                {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            )}
           </div>
-        </motion.div>
-      </AnimatePresence>
-
-{/* Navigation Arrows */}
-      {/* <button
-        onClick={(e) => {
-          e.stopPropagation();
-          prevSlide();
-        }}
-        className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-lg text-white flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
-      </button>
-      
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          nextSlide();
-        }}
-        className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-lg text-white flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
-      </button> */}
-      
-      {/* <button
-        onClick={(e) => {
-          e.stopPropagation();
-          nextSlide();
-        }}
-        className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 backdrop-blur-lg text-white hidden md:flex items-center justify-center hover:bg-[#2D79C4] hover:scale-110 transition-all duration-300 z-20 shadow-2xl"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="w-7 h-7" />
-      </button> */}
+        </div>
+      </div>
 
       {/* Progress Dots */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-20">
         {slides.map((_, index) => (
-          <motion.button
+          <button
             key={index}
             onClick={(e) => {
               e.stopPropagation();
               goToSlide(index);
             }}
             className={cn(
-              "h-2 rounded-full transition-all duration-500 shadow-lg",
+              "h-2 rounded-full transition-all duration-500 shadow-lg hover:scale-125 active:scale-95",
               index === currentSlide
                 ? "w-10 bg-[#2D79C4]"
                 : "w-2 bg-white/40 hover:bg-white/60"
             )}
-            whileHover={{ scale: 1.3 }}
-            whileTap={{ scale: 0.9 }}
           />
         ))}
       </div>

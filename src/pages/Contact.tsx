@@ -124,7 +124,6 @@ const Contact = () => {
   };
 
   const phoneNumbers = [
-    { value: "+998 71 226 65 96", link: "tel:+998712266596" },
     { value: "+998 91 192-07-55", link: "tel:+998911920755" },
     { value: "+998 97 444 00 16", link: "tel:+998974440016" },
     { value: "+998 94 647 10 03", link: "tel:+998946471003" },
@@ -144,8 +143,8 @@ const Contact = () => {
     { 
       icon: Mail, 
       title: t("contact.email.title"), 
-      value: "chorvador@chorvador.uz", 
-      link: "mailto:chorvador@chorvador.uz" 
+      value: "info@chorvador.uz", 
+      link: "mailto:info@chorvador.uz" 
     },
     { 
       icon: Clock, 
@@ -200,7 +199,7 @@ const Contact = () => {
                     <Input
                       required
                       type="tel"
-                      placeholder="+998 71 226 65 96"
+                      placeholder="+998 97 444 00 16"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="h-12 bg-background border-border focus:ring-1 focus:ring-primary transition-all"
@@ -315,9 +314,10 @@ const Contact = () => {
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1497.542603852809!2d69.26199674606329!3d41.35050164413911!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8d118e2bc4cf%3A0x374c51e289606a41!2sChorvador%20uz!5e0!3m2!1suz!2s!4v1766405927730!5m2!1suz!2s"
                 className="w-full h-full border-0"
                 allowFullScreen
-                loading="lazy"
+                loading="eager"
                 referrerPolicy="no-referrer-when-downgrade"
                 title="Location Map"
+                sandbox="allow-scripts allow-same-origin allow-popups"
               />
             </motion.div>
           </div>

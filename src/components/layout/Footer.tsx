@@ -1,9 +1,27 @@
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Facebook, Instagram, Send, Twitter, Linkedin } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Instagram, Send, Twitter, Linkedin, ArrowUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useState, useEffect } from "react";
 
 export function Footer() {
   const { t } = useLanguage();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   const footerLinks = {
     company: [
@@ -13,10 +31,7 @@ export function Footer() {
       { name: t("footer.company.contact"), href: "/contact" },
     ],
     products: [
-      { name: t("footer.products.machinery"), href: "/products?category=texnika" },
       { name: t("footer.products.livestock"), href: "/products?category=chorvachilik" },
-      { name: t("footer.products.fertilizers"), href: "/products?category=ogitlar" },
-      { name: t("footer.products.seeds"), href: "/products?category=uruglar" },
     ],
     services: [
       { name: t("footer.services.technical"), href: "/services" },
@@ -55,7 +70,18 @@ export function Footer() {
   ];
 
   return (
-    <footer id="footer" className="bg-primary-dark text-primary-foreground">
+    <footer id="footer" className="bg-primary-dark text-primary-foreground relative">
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 z-50"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </button>
+      )}
+
       <div className="container-main py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
@@ -132,15 +158,6 @@ export function Footer() {
             <ul className="space-y-4">
               <li>
                 <a
-                  href="tel:+998712266596"
-                  className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
-                >
-                  <Phone className="h-5 w-5 flex-shrink-0" />
-                  +998 71 226 65 96
-                </a>
-              </li>
-              <li>
-                <a
                   href="tel:+998974440016"
                   className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
@@ -150,11 +167,11 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:chorvador@chorvador.uz"
+                  href="mailto:info@chorvador.uz"
                   className="flex items-center gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <Mail className="h-5 w-5 flex-shrink-0" />
-                  chorvador@chorvador.uz
+                  info@chorvador.uz
                 </a>
               </li>
               <li>

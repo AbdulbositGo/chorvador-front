@@ -284,7 +284,7 @@ const ServiceDetail = () => {
 
                                         <div className="space-y-3">
                                             <a
-                                                href="tel:+998712266596"
+                                                href="tel:+998974440016"
                                                 className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
                                             >
                                                 <Phone className="w-5 h-5" />
@@ -292,18 +292,18 @@ const ServiceDetail = () => {
                                                     <p className="text-xs opacity-90">
                                                         {language === 'uz' ? 'Telefon' : language === 'ru' ? 'Телефон' : 'Phone'}
                                                     </p>
-                                                    <p className="font-semibold">+998 90 123 45 67</p>
+                                                    <p className="font-semibold">+998 97 444 00 16</p>
                                                 </div>
                                             </a>
 
                                             <a
-                                                href="mailto:chorvador@chorvador.uz"
+                                                href="mailto:info@chorvador.uz"
                                                 className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
                                             >
                                                 <Mail className="w-5 h-5" />
                                                 <div className="flex-1">
-                                                    <p className="text-xs opacity-90">Email</p>
-                                                    <p className="font-semibold text-sm">chorvador@chorvador.uz</p>
+                                                    <p className="text-xs opacity-90">{t("location.emailTitle")}</p>
+                                                    <p className="font-semibold text-sm">info@chorvador.uz</p>
                                                 </div>
                                             </a>
 

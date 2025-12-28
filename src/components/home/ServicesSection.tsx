@@ -84,7 +84,7 @@ export function ServicesSection({ services: apiServices, isLoading }: ServicesSe
         {displayServices.length === 0 && !isLoading ? (
           <div className="text-center py-12 sm:py-16">
             <p className="text-muted-foreground text-base sm:text-lg">
-              {t("services.noServices")}
+              {t("index.services.noServices")}
             </p>
           </div>
         ) : (
