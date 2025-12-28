@@ -165,7 +165,7 @@ export function Footer() {
                   className="flex items-start gap-3 text-primary-foreground/70 hover:text-white transition-colors"
                 >
                   <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                  <span>g.Toshkent, ul. Axmad Universitet 22</span>
+                  <span>{t("footer.contact.address")}</span>
                 </a>
               </li>
             </ul>
