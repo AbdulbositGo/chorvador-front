@@ -118,7 +118,7 @@ export function HeroSlider() {
             }}
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60 md:bg-gradient-to-r md:from-black/40 md:via-black/40 md:to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/30 md:bg-gradient-to-r md:from-black/40 md:via-black/30 md:to-black/30" />
         </div>
 
         {/* Content - chap tarafda */}
