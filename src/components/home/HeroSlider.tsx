@@ -5,10 +5,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 
 interface Banner {
-  title: string;
-  description: string;
+  title?: string | null;  // ixtiyoriy yoki null
+  description?: string | null;  // ixtiyoriy yoki null
   image: string;
-  link: string;
+  link?: string | null;  // ixtiyoriy yoki null
 }
 
 export function HeroSlider() {
@@ -66,8 +66,9 @@ export function HeroSlider() {
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
   const handleButtonClick = () => {
-    if (slides[currentSlide]?.link) {
-      window.location.href = slides[currentSlide].link;
+    const link = slides[currentSlide]?.link;
+    if (link && typeof link === 'string' && link.trim() !== '' && link !== 'null') {
+      window.location.href = link;
     }
   };
 
@@ -105,18 +106,25 @@ export function HeroSlider() {
 
       {/* Current Slide */}
       <div className="absolute inset-0">
-        {/* Background Image */}
-        <div className="absolute inset-0">
+        {/* Background Image - TO'LIQ COVER, YUQORI SIFAT */}
+        <div className="absolute inset-0 w-full h-full">
           <img 
             src={slide.image} 
-            alt={slide.title}
-            className="w-full h-full object-cover"
+            alt={slide.title || 'Banner'}
+            className="w-full h-full object-cover object-center"
             loading="eager"
             decoding="async"
             style={{
               opacity: isCurrentImageLoaded ? 1 : 0,
-              transition: 'opacity 0.3s ease-in-out'
-            }}
+              transition: 'opacity 0.3s ease-in-out',
+              minWidth: '100%',
+              minHeight: '100%',
+              imageRendering: 'auto',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+              willChange: 'transform'
+            } as React.CSSProperties}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.opacity = '1';
@@ -126,32 +134,41 @@ export function HeroSlider() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 h-full relative z-10 flex items-center">
-          <div className="max-w-3xl text-white">
-            {/* Title */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl">
-              {slide.title}
-            </h1>
+        {/* Content - faqat title yoki description mavjud bo'lsa ko'rsatiladi */}
+        {(slide.title || slide.description) && (
+          <div className="container mx-auto px-4 h-full relative z-10 flex items-center">
+            <div className="max-w-3xl text-white">
+              {/* Title - faqat mavjud va null emas bo'lsa */}
+              {slide.title && slide.title !== 'null' && (
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl">
+                  {slide.title}
+                </h1>
+              )}
 
-            {/* Description */}
-            <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-8">
-              {slide.description}
-            </p>
+              {/* Description - faqat mavjud va null emas bo'lsa */}
+              {slide.description && slide.description !== 'null' && (
+                <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-8">
+                  {slide.description}
+                </p>
+              )}
 
-            {/* Batafsil Button */}
-            {slide.link && (
-              <Button
-                onClick={handleButtonClick}
-                size="lg"
-                className="bg-[#2D79C4]/20 hover:bg-[#2D79C4]/90 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
-              >
-                {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            )}
+              {/* Button - faqat link mavjud, null emas va bo'sh emas bo'lsa */}
+              {slide.link && 
+               slide.link !== 'null' && 
+               typeof slide.link === 'string' && 
+               slide.link.trim() !== '' && (
+                <Button
+                  onClick={handleButtonClick}
+                  size="lg"
+                  className="bg-[#2D79C4]/20 hover:bg-[#2D79C4]/90 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
+                >
+                  {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Progress Dots */}
@@ -172,6 +189,8 @@ export function HeroSlider() {
           />
         ))}
       </div>
+
+
     </section>
   );
 }

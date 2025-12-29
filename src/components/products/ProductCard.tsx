@@ -9,7 +9,7 @@ interface Product {
   id: string;
   name: string;
   category: string;
-  price: number;
+  price: number | null;  // null bo'lishi mumkin
   image: string;
   badge?: string;
   description?: string;
@@ -18,9 +18,10 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   hidePrice?: boolean;
+  showPrice?: boolean;  // yangi prop
 }
 
-export function ProductCard({ product, hidePrice = false }: ProductCardProps) {
+export function ProductCard({ product, hidePrice = false, showPrice = true }: ProductCardProps) {
   const { t } = useLanguage();
   
   const formatPrice = (price: number) => {
@@ -43,9 +44,12 @@ export function ProductCard({ product, hidePrice = false }: ProductCardProps) {
     return "bg-muted text-muted-foreground";
   };
 
+  // Price ko'rsatish kerakmi yoki yo'qmi
+  const shouldShowPrice = !hidePrice && showPrice && product.price !== null;
+
   return (
     <motion.div
-      className="group rounded-2xl bg-card border border-border overflow-hidden card-hover h-full flex flex-col "
+      className="group rounded-2xl bg-card border border-border overflow-hidden card-hover h-full flex flex-col"
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 400 }}
     >
@@ -90,13 +94,17 @@ export function ProductCard({ product, hidePrice = false }: ProductCardProps) {
             {product.name}
           </h3>
         </Link>
-        {!hidePrice && (
-          <div className="mt-auto">
+        <div className="mt-auto">
+          {shouldShowPrice ? (
             <span className="text-xl font-bold text-primary">
-              {formatPrice(product.price)}
+              {formatPrice(product.price!)}
             </span>
-          </div>
-        )}
+          ) : !hidePrice && showPrice && product.price === null ? (
+            <span className="text-sm text-muted-foreground font-medium">
+              {t("products.priceOnRequest") || "Narx so'raladi"}
+            </span>
+          ) : null}
+        </div>
       </div>
     </motion.div>
   );

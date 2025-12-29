@@ -11,7 +11,7 @@ interface ApiProduct {
   id: number;
   title: string;
   image: string;
-  price: number;
+  price: number | null;
   short_description: string;
   has_discount: boolean;
   category: string;
@@ -21,7 +21,7 @@ interface Product {
   id: string;
   name: string;
   category: string;
-  price: number;
+  price: number | null;
   image: string;
   description: string;
   hasDiscount?: boolean;
@@ -47,7 +47,7 @@ export function FeaturedProducts({ products: apiProducts, isLoading }: FeaturedP
           id: product.id.toString(),
           name: product.title,
           category: product.category,
-          price: product.price,
+          price: product.price, // null bo'lishi mumkin
           image: product.image.startsWith('http') 
             ? product.image 
             : `${apiUrl}${product.image}`,
@@ -64,7 +64,7 @@ export function FeaturedProducts({ products: apiProducts, isLoading }: FeaturedP
   };
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-background">
+    <section className="py-12 sm:py-16 lg:py-12 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <ScrollReveal>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
@@ -109,7 +109,10 @@ export function FeaturedProducts({ products: apiProducts, isLoading }: FeaturedP
                   onClick={() => handleProductClick(product.id)} 
                   className="cursor-pointer h-full"
                 >
-                  <ProductCard product={product} />
+                  <ProductCard 
+                    product={product} 
+                    showPrice={product.price !== null} 
+                  />
                 </div>
               </StaggerItem>
             ))}
