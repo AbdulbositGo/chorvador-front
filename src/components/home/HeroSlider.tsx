@@ -106,51 +106,37 @@ export function HeroSlider() {
 
       {/* Current Slide */}
       <div className="absolute inset-0 w-full h-full">
-        {/* Background Image - TO'LIQ COVER, YUQORI SIFAT */}
+        {/* Background Image - Mobil va Desktop optimallashtirilgan */}
         <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
           <img 
             src={slide.image} 
             alt={slide.title || 'Banner'}
-            className="w-full h-full object-cover object-center"
-            loading="eager"
-            decoding="async"
+            className="w-full h-full object-cover"
             style={{
               opacity: isCurrentImageLoaded ? 1 : 0,
               transition: 'opacity 0.3s ease-in-out',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
               objectFit: 'cover',
-              objectPosition: 'center',
-              imageRendering: '-webkit-optimize-contrast',
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden'
-            } as React.CSSProperties}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.opacity = '1';
-              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%23000000" width="1920" height="1080"/%3E%3C/svg%3E';
+              objectPosition: 'center'
             }}
+            loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/40 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60 md:bg-gradient-to-r md:from-black/40 md:via-black/40 md:to-black/40" />
         </div>
 
-        {/* Content - har doim ko'rsatiladi */}
+        {/* Content - chap tarafda */}
         <div className="absolute inset-0 w-full h-full flex items-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl text-white">
-              {/* Title - faqat mavjud va null emas bo'lsa */}
+              {/* Title */}
               {slide.title && slide.title !== 'null' && (
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-4 md:mb-6 drop-shadow-2xl">
                   {slide.title}
                 </h1>
               )}
 
-              {/* Description - faqat mavjud va null emas bo'lsa */}
+              {/* Description */}
               {slide.description && slide.description !== 'null' && (
-                <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-8">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 font-light leading-relaxed mb-6 md:mb-8">
                   {slide.description}
                 </p>
               )}
@@ -163,10 +149,10 @@ export function HeroSlider() {
                 <Button
                   onClick={handleButtonClick}
                   size="lg"
-                  className="bg-[#2D79C4]/40 hover:bg-[#2D79C4]/90 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
+                  className="bg-[#2D79C4]/40 hover:bg-[#2D79C4]/90 text-white font-semibold px-6 py-5 md:px-8 md:py-6 text-base md:text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
                 >
                   {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
             </div>
@@ -175,7 +161,7 @@ export function HeroSlider() {
       </div>
 
       {/* Progress Dots */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+      <div className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
         {slides.map((_, index) => (
           <button
             key={index}
@@ -186,7 +172,7 @@ export function HeroSlider() {
             className={cn(
               "h-2 rounded-full transition-all duration-500 shadow-lg hover:scale-125 active:scale-95",
               index === currentSlide
-                ? "w-10 bg-[#2D79C4]"
+                ? "w-8 md:w-10 bg-[#2D79C4]"
                 : "w-2 bg-white/40 hover:bg-white/60"
             )}
           />

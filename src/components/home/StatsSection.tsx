@@ -7,7 +7,7 @@ const stats = [
   { icon: Users, value: "1000+", labelKey: "stats.customers" },
   { icon: Package, value: "500+", labelKey: "stats.products" },
   { icon: Award, value: "10+", labelKey: "stats.experience" },
-  { icon: MapPin, value: "14", labelKey: "stats.regions" },
+  { icon: MapPin, value: "12", labelKey: "stats.regions" },
 ];
 
 export function StatsSection() {
