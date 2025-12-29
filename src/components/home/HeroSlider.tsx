@@ -92,7 +92,7 @@ export function HeroSlider() {
   const isCurrentImageLoaded = imagesLoaded.has(currentSlide);
 
   return (
-    <section className="relative overflow-hidden h-screen bg-black -mt-16 pt-16">
+    <section className="relative overflow-hidden h-screen w-full bg-black -mt-16 pt-16">
       {/* All slides - hidden preload */}
       {slides.map((s, index) => (
         <img 
@@ -105,9 +105,9 @@ export function HeroSlider() {
       ))}
 
       {/* Current Slide */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 w-full h-full">
         {/* Background Image - TO'LIQ COVER, YUQORI SIFAT */}
-        <div className="absolute inset-0 w-full h-full">
+        <div className="absolute inset-0 w-full h-full bg-black">
           <img 
             src={slide.image} 
             alt={slide.title || 'Banner'}
@@ -117,8 +117,10 @@ export function HeroSlider() {
             style={{
               opacity: isCurrentImageLoaded ? 1 : 0,
               transition: 'opacity 0.3s ease-in-out',
-              minWidth: '100%',
-              minHeight: '100%',
+              width: '100vw',
+              height: '100vh',
+              maxWidth: '100%',
+              maxHeight: '100%',
               imageRendering: 'auto',
               WebkitBackfaceVisibility: 'hidden',
               backfaceVisibility: 'hidden',
@@ -128,7 +130,7 @@ export function HeroSlider() {
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.opacity = '1';
-              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%232D79C4" width="1920" height="1080"/%3E%3C/svg%3E';
+              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%23000000" width="1920" height="1080"/%3E%3C/svg%3E';
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
@@ -136,36 +138,38 @@ export function HeroSlider() {
 
         {/* Content - faqat title yoki description mavjud bo'lsa ko'rsatiladi */}
         {(slide.title || slide.description) && (
-          <div className="container mx-auto px-4 h-full relative z-10 flex items-center">
-            <div className="max-w-3xl text-white">
-              {/* Title - faqat mavjud va null emas bo'lsa */}
-              {slide.title && slide.title !== 'null' && (
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl">
-                  {slide.title}
-                </h1>
-              )}
+          <div className="absolute inset-0 w-full h-full flex items-center">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-3xl text-white">
+                {/* Title - faqat mavjud va null emas bo'lsa */}
+                {slide.title && slide.title !== 'null' && (
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 drop-shadow-2xl">
+                    {slide.title}
+                  </h1>
+                )}
 
-              {/* Description - faqat mavjud va null emas bo'lsa */}
-              {slide.description && slide.description !== 'null' && (
-                <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-8">
-                  {slide.description}
-                </p>
-              )}
+                {/* Description - faqat mavjud va null emas bo'lsa */}
+                {slide.description && slide.description !== 'null' && (
+                  <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-8">
+                    {slide.description}
+                  </p>
+                )}
 
-              {/* Button - faqat link mavjud, null emas va bo'sh emas bo'lsa */}
-              {slide.link && 
-               slide.link !== 'null' && 
-               typeof slide.link === 'string' && 
-               slide.link.trim() !== '' && (
-                <Button
-                  onClick={handleButtonClick}
-                  size="lg"
-                  className="bg-[#2D79C4]/20 hover:bg-[#2D79C4]/90 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
-                >
-                  {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              )}
+                {/* Button - faqat link mavjud, null emas va bo'sh emas bo'lsa */}
+                {slide.link && 
+                 slide.link !== 'null' && 
+                 typeof slide.link === 'string' && 
+                 slide.link.trim() !== '' && (
+                  <Button
+                    onClick={handleButtonClick}
+                    size="lg"
+                    className="bg-[#2D79C4]/20 hover:bg-[#2D79C4]/90 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
+                  >
+                    {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
