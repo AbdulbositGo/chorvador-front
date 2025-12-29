@@ -106,7 +106,7 @@ export function HeroSlider() {
 
       {/* Current Slide */}
       <div className="absolute inset-0 w-full h-full">
-        {/* Background Image - Mobil va Desktop optimallashtirilgan */}
+        {/* Background Image - Barcha ekranlar uchun optimallashtirilgan */}
         <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
           <img 
             src={slide.image} 
@@ -114,9 +114,7 @@ export function HeroSlider() {
             className="w-full h-full object-cover"
             style={{
               opacity: isCurrentImageLoaded ? 1 : 0,
-              transition: 'opacity 0.3s ease-in-out',
-              objectFit: 'cover',
-              objectPosition: 'center'
+              transition: 'opacity 0.3s ease-in-out'
             }}
             loading="eager"
           />

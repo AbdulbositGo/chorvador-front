@@ -77,7 +77,7 @@ const translations: Record<Language, Record<string, string>> = {
     "stats.customers": "Mamnun mijozlar",
     "stats.products": "Mahsulot turlari",
     "stats.experience": "Yillik tajriba",
-    "stats.regions": "Viloyatlarda xizmat",
+    "stats.regions": "Viloyatlarga xizmat",
 
     "products.badge": "Mahsulotlar",
     "products.title": "Tanlangan mahsulotlar",
