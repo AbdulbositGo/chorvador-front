@@ -107,16 +107,22 @@ export function HeroSlider() {
       {/* Current Slide */}
       <div className="absolute inset-0 w-full h-full">
         {/* Background Image - Barcha ekranlar uchun optimallashtirilgan */}
-        <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
+        <div className="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center">
           <img 
             src={slide.image} 
             alt={slide.title || 'Banner'}
-            className="w-full h-full object-cover"
+            className="min-w-full min-h-full w-auto h-auto max-w-none"
             style={{
               opacity: isCurrentImageLoaded ? 1 : 0,
-              transition: 'opacity 0.3s ease-in-out'
-            }}
+              transition: 'opacity 0.3s ease-in-out',
+              imageRendering: '-webkit-optimize-contrast',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+              willChange: 'opacity'
+            } as React.CSSProperties}
             loading="eager"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/30 md:bg-gradient-to-r md:from-black/40 md:via-black/30 md:to-black/30" />
         </div>

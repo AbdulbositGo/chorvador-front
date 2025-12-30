@@ -138,7 +138,7 @@ const Index = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content={t("seo.home.title")} />
         <meta property="og:description" content={t("seo.home.description")} />
-        <meta property="og:image" content="https://chorvador.uz/og-image.png" />
+        <meta property="og:image" content="https://chorvador.uz/og-image2.png" />
         
         {/* SEO */}
         <meta name="robots" content="index, follow" />
