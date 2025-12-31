@@ -74,7 +74,7 @@ export function HeroSlider() {
 
   if (loading) {
     return (
-      <section className="relative h-screen flex items-center justify-center bg-[#2D79C4]">
+      <section className="relative h-[400px] sm:h-[500px] md:h-screen flex items-center justify-center bg-[#2D79C4]">
         <Loader2 className="w-12 h-12 animate-spin text-white" />
       </section>
     );
@@ -82,7 +82,7 @@ export function HeroSlider() {
 
   if (slides.length === 0) {
     return (
-      <section className="relative h-screen flex items-center justify-center bg-[#2D79C4]">
+      <section className="relative h-[400px] sm:h-[500px] md:h-screen flex items-center justify-center bg-[#2D79C4]">
         <p className="text-white text-lg">Bannerlar topilmadi</p>
       </section>
     );
@@ -92,7 +92,7 @@ export function HeroSlider() {
   const isCurrentImageLoaded = imagesLoaded.has(currentSlide);
 
   return (
-    <section className="relative overflow-hidden h-screen w-full bg-black -mt-16 pt-16">
+    <section className="relative w-full h-[350px] sm:h-[436px] md:h-[calc(100vh-64px)] bg-black">
       {/* All slides - hidden preload */}
       {slides.map((s, index) => (
         <img 
@@ -106,57 +106,59 @@ export function HeroSlider() {
 
       {/* Current Slide */}
       <div className="absolute inset-0 w-full h-full">
-        {/* Background Image - Barcha ekranlar uchun optimallashtirilgan */}
-        <div className="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center">
+        {/* Background Image - To'liq ekranni qoplaydi, hech narsa kesilib ketmaydi */}
+        <div className="relative w-full h-full overflow-hidden">
           <img 
             src={slide.image} 
             alt={slide.title || 'Banner'}
-            className="min-w-full min-h-full w-auto h-auto max-w-none"
+            className="absolute inset-0 w-full h-full object-cover object-center"
             style={{
               opacity: isCurrentImageLoaded ? 1 : 0,
               transition: 'opacity 0.3s ease-in-out',
               imageRendering: '-webkit-optimize-contrast',
-              WebkitBackfaceVisibility: 'hidden',
               backfaceVisibility: 'hidden',
               transform: 'translateZ(0)',
-              willChange: 'opacity'
-            } as React.CSSProperties}
+              willChange: 'transform'
+            }}
             loading="eager"
-            decoding="async"
+            decoding="sync"
+            fetchPriority="high"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/30 md:bg-gradient-to-r md:from-black/40 md:via-black/30 md:to-black/30" />
+
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50 md:bg-gradient-to-r md:from-black/60 md:via-black/40 md:to-transparent" />
         </div>
 
-        {/* Content - chap tarafda */}
-        <div className="absolute inset-0 w-full h-full flex items-center">
+        {/* Content - chap tarafda, navbar uchun bo'sh joy qoldirish */}
+        <div className="absolute inset-0 w-full h-full flex items-center pt-16 md:pt-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl text-white">
               {/* Title */}
               {slide.title && slide.title !== 'null' && (
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-4 md:mb-6 drop-shadow-2xl">
+                <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-2 sm:mb-3 md:mb-4 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] [text-shadow:_2px_2px_4px_rgb(0_0_0_/_80%)]">
                   {slide.title}
                 </h1>
               )}
 
               {/* Description */}
               {slide.description && slide.description !== 'null' && (
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 font-light leading-relaxed mb-6 md:mb-8">
+                <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white font-light leading-relaxed mb-3 sm:mb-4 md:mb-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] [text-shadow:_1px_1px_3px_rgb(0_0_0_/_70%)]">
                   {slide.description}
                 </p>
               )}
 
-              {/* Button - faqat link mavjud, null emas va bo'sh emas bo'lsa */}
+              {/* Button - faqat link, title yoki description mavjud bo'lsa */}
               {slide.link && 
                slide.link !== 'null' && 
                typeof slide.link === 'string' && 
-               slide.link.trim() !== '' && (
+               slide.link.trim() !== '' &&
+               ((slide.title && slide.title !== 'null') || (slide.description && slide.description !== 'null')) && (
                 <Button
                   onClick={handleButtonClick}
-                  size="lg"
-                  className="bg-[#2D79C4]/40 hover:bg-[#2D79C4]/90 text-white font-semibold px-6 py-5 md:px-8 md:py-6 text-base md:text-lg rounded-xl shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
+                  size="sm"
+                  className="bg-[#2D79C4]/40 hover:bg-[#2D79C4]/90 text-white font-semibold px-3 py-2 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm md:text-base rounded-md sm:rounded-lg shadow-2xl hover:shadow-[#2D79C4]/50 transition-all duration-300 hover:scale-105 active:scale-95 group"
                 >
                   {language === 'uz' ? 'Batafsil' : language === 'ru' ? 'Подробнее' : 'Learn More'}
-                  <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="ml-1.5 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
             </div>
@@ -165,7 +167,7 @@ export function HeroSlider() {
       </div>
 
       {/* Progress Dots */}
-      <div className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+      <div className="absolute bottom-4 sm:bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 md:gap-3 z-20">
         {slides.map((_, index) => (
           <button
             key={index}
@@ -174,10 +176,10 @@ export function HeroSlider() {
               goToSlide(index);
             }}
             className={cn(
-              "h-2 rounded-full transition-all duration-500 shadow-lg hover:scale-125 active:scale-95",
+              "h-1.5 sm:h-2 rounded-full transition-all duration-500 shadow-lg hover:scale-125 active:scale-95",
               index === currentSlide
-                ? "w-8 md:w-10 bg-[#2D79C4]"
-                : "w-2 bg-white/40 hover:bg-white/60"
+                ? "w-6 sm:w-8 md:w-10 bg-[#2D79C4]"
+                : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/60"
             )}
           />
         ))}
