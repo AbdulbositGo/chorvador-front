@@ -1,5 +1,4 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ScrollReveal } from '../ui/ScrollReveal';
 
 export default function About() {
   const { t } = useLanguage();
@@ -24,7 +23,6 @@ export default function About() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-16">
         
-<ScrollReveal>
   <div className="mb-12 text-left">
     {/* Badge */}
     <span className="inline-block px-4 py-1.5 rounded-full bg-[#4E8EC3]/10 text-[#4E8EC3] text-sm font-semibold mb-3 uppercase tracking-wide">
@@ -41,7 +39,6 @@ export default function About() {
       {t("about1.subtitle")}
     </p>
   </div>
-</ScrollReveal>
 
 
 

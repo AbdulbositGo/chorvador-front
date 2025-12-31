@@ -92,7 +92,7 @@ export function HeroSlider() {
   const isCurrentImageLoaded = imagesLoaded.has(currentSlide);
 
   return (
-    <section className="relative w-full h-[350px] sm:h-[436px] md:h-[calc(100vh-64px)] bg-black">
+    <section className="relative w-full h-[250px] sm:h-[436px] md:h-[calc(100vh-64px)] bg-black">
       {/* All slides - hidden preload */}
       {slides.map((s, index) => (
         <img 
