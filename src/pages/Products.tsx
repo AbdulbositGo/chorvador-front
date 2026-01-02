@@ -89,7 +89,7 @@ const Products = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 6;
 
   // Preload critical images
   useEffect(() => {
@@ -621,7 +621,7 @@ const Products = () => {
                   </div>
 
                   {/* Pagination */}
-                  {filteredProducts.length > itemsPerPage && (
+                  {totalPages > 1 && (
                     <nav 
                       className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500"
                       aria-label="Pagination"
