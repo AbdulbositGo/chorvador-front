@@ -1,12 +1,45 @@
 import { Layout } from "@/components/layout/Layout";
-import { CheckCircle, Target, Eye, Award } from "lucide-react";
+import { CheckCircle, Target, Award, LucideIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
+
+interface Value {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+interface StructuredDataObject {
+  "@context": string;
+  "@type": string;
+  [key: string]: unknown;
+}
 
 const About = () => {
   const { t, language } = useLanguage();
 
-  const values = [
+  // Constants
+  const siteName = "Ultra Tez";
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : "https://yourwebsite.com";
+  const imageUrl = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&q=80";
+
+  // Memoized SEO data
+  const seoData = useMemo(() => {
+    const pageTitle = t("about.title");
+    const pageDescription = t("about.subtitle");
+    const currentUrl = `${siteUrl}/${language}/about`;
+    const keywords = language === 'uz' 
+      ? "haqimizda, kompaniya, xizmatlar, professional, sifat, ishonch"
+      : language === 'ru'
+      ? "о нас, компания, услуги, профессионал, качество, доверие"
+      : "about us, company, services, professional, quality, trust";
+
+    return { pageTitle, pageDescription, currentUrl, keywords };
+  }, [t, language, siteUrl]);
+
+  // Memoized values
+  const values: Value[] = useMemo(() => [
     {
       icon: CheckCircle,
       title: t("about.values.quality.title"),
@@ -22,58 +55,17 @@ const About = () => {
       title: t("about.values.professionalism.title"),
       description: t("about.values.professionalism.desc"),
     },
-  ];
+  ], [t]);
 
-  // SEO meta ma'lumotlari
-  const pageTitle = t("about.title");
-  const pageDescription = t("about.subtitle");
-  const siteName = "Ultra Tez"; // O'z kompaniya nomingizni kiriting
-  const siteUrl = window.location.origin; // Avtomatik domen
-  const currentUrl = `${siteUrl}/${language}/about`;
-  const imageUrl = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&q=80";
-
-  // SEO meta taglarni dinamik yangilash
-  useEffect(() => {
-    // Title
-    document.title = `${pageTitle} | ${siteName}`;
-
-    // Basic meta tags
-    updateMetaTag("description", pageDescription);
-    updateMetaTag("keywords", "haqimizda, kompaniya, xizmatlar, professional, sifat, ishonch");
-
-    // Canonical
-    updateLinkTag("canonical", currentUrl);
-
-    // Open Graph
-    updateMetaProperty("og:type", "website");
-    updateMetaProperty("og:url", currentUrl);
-    updateMetaProperty("og:title", `${pageTitle} | ${siteName}`);
-    updateMetaProperty("og:description", pageDescription);
-    updateMetaProperty("og:image", imageUrl);
-    updateMetaProperty("og:site_name", siteName);
-    updateMetaProperty("og:locale", language === 'uz' ? 'uz_UZ' : language === 'ru' ? 'ru_RU' : 'en_US');
-
-    // Twitter
-    updateMetaTag("twitter:card", "summary_large_image");
-    updateMetaTag("twitter:url", currentUrl);
-    updateMetaTag("twitter:title", `${pageTitle} | ${siteName}`);
-    updateMetaTag("twitter:description", pageDescription);
-    updateMetaTag("twitter:image", imageUrl);
-
-    // Alternate languages
-    updateLinkTag("alternate", `${siteUrl}/uz/about`, "uz");
-    updateLinkTag("alternate", `${siteUrl}/ru/about`, "ru");
-    updateLinkTag("alternate", `${siteUrl}/en/about`, "en");
-    updateLinkTag("alternate", `${siteUrl}/uz/about`, "x-default");
-
-    // Structured Data - Organization
-    updateStructuredData("organization-schema", {
+  // Memoized structured data
+  const structuredData = useMemo(() => ({
+    organization: {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": siteName,
       "url": siteUrl,
       "logo": `${siteUrl}/logo.png`,
-      "description": pageDescription,
+      "description": seoData.pageDescription,
       "foundingDate": "2004",
       "address": {
         "@type": "PostalAddress",
@@ -84,109 +76,128 @@ const About = () => {
         "https://instagram.com/yourpage",
         "https://linkedin.com/company/yourcompany"
       ]
-    });
-
-    // Structured Data - BreadcrumbList
-    updateStructuredData("breadcrumb-schema", {
+    },
+    breadcrumb: {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Bosh sahifa",
+          "name": language === 'uz' ? "Bosh sahifa" : language === 'ru' ? "Главная" : "Home",
           "item": siteUrl
         },
         {
           "@type": "ListItem",
           "position": 2,
-          "name": pageTitle,
-          "item": currentUrl
+          "name": seoData.pageTitle,
+          "item": seoData.currentUrl
         }
       ]
-    });
-
-    // Cleanup function
-    return () => {
-      // Reset title on unmount
-      document.title = siteName;
-    };
-  }, [pageTitle, pageDescription, language, currentUrl, siteName, siteUrl, imageUrl]);
-
-  // Helper functions
-  const updateMetaTag = (name: string, content: string) => {
-    let element = document.querySelector(`meta[name="${name}"]`);
-    if (!element) {
-      element = document.createElement("meta");
-      element.setAttribute("name", name);
-      document.head.appendChild(element);
     }
-    element.setAttribute("content", content);
-  };
+  }), [seoData, siteName, siteUrl, language]);
 
-  const updateMetaProperty = (property: string, content: string) => {
-    let element = document.querySelector(`meta[property="${property}"]`);
-    if (!element) {
-      element = document.createElement("meta");
-      element.setAttribute("property", property);
-      document.head.appendChild(element);
-    }
-    element.setAttribute("content", content);
-  };
-
-  const updateLinkTag = (rel: string, href: string, hreflang?: string) => {
-    const selector = hreflang 
-      ? `link[rel="${rel}"][hreflang="${hreflang}"]`
-      : `link[rel="${rel}"]`;
-    
-    let element = document.querySelector(selector) as HTMLLinkElement;
-    if (!element) {
-      element = document.createElement("link");
-      element.setAttribute("rel", rel);
-      if (hreflang) {
-        element.setAttribute("hreflang", hreflang);
+  // Add DNS prefetch and preconnect
+  useEffect(() => {
+    const addResourceHint = (rel: string, href: string): void => {
+      if (!document.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
+        const link = document.createElement('link');
+        link.rel = rel;
+        link.href = href;
+        document.head.appendChild(link);
       }
-      document.head.appendChild(element);
-    }
-    element.setAttribute("href", href);
-  };
+    };
 
-  const updateStructuredData = (id: string, data: Record<string, unknown>) => {
-    let script = document.getElementById(id) as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement("script");
-      script.id = id;
-      script.type = "application/ld+json";
-      document.head.appendChild(script);
-    }
-    script.textContent = JSON.stringify(data);
-  };
+    addResourceHint('dns-prefetch', 'https://fonts.googleapis.com');
+    addResourceHint('dns-prefetch', 'https://images.unsplash.com');
+    addResourceHint('preconnect', 'https://fonts.googleapis.com');
+    addResourceHint('preconnect', 'https://fonts.gstatic.com');
+    
+    // Preload hero image
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = '/about_img.jpg';
+    document.head.appendChild(link);
+
+    return () => {
+      link.remove();
+    };
+  }, []);
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="gradient-hero py-20">
+      <Helmet>
+        {/* Basic Meta Tags */}
+        <html lang={language} />
+        <title>{seoData.pageTitle} | {siteName}</title>
+        <meta name="description" content={seoData.pageDescription} />
+        <meta name="keywords" content={seoData.keywords} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={seoData.currentUrl} />
+        
+        {/* Alternate Languages */}
+        <link rel="alternate" hrefLang="uz" href={`${siteUrl}/uz/about`} />
+        <link rel="alternate" hrefLang="ru" href={`${siteUrl}/ru/about`} />
+        <link rel="alternate" hrefLang="en" href={`${siteUrl}/en/about`} />
+        <link rel="alternate" hrefLang="x-default" href={`${siteUrl}/uz/about`} />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={seoData.currentUrl} />
+        <meta property="og:title" content={`${seoData.pageTitle} | ${siteName}`} />
+        <meta property="og:description" content={seoData.pageDescription} />
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content={siteName} />
+        <meta property="og:locale" content={language === 'uz' ? 'uz_UZ' : language === 'ru' ? 'ru_RU' : 'en_US'} />
+        
+        {/* Twitter Card Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={seoData.currentUrl} />
+        <meta name="twitter:title" content={`${seoData.pageTitle} | ${siteName}`} />
+        <meta name="twitter:description" content={seoData.pageDescription} />
+        <meta name="twitter:image" content={imageUrl} />
+        
+        {/* Additional SEO Tags */}
+        <meta name="robots" content="index, follow, max-image-preview:large" />
+        <meta name="author" content={siteName} />
+        <meta name="revisit-after" content="7 days" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData.organization)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData.breadcrumb)}
+        </script>
+      </Helmet>
+
+      {/* Hero Section */}
+      <section className="gradient-hero py-12 sm:py-16 lg:py-20">
         <div className="container-main">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
-              {t("about.title")}
+          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-4 sm:mb-6 leading-tight">
+              {seoData.pageTitle}
             </h1>
-            <p className="text-xl text-primary-foreground/90">
-              {t("about.subtitle")}
+            <p className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 leading-relaxed">
+              {seoData.pageDescription}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Company description */}
+      {/* Company Description */}
       <section className="section-padding">
         <div className="container-main">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <article>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <article className="animate-in fade-in slide-in-from-left duration-700">
               <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
                 {t("about.history.badge")}
               </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4 sm:mb-6">
                 {t("about.history.title")}
               </h2>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -195,43 +206,60 @@ const About = () => {
                 <p>{t("about.history.p3")}</p>
               </div>
             </article>
-            <figure className="relative">
+            
+            <figure className="relative animate-in fade-in slide-in-from-right duration-700">
               <img
                 src="/about_img.jpg"
-                alt={`${t("about.title")} - kompaniya tarixi`}
-                loading="lazy"
+                alt={`${seoData.pageTitle} - ${language === 'uz' ? 'kompaniya tarixi' : language === 'ru' ? 'история компании' : 'company history'}`}
+                loading="eager"
                 width="600"
                 height="400"
-                className="rounded-2xl shadow-hero w-full"
+                className="rounded-2xl shadow-hero w-full object-cover"
+                fetchPriority="high"
               />
-              <div className="absolute -bottom-6 -left-6 bg-secondary text-secondary-foreground p-6 rounded-2xl shadow-lg">
-                <div className="text-4xl font-bold" aria-label="20 yildan ortiq tajriba">10+</div>
-                <div className="text-sm font-medium">{t("about.history.years")}</div>
+              <div 
+                className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-secondary text-secondary-foreground p-4 sm:p-6 rounded-2xl shadow-lg animate-in zoom-in duration-500 delay-300"
+                aria-label={language === 'uz' ? '10 yildan ortiq tajriba' : language === 'ru' ? 'более 10 лет опыта' : 'over 10 years experience'}
+              >
+                <div className="text-3xl sm:text-4xl font-bold">10+</div>
+                <div className="text-xs sm:text-sm font-medium">{t("about.history.years")}</div>
               </div>
             </figure>
           </div>
         </div>
       </section>
 
-      {/* Values */}
-      <section className="section-padding" aria-labelledby="values-heading">
+      {/* Values Section */}
+      <section className="section-padding bg-muted/30" aria-labelledby="values-heading">
         <div className="container-main">
-          <header className="text-center mb-12">
+          <header className="text-center mb-8 sm:mb-12 animate-in fade-in slide-in-from-bottom-3 duration-700">
             <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
               {t("about.values.badge")}
             </span>
-            <h2 id="values-heading" className="text-3xl md:text-4xl font-bold text-foreground">
+            <h2 id="values-heading" className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               {t("about.values.title")}
             </h2>
           </header>
-          <div className="grid md:grid-cols-3 gap-8">
-            {values.map((value) => (
-              <article key={value.title} className="text-center p-6">
-                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl gradient-hero flex items-center justify-center" aria-hidden="true">
-                  <value.icon className="w-8 h-8 text-primary-foreground" />
+          
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+            {values.map((value, index) => (
+              <article 
+                key={value.title} 
+                className="text-center p-6 bg-background rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div 
+                  className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-5 rounded-2xl gradient-hero flex items-center justify-center transform hover:scale-110 transition-transform duration-300" 
+                  aria-hidden="true"
+                >
+                  <value.icon className="w-7 h-7 sm:w-8 sm:h-8 text-primary-foreground" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-3">{value.title}</h3>
-                <p className="text-muted-foreground">{value.description}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2 sm:mb-3">
+                  {value.title}
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  {value.description}
+                </p>
               </article>
             ))}
           </div>

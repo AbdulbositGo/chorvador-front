@@ -42,6 +42,40 @@ interface Category {
   name: string;
 }
 
+// Cache types
+interface CacheItem<T> {
+  value: T;
+  timestamp: number;
+}
+
+// Simple in-memory cache implementation with generics
+const cache = {
+  data: new Map<string, CacheItem<Category[] | Product[]>>(),
+  
+  set<T extends Category[] | Product[]>(key: string, value: T, ttl: number = 300000): void {
+    this.data.set(key, {
+      value,
+      timestamp: Date.now() + ttl
+    });
+  },
+  
+  get<T extends Category[] | Product[]>(key: string): T | null {
+    const item = this.data.get(key);
+    if (!item) return null;
+    
+    if (Date.now() > item.timestamp) {
+      this.data.delete(key);
+      return null;
+    }
+    
+    return item.value as T;
+  },
+  
+  clear(): void {
+    this.data.clear();
+  }
+};
+
 const Products = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -56,6 +90,21 @@ const Products = () => {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Preload critical images
+  useEffect(() => {
+    const preloadImages = (urls: string[]): void => {
+      urls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+      });
+    };
+
+    if (products.length > 0) {
+      const firstPageImages: string[] = products.slice(0, itemsPerPage).map(p => p.image);
+      preloadImages(firstPageImages);
+    }
+  }, [products, itemsPerPage]);
 
   // SEO metadata based on language
   const seoData = useMemo(() => {
@@ -74,7 +123,6 @@ const Products = () => {
     return { pageTitle, pageDescription };
   }, [language]);
 
-  // Get selected category name for SEO
   const selectedCategoryName = useMemo(() => {
     const category = categories.find(cat => cat.id === selectedCategory);
     return category?.name || '';
@@ -84,8 +132,7 @@ const Products = () => {
   useEffect(() => {
     document.title = seoData.pageTitle;
     
-    // Update or create meta description
-    let metaDescription = document.querySelector('meta[name="description"]');
+    let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
       metaDescription.setAttribute('name', 'description');
@@ -93,9 +140,8 @@ const Products = () => {
     }
     metaDescription.setAttribute('content', seoData.pageDescription);
 
-    // Update or create Open Graph tags
-    const updateOrCreateMetaTag = (property: string, content: string) => {
-      let meta = document.querySelector(`meta[property="${property}"]`);
+    const updateOrCreateMetaTag = (property: string, content: string): void => {
+      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
       if (!meta) {
         meta = document.createElement('meta');
         meta.setAttribute('property', property);
@@ -109,9 +155,8 @@ const Products = () => {
     updateOrCreateMetaTag('og:type', 'website');
     updateOrCreateMetaTag('og:url', window.location.href);
 
-    // Twitter Card tags
-    const updateOrCreateTwitterTag = (name: string, content: string) => {
-      let meta = document.querySelector(`meta[name="${name}"]`);
+    const updateOrCreateTwitterTag = (name: string, content: string): void => {
+      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!meta) {
         meta = document.createElement('meta');
         meta.setAttribute('name', name);
@@ -124,14 +169,12 @@ const Products = () => {
     updateOrCreateTwitterTag('twitter:title', seoData.pageTitle);
     updateOrCreateTwitterTag('twitter:description', seoData.pageDescription);
 
-    // Add keywords if category selected
     if (selectedCategoryName && selectedCategory !== 'all') {
       const keywords = `${selectedCategoryName}, products, ${language === 'uz' ? 'mahsulotlar' : language === 'ru' ? 'продукты' : 'products'}`;
       updateOrCreateTwitterTag('keywords', keywords);
     }
 
-    // Canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
@@ -139,8 +182,24 @@ const Products = () => {
     }
     canonical.href = window.location.href;
 
+    // Add DNS prefetch and preconnect for external resources
+    const addResourceHint = (rel: string, href: string): void => {
+      if (!document.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
+        const link = document.createElement('link');
+        link.rel = rel;
+        link.href = href;
+        document.head.appendChild(link);
+      }
+    };
+
+    addResourceHint('dns-prefetch', 'https://fonts.googleapis.com');
+    addResourceHint('dns-prefetch', 'https://fonts.gstatic.com');
+    addResourceHint('preconnect', 'https://fonts.googleapis.com');
+    addResourceHint('preconnect', 'https://fonts.gstatic.com');
+
   }, [seoData, selectedCategoryName, selectedCategory, language]);
 
+  // Fetch categories with caching
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -152,6 +211,15 @@ const Products = () => {
         }
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
+        const cacheKey = `categories_${acceptLanguage}`;
+        
+        // Check cache first
+        const cachedData = cache.get<Category[]>(cacheKey);
+        if (cachedData) {
+          setCategories(cachedData);
+          setCategoriesLoading(false);
+          return;
+        }
         
         const response = await fetch(`${apiUrl}/categories/?type=product`, {
           method: 'GET',
@@ -183,6 +251,8 @@ const Products = () => {
           }))
         ];
         
+        // Cache the result
+        cache.set(cacheKey, allCategories, 600000); // Cache for 10 minutes
         setCategories(allCategories);
       } catch (err) {
         setCategories([
@@ -196,6 +266,7 @@ const Products = () => {
     fetchCategories();
   }, [language]);
 
+  // Fetch products with caching
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -209,36 +280,37 @@ const Products = () => {
         }
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
-
-        let allProducts: ApiProduct[] = [];
-        let nextUrl: string | null = `${apiUrl}/products/`;
+        const cacheKey = `products_${acceptLanguage}`;
         
-        while (nextUrl) {
-          const response = await fetch(nextUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'Accept-Language': acceptLanguage,
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP xatolik! Status: ${response.status}`);
-          }
-          
-          const data: ProductsResponse = await response.json();
-          const productsArray: ApiProduct[] = data.results || [];
-          
-          allProducts = [...allProducts, ...productsArray];
-          nextUrl = data.next;
+        // Check cache first
+        const cachedData = cache.get<Product[]>(cacheKey);
+        if (cachedData) {
+          setProducts(cachedData);
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${apiUrl}/products/`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Accept-Language': acceptLanguage,
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP xatolik! Status: ${response.status}`);
         }
         
-        if (!Array.isArray(allProducts)) {
+        const data: ProductsResponse = await response.json();
+        const productsArray: ApiProduct[] = data.results || [];
+        
+        if (!Array.isArray(productsArray)) {
           throw new Error("Ma'lumot noto'g'ri formatda");
         }
 
-        const transformedProducts: Product[] = allProducts.map(product => {
+        const transformedProducts: Product[] = productsArray.map(product => {
           let categoryId = 'all';
           const categoryName = product.category || '';
           
@@ -267,6 +339,8 @@ const Products = () => {
           };
         });
         
+        // Cache the result
+        cache.set(cacheKey, transformedProducts, 300000); // Cache for 5 minutes
         setProducts(transformedProducts);
         
       } catch (err) {
@@ -286,7 +360,7 @@ const Products = () => {
     navigate(`/products/${productId}`);
   }, [navigate]);
 
-  // Memoized filtered products for better performance
+  // Memoized filtered products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesSearch = 
@@ -314,7 +388,7 @@ const Products = () => {
     };
   }, [filteredProducts, currentPage, itemsPerPage]);
 
-  // Add structured data for current products
+  // Add structured data
   useEffect(() => {
     if (currentProducts.length === 0) return;
 
@@ -338,7 +412,7 @@ const Products = () => {
       }))
     };
 
-    let scriptTag = document.querySelector('script[type="application/ld+json"]');
+    let scriptTag = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement | null;
     if (!scriptTag) {
       scriptTag = document.createElement('script');
       scriptTag.setAttribute('type', 'application/ld+json');
@@ -357,7 +431,7 @@ const Products = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchQuery, selectedCategory]);
 
-  // Smooth scroll to top when changing pages
+  // Smooth scroll when changing pages
   useEffect(() => {
     const element = document.getElementById('products-grid');
     if (element && currentPage > 1) {
@@ -365,7 +439,6 @@ const Products = () => {
     }
   }, [currentPage]);
 
-  // Memoized visible categories
   const visibleCategories = useMemo(() => 
     showAllCategories ? categories : categories.slice(0, 6),
     [showAllCategories, categories]
