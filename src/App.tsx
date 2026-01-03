@@ -8,9 +8,8 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./components/ScrollToTop";
-import { HelmetProvider } from "react-helmet-async"; // ⬅️ BU QATOR QO'SHILDI
+import { HelmetProvider } from "react-helmet-async";
 
-// 🔹 LAZY PAGES
 const Index = lazy(() => import("./pages/Index"));
 const About = lazy(() => import("./pages/About"));
 const Products = lazy(() => import("./pages/Products"));
@@ -24,7 +23,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <HelmetProvider> {/* ⬅️ BU QO'SHILDI */}
+    <HelmetProvider>
       <LanguageProvider>
         <TooltipProvider>
           <Toaster />
@@ -34,12 +33,14 @@ const App = () => (
           <BrowserRouter
             future={{
               v7_startTransition: true,
-              v7_relativeSplatPath: true
+              v7_relativeSplatPath: true,
             }}
           >
             <ScrollToTop />
 
-            <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+            <Suspense
+              fallback={<div className="p-10 text-center">Loading...</div>}
+            >
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
@@ -54,7 +55,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </LanguageProvider>
-    </HelmetProvider> {/* ⬅️ BU QO'SHILDI */}
+    </HelmetProvider>
   </QueryClientProvider>
 );
 
