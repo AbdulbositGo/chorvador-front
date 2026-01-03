@@ -50,16 +50,16 @@ interface CacheItem<T> {
 
 // Simple in-memory cache implementation with generics
 const cache = {
-  data: new Map<string, CacheItem<Category[] | Product[]>>(),
+  data: new Map<string, CacheItem<Category[]>>(),
   
-  set<T extends Category[] | Product[]>(key: string, value: T, ttl: number = 300000): void {
+  set<T extends Category[]>(key: string, value: T, ttl: number = 300000): void {
     this.data.set(key, {
       value,
       timestamp: Date.now() + ttl
     });
   },
   
-  get<T extends Category[] | Product[]>(key: string): T | null {
+  get<T extends Category[]>(key: string): T | null {
     const item = this.data.get(key);
     if (!item) return null;
     
@@ -89,7 +89,8 @@ const Products = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 8;
 
   // Preload critical images
   useEffect(() => {
@@ -101,10 +102,10 @@ const Products = () => {
     };
 
     if (products.length > 0) {
-      const firstPageImages: string[] = products.slice(0, itemsPerPage).map(p => p.image);
+      const firstPageImages: string[] = products.map(p => p.image);
       preloadImages(firstPageImages);
     }
-  }, [products, itemsPerPage]);
+  }, [products]);
 
   // SEO metadata based on language
   const seoData = useMemo(() => {
@@ -266,7 +267,7 @@ const Products = () => {
     fetchCategories();
   }, [language]);
 
-  // Fetch products with caching
+  // Fetch products with backend pagination
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -280,17 +281,22 @@ const Products = () => {
         }
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
-        const cacheKey = `products_${acceptLanguage}`;
         
-        // Check cache first
-        const cachedData = cache.get<Product[]>(cacheKey);
-        if (cachedData) {
-          setProducts(cachedData);
-          setLoading(false);
-          return;
+        // Build URL with pagination and filters
+        const params = new URLSearchParams();
+        params.append('page', currentPage.toString());
+        
+        if (selectedCategory !== 'all') {
+          params.append('category', selectedCategory);
+        }
+        
+        if (searchQuery.trim()) {
+          params.append('search', searchQuery.trim());
         }
 
-        const response = await fetch(`${apiUrl}/products/`, {
+        const url = `${apiUrl}/products/?${params.toString()}`;
+
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -305,6 +311,9 @@ const Products = () => {
         
         const data: ProductsResponse = await response.json();
         const productsArray: ApiProduct[] = data.results || [];
+        
+        // Update total count for pagination
+        setTotalCount(data.count || 0);
         
         if (!Array.isArray(productsArray)) {
           throw new Error("Ma'lumot noto'g'ri formatda");
@@ -339,8 +348,6 @@ const Products = () => {
           };
         });
         
-        // Cache the result
-        cache.set(cacheKey, transformedProducts, 300000); // Cache for 5 minutes
         setProducts(transformedProducts);
         
       } catch (err) {
@@ -354,39 +361,25 @@ const Products = () => {
     if (!categoriesLoading) {
       fetchProducts();
     }
-  }, [language, categoriesLoading, categories]);
+  }, [language, categoriesLoading, categories, currentPage, selectedCategory, searchQuery]);
 
   const handleProductClick = useCallback((productId: string) => {
     navigate(`/products/${productId}`);
   }, [navigate]);
 
-  // Memoized filtered products
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesSearch = 
-        (product.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = selectedCategory === "all" || product.categoryId === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, searchQuery, selectedCategory]);
-
-  // Memoized pagination
+  // Memoized pagination - calculate based on backend total count
   const { totalPages, startIndex, endIndex, currentProducts } = useMemo(() => {
-    const total = Math.ceil(filteredProducts.length / itemsPerPage);
+    const total = Math.ceil(totalCount / itemsPerPage);
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    const current = filteredProducts.slice(start, end);
     
     return {
       totalPages: total,
       startIndex: start,
       endIndex: end,
-      currentProducts: current
+      currentProducts: products // Use all products from current page
     };
-  }, [filteredProducts, currentPage, itemsPerPage]);
+  }, [totalCount, currentPage, itemsPerPage, products]);
 
   // Add structured data
   useEffect(() => {
@@ -584,14 +577,14 @@ const Products = () => {
           )}
 
           {/* Results Count */}
-          {!loading && !error && filteredProducts.length > 0 && (
+          {!loading && !error && totalCount > 0 && (
             <div id="products-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500" role="status" aria-live="polite">
               <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               <p className="text-sm sm:text-base font-medium">
-                {filteredProducts.length} {t("products.found")}
-                {filteredProducts.length > itemsPerPage && (
+                {totalCount} {t("products.found")}
+                {totalCount > itemsPerPage && (
                   <span className="text-muted-foreground/70 ml-2">
-                    ({startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} {language === 'uz' ? 'ko\'rsatilmoqda' : language === 'ru' ? 'показано' : 'shown'})
+                    ({startIndex + 1}-{Math.min(endIndex, totalCount)} {language === 'uz' ? 'ko\'rsatilmoqda' : language === 'ru' ? 'показано' : 'shown'})
                   </span>
                 )}
               </p>

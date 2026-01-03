@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ServiceCard } from "@/components/services/ServiceCard";
@@ -36,6 +36,40 @@ interface ApiResponse {
   results: Service[];
 }
 
+// Cache types
+interface CacheItem<T> {
+  value: T;
+  timestamp: number;
+}
+
+// Simple in-memory cache for categories only
+const cache = {
+  data: new Map<string, CacheItem<Category[]>>(),
+  
+  set<T extends Category[]>(key: string, value: T, ttl: number = 300000): void {
+    this.data.set(key, {
+      value,
+      timestamp: Date.now() + ttl
+    });
+  },
+  
+  get<T extends Category[]>(key: string): T | null {
+    const item = this.data.get(key);
+    if (!item) return null;
+    
+    if (Date.now() > item.timestamp) {
+      this.data.delete(key);
+      return null;
+    }
+    
+    return item.value as T;
+  },
+  
+  clear(): void {
+    this.data.clear();
+  }
+};
+
 const Services = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -49,6 +83,7 @@ const Services = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 8;
 
   // SEO metadata
@@ -66,43 +101,76 @@ const Services = () => {
   const currentUrl = `${siteUrl}/services${currentPage > 1 ? `?page=${currentPage}` : ''}`;
   const canonicalUrl = `${siteUrl}/services`;
 
-  // Categories ni olish
+  // Preload critical images
+  useEffect(() => {
+    const preloadImages = (urls: string[]): void => {
+      urls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+      });
+    };
+
+    if (services.length > 0) {
+      const firstPageImages: string[] = services.map(s => s.image);
+      preloadImages(firstPageImages);
+    }
+  }, [services]);
+
+  // Categories ni olish (with cache)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
         const API_URL = import.meta.env.VITE_API_URL;
         
+        if (!API_URL) {
+          throw new Error("API URL topilmadi");
+        }
+
+        const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
+        const cacheKey = `service_categories_${acceptLanguage}`;
+        
+        // Check cache first
+        const cachedData = cache.get<Category[]>(cacheKey);
+        if (cachedData) {
+          setCategories(cachedData);
+          setCategoriesLoading(false);
+          return;
+        }
+        
         const response = await fetch(`${API_URL}/categories/?type=service`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Accept-Language': language,
+            'Accept-Language': acceptLanguage,
           },
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (Array.isArray(data)) {
-            const allCategories = [
-              { 
-                id: 'all', 
-                name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' 
-              },
-              ...data.map(cat => ({
-                id: cat.id.toString(),
-                name: cat.name
-              }))
-            ];
-            setCategories(allCategories);
-          }
-        } else {
-          setCategories([
-            { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
-          ]);
+        if (!response.ok) {
+          throw new Error(`HTTP xatolik! Status: ${response.status}`);
         }
+        
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) {
+          throw new Error("Categories data array formatida emas");
+        }
+        
+        const allCategories: Category[] = [
+          { 
+            id: 'all', 
+            name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' 
+          },
+          ...data.map(cat => ({
+            id: cat.id.toString(),
+            name: cat.name
+          }))
+        ];
+        
+        // Cache the result
+        cache.set(cacheKey, allCategories, 600000); // Cache for 10 minutes
+        setCategories(allCategories);
       } catch (err) {
         console.error("Categories ERROR:", err);
         setCategories([
@@ -116,7 +184,7 @@ const Services = () => {
     fetchCategories();
   }, [language]);
 
-  // Services ni olish
+  // Services ni olish (with backend pagination)
   useEffect(() => {
     if (categoriesLoading) return;
 
@@ -132,38 +200,45 @@ const Services = () => {
         }
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
-
-        let allServices: Service[] = [];
-        let nextUrl: string | null = `${API_URL}/services/`;
         
-        while (nextUrl) {
-          const response = await fetch(nextUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'Accept-Language': acceptLanguage,
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP xatolik! Status: ${response.status}`);
-          }
-          
-          const data: ApiResponse = await response.json();
-          const servicesArray: Service[] = data.results || [];
-          
-          allServices = [...allServices, ...servicesArray];
-          nextUrl = data.next;
+        // Build URL with pagination and filters
+        const params = new URLSearchParams();
+        params.append('page', currentPage.toString());
+        
+        if (selectedCategory !== 'all') {
+          params.append('category', selectedCategory);
         }
         
-        console.log(`✅ Jami ${allServices.length} ta xizmat yuklandi`);
+        if (searchQuery.trim()) {
+          params.append('search', searchQuery.trim());
+        }
+
+        const url = `${API_URL}/services/?${params.toString()}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Accept-Language': acceptLanguage,
+          },
+        });
         
-        if (!Array.isArray(allServices)) {
+        if (!response.ok) {
+          throw new Error(`HTTP xatolik! Status: ${response.status}`);
+        }
+        
+        const data: ApiResponse = await response.json();
+        const servicesArray: Service[] = data.results || [];
+        
+        // Update total count for pagination
+        setTotalCount(data.count || 0);
+        
+        if (!Array.isArray(servicesArray)) {
           throw new Error("Ma'lumot noto'g'ri formatda");
         }
         
-        const transformedServices = allServices.map(service => {
+        const transformedServices = servicesArray.map(service => {
           let categoryId = 'all';
           let categoryName = '';
           
@@ -206,38 +281,25 @@ const Services = () => {
     };
 
     fetchServices();
-  }, [language, categories, categoriesLoading]);
+  }, [language, categories, categoriesLoading, currentPage, selectedCategory, searchQuery]);
 
-  // Filter funksiyasi
-  const filteredServices = services.filter((service) => {
-    const matchesSearch = 
-      service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.short_description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesCategory = false;
-    
-    if (selectedCategory === "all") {
-      matchesCategory = true;
-    } else {
-      const selectedCat = categories.find(cat => cat.id === selectedCategory);
-      
-      if (selectedCat) {
-        matchesCategory = 
-          service.categoryId === selectedCategory || 
-          service.categoryId === selectedCat.name ||
-          service.categoryName === selectedCat.name ||
-          (typeof service.category === 'string' && service.category === selectedCat.name);
-      }
-    }
-    
-    return matchesSearch && matchesCategory;
-  });
+  const handleServiceClick = useCallback((serviceId: number) => {
+    navigate(`/services/${serviceId}`);
+  }, [navigate]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentServices = filteredServices.slice(startIndex, endIndex);
+  // Memoized pagination - calculate based on backend total count
+  const { totalPages, startIndex, endIndex, currentServices } = useMemo(() => {
+    const total = Math.ceil(totalCount / itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    
+    return {
+      totalPages: total,
+      startIndex: start,
+      endIndex: end,
+      currentServices: services // Use all services from current page
+    };
+  }, [totalCount, currentPage, itemsPerPage, services]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -254,15 +316,18 @@ const Services = () => {
   }, [currentPage]);
 
   // Display categories
-  const visibleCategories = showAllCategories ? categories : categories.slice(0, 6);
+  const visibleCategories = useMemo(() => 
+    showAllCategories ? categories : categories.slice(0, 6),
+    [showAllCategories, categories]
+  );
 
   // Generate structured data for SEO
-  const structuredData = {
+  const structuredData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": pageTitle,
     "description": pageDescription,
-    "numberOfItems": filteredServices.length,
+    "numberOfItems": totalCount,
     "itemListElement": currentServices.map((service, index) => ({
       "@type": "ListItem",
       "position": startIndex + index + 1,
@@ -278,9 +343,9 @@ const Services = () => {
         }
       }
     }))
-  };
+  }), [pageTitle, pageDescription, totalCount, currentServices, startIndex, siteUrl, siteName]);
 
-  const breadcrumbData = {
+  const breadcrumbData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
@@ -297,7 +362,7 @@ const Services = () => {
         "item": canonicalUrl
       }
     ]
-  };
+  }), [language, siteUrl, pageTitle, canonicalUrl]);
 
   return (
     <Layout>
@@ -466,7 +531,7 @@ const Services = () => {
 
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status">
+            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status" aria-live="polite">
               <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" />
               <span className="text-sm sm:text-base text-muted-foreground animate-pulse">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
@@ -494,14 +559,14 @@ const Services = () => {
           )}
 
           {/* Results Count */}
-          {!loading && !error && filteredServices.length > 0 && (
-            <div id="services-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500" role="status">
+          {!loading && !error && totalCount > 0 && (
+            <div id="services-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500" role="status" aria-live="polite">
               <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
               <p className="text-sm sm:text-base font-medium">
-                {filteredServices.length} {language === 'uz' ? 'ta xizmat topildi' : language === 'ru' ? 'найдено услуг' : 'services found'}
-                {filteredServices.length > itemsPerPage && (
+                {totalCount} {language === 'uz' ? 'ta xizmat topildi' : language === 'ru' ? 'найдено услуг' : 'services found'}
+                {totalCount > itemsPerPage && (
                   <span className="text-muted-foreground/70 ml-2">
-                    ({startIndex + 1}-{Math.min(endIndex, filteredServices.length)} {language === 'uz' ? 'ko\'rsatilmoqda' : language === 'ru' ? 'показано' : 'shown'})
+                    ({startIndex + 1}-{Math.min(endIndex, totalCount)} {language === 'uz' ? 'ko\'rsatilmoqda' : language === 'ru' ? 'показано' : 'shown'})
                   </span>
                 )}
               </p>
@@ -513,25 +578,24 @@ const Services = () => {
             <>
               {currentServices.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" role="list">
                     {currentServices.map((service, index) => (
                       <article 
                         key={service.id}
+                        onClick={() => handleServiceClick(service.id)}
                         className="cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
                         style={{ animationDelay: `${index * 75}ms` }}
                         itemScope
                         itemType="https://schema.org/Service"
+                        role="listitem"
                       >
-                        <ServiceCard 
-                          service={service}
-                          onClick={() => navigate(`/services/${service.id}`)}
-                        />
+                        <ServiceCard service={service} />
                       </article>
                     ))}
                   </div>
 
                   {/* Pagination */}
-                  {filteredServices.length > itemsPerPage && (
+                  {totalPages > 1 && (
                     <nav 
                       className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500"
                       role="navigation"
@@ -548,7 +612,7 @@ const Services = () => {
                         {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Previous'}
                       </Button>
                       
-                      <div className="flex gap-1 sm:gap-2">
+                      <div className="flex gap-1 sm:gap-2" role="list">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                           <button
                             key={page}
@@ -581,7 +645,7 @@ const Services = () => {
                   )}
                 </>
               ) : (
-                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500">
+                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status">
                   <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted mb-4 sm:mb-6">
                     <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
                   </div>
