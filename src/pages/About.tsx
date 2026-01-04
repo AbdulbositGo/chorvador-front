@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { CheckCircle, Target, Award, LucideIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 
 interface Value {
@@ -18,13 +18,13 @@ interface StructuredDataObject {
 
 const About = () => {
   const { t, language } = useLanguage();
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Constants
-  const siteName = "Ultra Tez";
+  const siteName = "Chorvador.uz";
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : "https://yourwebsite.com";
   const imageUrl = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&q=80";
 
-  // Memoized SEO data
   const seoData = useMemo(() => {
     const pageTitle = t("about.title");
     const pageDescription = t("about.subtitle");
@@ -36,7 +36,7 @@ const About = () => {
       : "about us, company, services, professional, quality, trust";
 
     return { pageTitle, pageDescription, currentUrl, keywords };
-  }, [t, language, siteUrl]);
+  }, [  t, language, siteUrl]);
 
   // Memoized values
   const values: Value[] = useMemo(() => [
@@ -57,7 +57,6 @@ const About = () => {
     },
   ], [t]);
 
-  // Memoized structured data
   const structuredData = useMemo(() => ({
     organization: {
       "@context": "https://schema.org",
@@ -70,12 +69,7 @@ const About = () => {
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "UZ"
-      },
-      "sameAs": [
-        "https://facebook.com/yourpage",
-        "https://instagram.com/yourpage",
-        "https://linkedin.com/company/yourcompany"
-      ]
+      }
     },
     breadcrumb: {
       "@context": "https://schema.org",
@@ -84,7 +78,7 @@ const About = () => {
         {
           "@type": "ListItem",
           "position": 1,
-          "name": language === 'uz' ? "Bosh sahifa" : language === 'ru' ? "Главная" : "Home",
+          "name": language === 'uz' ? "Bosh sahifa" : "Home",
           "item": siteUrl
         },
         {
@@ -97,32 +91,64 @@ const About = () => {
     }
   }), [seoData, siteName, siteUrl, language]);
 
-  // Add DNS prefetch and preconnect
+  // Optimized resource hints
   useEffect(() => {
-    const addResourceHint = (rel: string, href: string): void => {
+    const addResourceHint = (rel: string, href: string, crossorigin?: boolean): void => {
       if (!document.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
         const link = document.createElement('link');
         link.rel = rel;
         link.href = href;
+        if (crossorigin) link.crossOrigin = 'anonymous';
         document.head.appendChild(link);
       }
     };
 
+    // Critical resource hints
     addResourceHint('dns-prefetch', 'https://fonts.googleapis.com');
     addResourceHint('dns-prefetch', 'https://images.unsplash.com');
     addResourceHint('preconnect', 'https://fonts.googleapis.com');
-    addResourceHint('preconnect', 'https://fonts.gstatic.com');
+    addResourceHint('preconnect', 'https://fonts.gstatic.com', true);
     
-    // Preload hero image
+    // Preload critical image with priority
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
     link.href = '/about_img.jpg';
+    link.fetchPriority = 'high';
     document.head.appendChild(link);
 
     return () => {
       link.remove();
     };
+  }, []);
+
+  // Lazy load animations only when visible
+  useEffect(() => {
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('animate-visible');
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '50px' }
+      );
+
+      document.querySelectorAll('.lazy-animate').forEach((el) => {
+        observer.observe(el);
+      });
+
+      return () => observer.disconnect();
+    }
+  }, []);
+
+  // Image optimization with native lazy loading
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setImageLoaded(true);
+    }
   }, []);
 
   return (
@@ -193,7 +219,7 @@ const About = () => {
       <section className="section-padding">
         <div className="container-main">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <article className="animate-in fade-in slide-in-from-left duration-700">
+            <article className="lazy-animate opacity-0 translate-x-[-20px] transition-all duration-700">
               <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
                 {t("about.history.badge")}
               </span>
@@ -207,18 +233,24 @@ const About = () => {
               </div>
             </article>
             
-            <figure className="relative animate-in fade-in slide-in-from-right duration-700">
-              <img
-                src="/about_img.jpg"
-                alt={`${seoData.pageTitle} - ${language === 'uz' ? 'kompaniya tarixi' : language === 'ru' ? 'история компании' : 'company history'}`}
-                loading="eager"
-                width="600"
-                height="400"
-                className="rounded-2xl shadow-hero w-full object-cover"
-                fetchPriority="high"
-              />
+            <figure className="relative lazy-animate opacity-0 translate-x-[20px] transition-all duration-700">
+              <div className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
+                <img
+                  ref={imgRef}
+                  src="/about_img.jpg"
+                  alt={`${seoData.pageTitle} - ${language === 'uz' ? 'kompaniya tarixi' : language === 'ru' ? 'история компании' : 'company history'}`}
+                  loading="eager"
+                  decoding="async"
+                  width="600"
+                  height="400"
+                  className="rounded-2xl shadow-hero w-full object-cover will-change-transform"
+                  fetchPriority="high"
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </div>
               <div 
-                className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-secondary text-secondary-foreground p-4 sm:p-6 rounded-2xl shadow-lg animate-in zoom-in duration-500 delay-300"
+                className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-secondary text-secondary-foreground p-4 sm:p-6 rounded-2xl shadow-lg lazy-animate opacity-0"
+                style={{ animationDelay: '300ms' }}
                 aria-label={language === 'uz' ? '10 yildan ortiq tajriba' : language === 'ru' ? 'более 10 лет опыта' : 'over 10 years experience'}
               >
                 <div className="text-3xl sm:text-4xl font-bold">10+</div>
@@ -232,7 +264,7 @@ const About = () => {
       {/* Values Section */}
       <section className="section-padding bg-muted/30" aria-labelledby="values-heading">
         <div className="container-main">
-          <header className="text-center mb-8 sm:mb-12 animate-in fade-in slide-in-from-bottom-3 duration-700">
+          <header className="text-center mb-8 sm:mb-12 lazy-animate opacity-0 translate-y-[-15px] transition-all duration-700">
             <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
               {t("about.values.badge")}
             </span>
@@ -245,8 +277,11 @@ const About = () => {
             {values.map((value, index) => (
               <article 
                 key={value.title} 
-                className="text-center p-6 bg-background rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="text-center p-6 bg-background rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 lazy-animate opacity-0 translate-y-[20px]"
+                style={{ 
+                  transitionDelay: `${index * 100}ms`,
+                  animationDelay: `${index * 100}ms`
+                }}
               >
                 <div 
                   className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-5 rounded-2xl gradient-hero flex items-center justify-center transform hover:scale-110 transition-transform duration-300" 
@@ -265,6 +300,49 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      <style>{`
+        /* Performance optimization styles */
+        .lazy-animate.animate-visible {
+          opacity: 1 !important;
+          transform: translateY(0) translateX(0) !important;
+        }
+
+        .will-change-transform {
+          will-change: transform;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+
+        /* GPU acceleration for animations */
+        .gradient-hero,
+        .lazy-animate,
+        img {
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+
+        /* Optimize font rendering */
+        body {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+
+        /* Content visibility for better performance */
+        img {
+          content-visibility: auto;
+        }
+
+        /* Reduce motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
     </Layout>
   );
 };

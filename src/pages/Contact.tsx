@@ -1,57 +1,155 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { MapPin, Phone, Mail, Clock, Send, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { Helmet } from "react-helmet-async";
+
+interface PhoneNumber {
+  value: string;
+  link: string;
+}
+
+interface ContactItem {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  value?: string;
+  link?: string;
+  isPhoneGrid?: boolean;
+}
+
+interface ContactInfoCardProps {
+  item: ContactItem;
+  index: number;
+  phoneNumbers: PhoneNumber[];
+}
+
+// Memoized ContactInfoCard component
+const ContactInfoCard = memo(({ item, index, phoneNumbers }: ContactInfoCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div 
+      ref={cardRef}
+      className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border group cursor-default lazy-animate opacity-0 translate-y-5 hover:translate-x-2 transition-all duration-300"
+      style={{ transitionDelay: `${index * 100}ms` }}
+    >
+      <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform will-change-transform">
+        <item.icon className="w-6 h-6 text-primary-foreground" />
+      </div>
+      <div className="flex-1">
+        <h3 className="font-semibold text-foreground mb-1">
+          {item.title}
+        </h3>
+        {item.isPhoneGrid ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            {phoneNumbers.map((phone: PhoneNumber, phoneIdx: number) => (
+              <a
+                key={phoneIdx}
+                href={phone.link}
+                className="flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:text-white transition-all p-3 rounded-lg border border-border hover:border-[#2D79C4] hover:bg-[#2D79C4] hover:shadow-md"
+              >
+                <Phone className="w-4 h-4" />
+                {phone.value}
+              </a>
+            ))}
+          </div>
+        ) : item.link ? (
+          <a 
+            href={item.link} 
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            {item.value}
+          </a>
+        ) : (
+          <p className="text-muted-foreground whitespace-pre-line">
+            {item.value}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+});
+
+ContactInfoCard.displayName = 'ContactInfoCard';
 
 const Contact = () => {
   const { t, language } = useLanguage();
-  
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
     text: "",
   });
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
 
-  // SEO Metadata
-  useEffect(() => {
-    const pageTitle = language === 'uz' 
-      ? 'Bog\'lanish | Chorvador' 
+  const siteName = "Chorvador.uz";
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : "https://yourwebsite.com";
+
+  // Memoized SEO data
+  const seoData = {
+    pageTitle: language === 'uz' 
+      ? 'Bog\'lanish' 
       : language === 'ru' 
-      ? 'Контакты | Chorvador' 
-      : 'Contact | Chorvador';
-    
-    const pageDescription = language === 'uz'
+      ? 'Контакты' 
+      : 'Contact',
+    pageDescription: language === 'uz'
       ? 'Biz bilan bog\'laning. Savollaringiz bormi? Biz sizga yordam berishga tayyormiz.'
       : language === 'ru'
       ? 'Свяжитесь с нами. Есть вопросы? Мы готовы помочь вам.'
-      : 'Contact us. Have questions? We are ready to help you.';
-
-    document.title = pageTitle;
-    
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', pageDescription);
-    
-    document.documentElement.lang = language;
-  }, [language]);
-
-  const validatePhone = (number: string) => {
-    const digitsOnly = number.replace(/\D/g, "");
-    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+      : 'Contact us. Have questions? We are ready to help you.',
+    currentUrl: `${siteUrl}/${language}/contact`
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Lazy load map with Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !mapLoaded) {
+            setMapLoaded(true);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    if (mapRef.current) {
+      observer.observe(mapRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [mapLoaded]);
+
+  const validatePhone = useCallback((number: string) => {
+    const digitsOnly = number.replace(/\D/g, "");
+    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+  }, []);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validatePhone(formData.phone)) {
@@ -64,10 +162,6 @@ const Contact = () => {
         {
           position: "top-right",
           autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         }
       );
       return;
@@ -75,61 +169,49 @@ const Contact = () => {
 
     setIsSubmitting(true);
 
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "";
-      const response = await fetch(`${API_URL}/send/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+    const API_URL = import.meta.env.VITE_API_URL || "";
+    fetch(`${API_URL}/send/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+      .then(response => {
+        if (!response.ok) throw new Error("Server error");
+        return response.json();
+      })
+      .then(() => {
+        toast.success(
+          language === 'uz'
+            ? "Xabaringiz muvaffaqiyatli yuborildi!"
+            : language === 'ru'
+            ? "Ваше сообщение успешно отправлено!"
+            : "Your message has been sent successfully!",
+          { position: "top-right", autoClose: 5000 }
+        );
+        setFormData({ full_name: "", phone: "", text: "" });
+      })
+      .catch(() => {
+        toast.error(
+          language === 'uz'
+            ? "Xabar yuborishda xatolik yuz berdi"
+            : language === 'ru'
+            ? "Произошла ошибка при отправке сообщения"
+            : "An error occurred while sending the message",
+          { position: "top-right", autoClose: 4000 }
+        );
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
+  }, [formData, language, validatePhone]);
 
-      if (!response.ok) throw new Error("Server error");
-
-      toast.success(
-        language === 'uz'
-          ? "Xabaringiz muvaffaqiyatli yuborildi!"
-          : language === 'ru'
-          ? "Ваше сообщение успешно отправлено!"
-          : "Your message has been sent successfully!",
-        {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        }
-      );
-
-      setFormData({ full_name: "", phone: "", text: "" });
-    } catch (error) {
-      toast.error(
-        language === 'uz'
-          ? "Xabar yuborishda xatolik yuz berdi"
-          : language === 'ru'
-          ? "Произошла ошибка при отправке сообщения"
-          : "An error occurred while sending the message",
-        {
-          position: "top-right",
-          autoClose: 4000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        }
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const phoneNumbers = [
+  const phoneNumbers: PhoneNumber[] = [
     { value: "+998 91 192-07-55", link: "tel:+998911920755" },
     { value: "+998 97 444 00 16", link: "tel:+998974440016" },
     { value: "+998 94 647 10 03", link: "tel:+998946471003" },
   ];
 
-  const contactInfo = [
+  const contactInfo: ContactItem[] = [
     { 
       icon: MapPin, 
       title: t("contact.address.title"), 
@@ -155,6 +237,24 @@ const Contact = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <html lang={language} />
+        <title>{seoData.pageTitle} | {siteName}</title>
+        <meta name="description" content={seoData.pageDescription} />
+        <link rel="canonical" href={seoData.currentUrl} />
+        
+        {/* Alternate Languages */}
+        <link rel="alternate" hrefLang="uz" href={`${siteUrl}/uz/contact`} />
+        <link rel="alternate" hrefLang="ru" href={`${siteUrl}/ru/contact`} />
+        <link rel="alternate" hrefLang="en" href={`${siteUrl}/en/contact`} />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content={`${seoData.pageTitle} | ${siteName}`} />
+        <meta property="og:description" content={seoData.pageDescription} />
+        <meta property="og:url" content={seoData.currentUrl} />
+        <meta property="og:type" content="website" />
+      </Helmet>
+
       {/* Hero Section */}
       <section className="gradient-hero py-12 md:py-20">
         <div className="container-main px-4 md:px-6">
@@ -178,7 +278,7 @@ const Contact = () => {
                   {t("contact.form.title")}
                 </h2>
                 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">
                       {t("contact.form.name")} *
@@ -220,7 +320,7 @@ const Contact = () => {
                   </div>
 
                   <Button
-                    type="submit"
+                    onClick={handleSubmit}
                     size="lg"
                     className="w-full h-12 font-bold active:scale-[0.98] transition-transform shadow-sm"
                     disabled={isSubmitting}
@@ -234,7 +334,7 @@ const Contact = () => {
                       </span>
                     )}
                   </Button>
-                </form>
+                </div>
               </div>
             </div>
 
@@ -251,78 +351,82 @@ const Contact = () => {
 
               <div className="grid gap-4 md:gap-6 lg:pl-6 flex-1">
                 {contactInfo.map((item, idx) => (
-                  <motion.div 
-                    key={idx} 
-                    className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border group cursor-default"
-                    whileHover={{ 
-                      x: 10, 
-                      boxShadow: "0 10px 30px -10px hsl(207 66% 47% / 0.15)" 
-                    }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                  >
-                    <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                      <item.icon className="w-6 h-6 text-primary-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-1">
-                        {item.title}
-                      </h3>
-                      {item.isPhoneGrid ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                          {phoneNumbers.map((phone, phoneIdx) => (
-                            <a
-                              key={phoneIdx}
-                              href={phone.link}
-                              className="flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:text-white transition-all p-3 rounded-lg border border-border hover:border-[#2D79C4] hover:bg-[#2D79C4] hover:shadow-md"
-                            >
-                              <Phone className="w-4 h-4" />
-                              {phone.value}
-                            </a>
-                          ))}
-                        </div>
-                      ) : item.link ? (
-                        <a 
-                          href={item.link} 
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          {item.value}
-                        </a>
-                      ) : (
-                        <p className="text-muted-foreground whitespace-pre-line">
-                          {item.value}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
+                  <ContactInfoCard 
+                    key={idx}
+                    item={item}
+                    index={idx}
+                    phoneNumbers={phoneNumbers}
+                  />
                 ))}
               </div>
             </div>
 
           </div>
 
-          {/* Map Section */}
-          <div className="mt-16 md:mt-24">
-            <motion.div 
-              className="rounded-3xl overflow-hidden shadow-lg border border-border relative w-full h-[350px] md:h-[500px]"
-              whileHover={{ scale: 1.02 }} 
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1497.542603852809!2d69.26199674606329!3d41.35050164413911!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8d118e2bc4cf%3A0x374c51e289606a41!2sChorvador%20uz!5e0!3m2!1suz!2s!4v1766405927730!5m2!1suz!2s"
-                className="w-full h-full border-0"
-                allowFullScreen
-                loading="eager"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Location Map"
-                sandbox="allow-scripts allow-same-origin allow-popups"
-              />
-            </motion.div>
+          {/* Map Section - Lazy Loaded */}
+          <div className="mt-16 md:mt-24" ref={mapRef}>
+            <div className="rounded-3xl overflow-hidden shadow-lg border border-border relative w-full h-[350px] md:h-[500px] hover:shadow-xl transition-shadow duration-300">
+              {mapLoaded ? (
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1497.542603852809!2d69.26199674606329!3d41.35050164413911!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8d118e2bc4cf%3A0x374c51e289606a41!2sChorvador%20uz!5e0!3m2!1suz!2s!4v1766405927730!5m2!1suz!2s"
+                  className="w-full h-full border-0"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Location Map"
+                />
+              ) : (
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading map...</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
+
+      <style>{`
+        .lazy-animate.animate-visible {
+          opacity: 1 !important;
+          transform: translateY(0) !important;
+        }
+
+        .will-change-transform {
+          will-change: transform;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+
+        .gradient-hero,
+        .lazy-animate {
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+
+        body {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+
+        input, textarea {
+          will-change: auto;
+        }
+
+        html {
+          scroll-behavior: smooth;
+        }
+      `}</style>
     </Layout>
   );
 };

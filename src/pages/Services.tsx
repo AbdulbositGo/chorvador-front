@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ServiceCard } from "@/components/services/ServiceCard";
 import { Input } from "@/components/ui/input";
@@ -36,17 +36,16 @@ interface ApiResponse {
   results: Service[];
 }
 
-// Cache types
 interface CacheItem<T> {
   value: T;
   timestamp: number;
 }
 
-// Simple in-memory cache for categories only
+// Optimized cache with better performance
 const cache = {
   data: new Map<string, CacheItem<Category[]>>(),
   
-  set<T extends Category[]>(key: string, value: T, ttl: number = 300000): void {
+  set<T extends Category[]>(key: string, value: T, ttl: number = 600000): void {
     this.data.set(key, {
       value,
       timestamp: Date.now() + ttl
@@ -73,8 +72,15 @@ const cache = {
 const Services = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // URL dan qiymatlarni olish
+  const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
+  const categoryFromUrl = searchParams.get("category") || "all";
+  const searchFromUrl = searchParams.get("search") || "";
+  
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl);
+  const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
   const [showFilters, setShowFilters] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -82,12 +88,12 @@ const Services = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 8;
 
   // SEO metadata
-  const siteName = "Your Company Name";
+  const siteName = "Chorvador.uz";
   const siteUrl = "https://yourwebsite.com";
   
   const pageTitle = t("services.page.title") || "Professional Services";
@@ -101,17 +107,37 @@ const Services = () => {
   const currentUrl = `${siteUrl}/services${currentPage > 1 ? `?page=${currentPage}` : ''}`;
   const canonicalUrl = `${siteUrl}/services`;
 
-  // Preload critical images
-  useEffect(() => {
-    const preloadImages = (urls: string[]): void => {
-      urls.forEach(url => {
-        const img = new Image();
-        img.src = url;
-      });
-    };
+  // URL ni yangilash
+  const updateURL = useCallback((page: number, category: string, search: string) => {
+    const params = new URLSearchParams();
+    
+    if (page > 1) params.set("page", page.toString());
+    if (category !== "all") params.set("category", category);
+    if (search.trim()) params.set("search", search.trim());
+    
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
 
+  // State o'zgarganda URL ni yangilash
+  useEffect(() => {
+    updateURL(currentPage, selectedCategory, searchQuery);
+  }, [currentPage, selectedCategory, searchQuery, updateURL]);
+
+  // Optimized image preloading with priority hints
+  useEffect(() => {
     if (services.length > 0) {
-      const firstPageImages: string[] = services.map(s => s.image);
+      const preloadImages = (urls: string[]): void => {
+        urls.slice(0, 4).forEach((url, index) => {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = url;
+          if (index === 0) link.setAttribute('fetchpriority', 'high');
+          document.head.appendChild(link);
+        });
+      };
+
+      const firstPageImages = services.slice(0, 4).map(s => s.image);
       preloadImages(firstPageImages);
     }
   }, [services]);
@@ -169,10 +195,9 @@ const Services = () => {
         ];
         
         // Cache the result
-        cache.set(cacheKey, allCategories, 600000); // Cache for 10 minutes
+        cache.set(cacheKey, allCategories, 600000);
         setCategories(allCategories);
       } catch (err) {
-        console.error("Categories ERROR:", err);
         setCategories([
           { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
         ]);
@@ -273,7 +298,6 @@ const Services = () => {
         setServices(transformedServices);
         
       } catch (err) {
-        console.error("Services ERROR:", err);
         setError(err instanceof Error ? err.message : 'Noma\'lum xatolik');
       } finally {
         setLoading(false);
@@ -287,7 +311,7 @@ const Services = () => {
     navigate(`/services/${serviceId}`);
   }, [navigate]);
 
-  // Memoized pagination - calculate based on backend total count
+  // Memoized pagination
   const { totalPages, startIndex, endIndex, currentServices } = useMemo(() => {
     const total = Math.ceil(totalCount / itemsPerPage);
     const start = (currentPage - 1) * itemsPerPage;
@@ -297,7 +321,7 @@ const Services = () => {
       totalPages: total,
       startIndex: start,
       endIndex: end,
-      currentServices: services // Use all services from current page
+      currentServices: services
     };
   }, [totalCount, currentPage, itemsPerPage, services]);
 
@@ -307,7 +331,7 @@ const Services = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchQuery, selectedCategory]);
 
-  // Smooth scroll to top when changing pages
+  // Smooth scroll when changing pages
   useEffect(() => {
     const element = document.getElementById('services-grid');
     if (element && currentPage > 1) {
@@ -321,7 +345,7 @@ const Services = () => {
     [showAllCategories, categories]
   );
 
-  // Generate structured data for SEO
+  // Enhanced structured data for SEO
   const structuredData = useMemo(() => ({
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -372,6 +396,7 @@ const Services = () => {
         <title>{pageTitle} | {siteName}</title>
         <meta name="description" content={pageDescription} />
         <meta name="keywords" content={pageKeywords} />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
         
         {/* Canonical URL */}
         <link rel="canonical" href={canonicalUrl} />
@@ -394,6 +419,7 @@ const Services = () => {
         )}
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={pageTitle} />
         
         {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -402,11 +428,13 @@ const Services = () => {
         {currentServices.length > 0 && (
           <meta name="twitter:image" content={currentServices[0].image} />
         )}
+        <meta name="twitter:image:alt" content={pageTitle} />
         
         {/* Additional SEO Tags */}
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         <meta name="author" content={siteName} />
         <meta name="revisit-after" content="7 days" />
+        <meta name="theme-color" content="#ffffff" />
         
         {/* Pagination Meta Tags */}
         {currentPage > 1 && (
@@ -414,6 +442,14 @@ const Services = () => {
         )}
         {currentPage < totalPages && (
           <link rel="next" href={`${siteUrl}/services?page=${currentPage + 1}`} />
+        )}
+        
+        {/* Resource Hints */}
+        {import.meta.env.VITE_API_URL && (
+          <>
+            <link rel="dns-prefetch" href={new URL(import.meta.env.VITE_API_URL).origin} />
+            <link rel="preconnect" href={new URL(import.meta.env.VITE_API_URL).origin} crossOrigin="anonymous" />
+          </>
         )}
         
         {/* Structured Data */}
@@ -428,7 +464,7 @@ const Services = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
               {pageTitle}
             </h1>
@@ -443,23 +479,26 @@ const Services = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           
           {/* Search & Filter Controls */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div className="relative flex-1">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
               <Input
                 placeholder={language === 'uz' ? 'Xizmatlarni qidiring...' : language === 'ru' ? 'Поиск услуг...' : 'Search services...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base transition-all duration-300"
+                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
                 aria-label={language === 'uz' ? 'Xizmatlarni qidirish' : language === 'ru' ? 'Поиск услуг' : 'Search services'}
+                type="search"
+                autoComplete="off"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors animate-in fade-in zoom-in duration-200"
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
                   aria-label="Clear search"
+                  type="button"
                 >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -468,8 +507,10 @@ const Services = () => {
               className="sm:hidden h-11 font-medium"
               onClick={() => setShowFilters(!showFilters)}
               aria-label="Toggle filters"
+              aria-expanded={showFilters}
+              type="button"
             >
-              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              <SlidersHorizontal className="w-4 h-4 mr-2" aria-hidden="true" />
               {language === 'uz' ? 'Filtrlar' : language === 'ru' ? 'Фильтры' : 'Filters'}
             </Button>
           </div>
@@ -484,15 +525,15 @@ const Services = () => {
           >
             <div className="flex flex-wrap gap-2">
               {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground py-2 animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="flex items-center gap-2 text-muted-foreground py-2" role="status" aria-live="polite">
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span className="text-xs sm:text-sm">
                     {language === 'uz' ? 'Kategoriyalar yuklanmoqda...' : language === 'ru' ? 'Загрузка категорий...' : 'Loading categories...'}
                   </span>
                 </div>
               ) : (
                 <>
-                  {visibleCategories.map((category, index) => (
+                  {visibleCategories.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => {
@@ -500,14 +541,14 @@ const Services = () => {
                         setShowFilters(false);
                       }}
                       className={cn(
-                        "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                        "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
                         selectedCategory === category.id
                           ? "bg-primary text-primary-foreground shadow-md scale-105"
                           : "bg-muted text-muted-foreground hover:bg-muted/80 hover:scale-105"
                       )}
-                      style={{ animationDelay: `${index * 50}ms` }}
                       aria-pressed={selectedCategory === category.id}
                       aria-label={`Filter by ${category.name}`}
+                      type="button"
                     >
                       {category.name}
                     </button>
@@ -515,8 +556,10 @@ const Services = () => {
                   {categories.length > 6 && (
                     <button
                       onClick={() => setShowAllCategories(!showAllCategories)}
-                      className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-all duration-300 border border-dashed border-muted-foreground/30 hover:scale-105 hover:border-solid animate-in fade-in slide-in-from-bottom-2"
-                      style={{ animationDelay: `${visibleCategories.length * 50}ms` }}
+                      className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-all duration-300 border border-dashed border-muted-foreground/30 hover:scale-105 hover:border-solid"
+                      aria-expanded={showAllCategories}
+                      aria-label={showAllCategories ? 'Show less categories' : 'Show more categories'}
+                      type="button"
                     >
                       {showAllCategories 
                         ? (language === 'uz' ? 'Kamroq' : language === 'ru' ? 'Меньше' : 'Less')
@@ -531,9 +574,9 @@ const Services = () => {
 
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status" aria-live="polite">
-              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" />
-              <span className="text-sm sm:text-base text-muted-foreground animate-pulse">
+            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24" role="status" aria-live="polite">
+              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" aria-hidden="true" />
+              <span className="text-sm sm:text-base text-muted-foreground">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
               </span>
             </div>
@@ -541,9 +584,9 @@ const Services = () => {
 
           {/* Error State */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500" role="alert">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4 animate-in zoom-in duration-300">
-                <X className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" />
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center" role="alert" aria-live="assertive">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4">
+                <X className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" aria-hidden="true" />
               </div>
               <p className="text-destructive font-semibold mb-2 text-base sm:text-lg">
                 {language === 'uz' ? 'Xatolik yuz berdi' : language === 'ru' ? 'Произошла ошибка' : 'An error occurred'}
@@ -552,6 +595,7 @@ const Services = () => {
               <Button 
                 onClick={() => window.location.reload()}
                 className="w-full sm:w-auto"
+                type="button"
               >
                 {language === 'uz' ? 'Qayta urinish' : language === 'ru' ? 'Попробовать снова' : 'Try again'}
               </Button>
@@ -560,8 +604,8 @@ const Services = () => {
 
           {/* Results Count */}
           {!loading && !error && totalCount > 0 && (
-            <div id="services-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500" role="status" aria-live="polite">
-              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div id="services-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6" role="status" aria-live="polite">
+              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               <p className="text-sm sm:text-base font-medium">
                 {totalCount} {language === 'uz' ? 'ta xizmat topildi' : language === 'ru' ? 'найдено услуг' : 'services found'}
                 {totalCount > itemsPerPage && (
@@ -579,12 +623,11 @@ const Services = () => {
               {currentServices.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" role="list">
-                    {currentServices.map((service, index) => (
+                    {currentServices.map((service) => (
                       <article 
                         key={service.id}
                         onClick={() => handleServiceClick(service.id)}
-                        className="cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
-                        style={{ animationDelay: `${index * 75}ms` }}
+                        className="cursor-pointer"
                         itemScope
                         itemType="https://schema.org/Service"
                         role="listitem"
@@ -597,7 +640,7 @@ const Services = () => {
                   {/* Pagination */}
                   {totalPages > 1 && (
                     <nav 
-                      className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                      className="flex justify-center items-center gap-2 mt-8 sm:mt-12"
                       role="navigation"
                       aria-label="Pagination"
                     >
@@ -608,12 +651,25 @@ const Services = () => {
                         disabled={currentPage === 1}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Previous page"
+                        type="button"
                       >
                         {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Previous'}
                       </Button>
                       
                       <div className="flex gap-1 sm:gap-2" role="list">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                          let page;
+                          if (totalPages <= 7) {
+                            page = i + 1;
+                          } else if (currentPage <= 4) {
+                            page = i + 1;
+                          } else if (currentPage >= totalPages - 3) {
+                            page = totalPages - 6 + i;
+                          } else {
+                            page = currentPage - 3 + i;
+                          }
+                          return page;
+                        }).map((page) => (
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
@@ -623,8 +679,9 @@ const Services = () => {
                                 ? "bg-primary text-primary-foreground shadow-md scale-105"
                                 : "bg-muted text-muted-foreground hover:bg-muted/80"
                             )}
-                            aria-label={`Page ${page}`}
+                            aria-label={`Go to page ${page}`}
                             aria-current={currentPage === page ? 'page' : undefined}
+                            type="button"
                           >
                             {page}
                           </button>
@@ -638,6 +695,7 @@ const Services = () => {
                         disabled={currentPage === totalPages}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Next page"
+                        type="button"
                       >
                         {language === 'uz' ? 'Keyingi' : language === 'ru' ? 'Далее' : 'Next'}
                       </Button>
@@ -645,9 +703,9 @@ const Services = () => {
                   )}
                 </>
               ) : (
-                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status">
+                <div className="text-center py-16 sm:py-20 lg:py-24" role="status">
                   <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted mb-4 sm:mb-6">
-                    <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
+                    <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" aria-hidden="true" />
                   </div>
                   <p className="text-muted-foreground text-base sm:text-lg lg:text-xl font-medium mb-2">
                     {language === 'uz' ? 'Hech narsa topilmadi' : language === 'ru' ? 'Ничего не найдено' : 'No services found'}
@@ -667,6 +725,7 @@ const Services = () => {
                         setSelectedCategory("all");
                       }}
                       className="mt-4"
+                      type="button"
                     >
                       {language === 'uz' ? 'Filtrlarni tozalash' : language === 'ru' ? 'Очистить фильтры' : 'Clear filters'}
                     </Button>

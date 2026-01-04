@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Input } from "@/components/ui/input";
@@ -42,17 +42,16 @@ interface Category {
   name: string;
 }
 
-// Cache types
 interface CacheItem<T> {
   value: T;
   timestamp: number;
 }
 
-// Simple in-memory cache implementation with generics
+// Optimized cache with better performance
 const cache = {
   data: new Map<string, CacheItem<Category[]>>(),
   
-  set<T extends Category[]>(key: string, value: T, ttl: number = 300000): void {
+  set<T extends Category[]>(key: string, value: T, ttl: number = 600000): void {
     this.data.set(key, {
       value,
       timestamp: Date.now() + ttl
@@ -79,8 +78,15 @@ const cache = {
 const Products = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // URL dan qiymatlarni olish
+  const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
+  const categoryFromUrl = searchParams.get("category") || "all";
+  const searchFromUrl = searchParams.get("search") || "";
+  
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl);
+  const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -88,21 +94,41 @@ const Products = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 8;
 
-  // Preload critical images
-  useEffect(() => {
-    const preloadImages = (urls: string[]): void => {
-      urls.forEach(url => {
-        const img = new Image();
-        img.src = url;
-      });
-    };
+  // URL ni yangilash
+  const updateURL = useCallback((page: number, category: string, search: string) => {
+    const params = new URLSearchParams();
+    
+    if (page > 1) params.set("page", page.toString());
+    if (category !== "all") params.set("category", category);
+    if (search.trim()) params.set("search", search.trim());
+    
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
 
+  // State o'zgarganda URL ni yangilash
+  useEffect(() => {
+    updateURL(currentPage, selectedCategory, searchQuery);
+  }, [currentPage, selectedCategory, searchQuery, updateURL]);
+
+  // Optimized image preloading with priority hints
+  useEffect(() => {
     if (products.length > 0) {
-      const firstPageImages: string[] = products.map(p => p.image);
+      const preloadImages = (urls: string[]): void => {
+        urls.slice(0, 4).forEach((url, index) => {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = url;
+          if (index === 0) link.setAttribute('fetchpriority', 'high');
+          document.head.appendChild(link);
+        });
+      };
+
+      const firstPageImages = products.slice(0, 4).map(p => p.image);
       preloadImages(firstPageImages);
     }
   }, [products]);
@@ -110,7 +136,7 @@ const Products = () => {
   // SEO metadata based on language
   const seoData = useMemo(() => {
     const pageTitle = language === 'uz' 
-      ? 'Mahsulotlar | Bizning Do\'kon'
+      ? 'Mahsulotlar | Chorvador.uz'
       : language === 'ru' 
       ? 'Продукты | Наш Магазин'
       : 'Products | Our Store';
@@ -129,10 +155,12 @@ const Products = () => {
     return category?.name || '';
   }, [selectedCategory, categories]);
 
-  // Update document title and meta tags
+  // Enhanced SEO with better performance
   useEffect(() => {
+    // Title
     document.title = seoData.pageTitle;
     
+    // Meta description
     let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -141,6 +169,7 @@ const Products = () => {
     }
     metaDescription.setAttribute('content', seoData.pageDescription);
 
+    // Open Graph tags
     const updateOrCreateMetaTag = (property: string, content: string): void => {
       let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
       if (!meta) {
@@ -156,6 +185,7 @@ const Products = () => {
     updateOrCreateMetaTag('og:type', 'website');
     updateOrCreateMetaTag('og:url', window.location.href);
 
+    // Twitter Card tags
     const updateOrCreateTwitterTag = (name: string, content: string): void => {
       let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!meta) {
@@ -170,20 +200,22 @@ const Products = () => {
     updateOrCreateTwitterTag('twitter:title', seoData.pageTitle);
     updateOrCreateTwitterTag('twitter:description', seoData.pageDescription);
 
+    // Keywords
     if (selectedCategoryName && selectedCategory !== 'all') {
       const keywords = `${selectedCategoryName}, products, ${language === 'uz' ? 'mahsulotlar' : language === 'ru' ? 'продукты' : 'products'}`;
       updateOrCreateTwitterTag('keywords', keywords);
     }
 
+    // Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
       document.head.appendChild(canonical);
     }
-    canonical.href = window.location.href;
+    canonical.href = window.location.origin + window.location.pathname;
 
-    // Add DNS prefetch and preconnect for external resources
+    // Resource hints for performance
     const addResourceHint = (rel: string, href: string): void => {
       if (!document.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
         const link = document.createElement('link');
@@ -193,10 +225,24 @@ const Products = () => {
       }
     };
 
-    addResourceHint('dns-prefetch', 'https://fonts.googleapis.com');
-    addResourceHint('dns-prefetch', 'https://fonts.gstatic.com');
-    addResourceHint('preconnect', 'https://fonts.googleapis.com');
-    addResourceHint('preconnect', 'https://fonts.gstatic.com');
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl) {
+      const apiDomain = new URL(apiUrl).origin;
+      addResourceHint('dns-prefetch', apiDomain);
+      addResourceHint('preconnect', apiDomain);
+    }
+
+    // Viewport meta tag
+    let viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+    if (!viewport) {
+      viewport = document.createElement('meta');
+      viewport.setAttribute('name', 'viewport');
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0');
+      document.head.appendChild(viewport);
+    }
+
+    // Language meta tag
+    document.documentElement.lang = language;
 
   }, [seoData, selectedCategoryName, selectedCategory, language]);
 
@@ -253,7 +299,7 @@ const Products = () => {
         ];
         
         // Cache the result
-        cache.set(cacheKey, allCategories, 600000); // Cache for 10 minutes
+        cache.set(cacheKey, allCategories, 600000);
         setCategories(allCategories);
       } catch (err) {
         setCategories([
@@ -367,7 +413,7 @@ const Products = () => {
     navigate(`/products/${productId}`);
   }, [navigate]);
 
-  // Memoized pagination - calculate based on backend total count
+  // Memoized pagination
   const { totalPages, startIndex, endIndex, currentProducts } = useMemo(() => {
     const total = Math.ceil(totalCount / itemsPerPage);
     const start = (currentPage - 1) * itemsPerPage;
@@ -377,17 +423,18 @@ const Products = () => {
       totalPages: total,
       startIndex: start,
       endIndex: end,
-      currentProducts: products // Use all products from current page
+      currentProducts: products
     };
   }, [totalCount, currentPage, itemsPerPage, products]);
 
-  // Add structured data
+  // Enhanced structured data for SEO
   useEffect(() => {
     if (currentProducts.length === 0) return;
 
     const structuredData = {
       "@context": "https://schema.org",
       "@type": "ItemList",
+      "numberOfItems": totalCount,
       "itemListElement": currentProducts.map((product, index) => ({
         "@type": "ListItem",
         "position": startIndex + index + 1,
@@ -399,7 +446,8 @@ const Products = () => {
           "offers": {
             "@type": "Offer",
             "price": product.price,
-            "priceCurrency": "UZS"
+            "priceCurrency": "UZS",
+            "availability": "https://schema.org/InStock"
           }
         }
       }))
@@ -416,7 +464,7 @@ const Products = () => {
     return () => {
       scriptTag?.remove();
     };
-  }, [currentProducts, startIndex]);
+  }, [currentProducts, startIndex, totalCount]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -442,7 +490,7 @@ const Products = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
               {t("products.page.title")}
             </h1>
@@ -458,23 +506,26 @@ const Products = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           
           {/* Search & Filter Toggle */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div className="relative flex-1">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
               <Input
                 placeholder={t("products.search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base transition-all duration-300"
+                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
                 aria-label={t("products.search")}
+                type="search"
+                autoComplete="off"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors animate-in fade-in zoom-in duration-200"
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
                   aria-label="Clear search"
+                  type="button"
                 >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -484,8 +535,9 @@ const Products = () => {
               onClick={() => setShowFilters(!showFilters)}
               aria-label={t("products.filters")}
               aria-expanded={showFilters}
+              type="button"
             >
-              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              <SlidersHorizontal className="w-4 h-4 mr-2" aria-hidden="true" />
               {t("products.filters")}
             </Button>
           </div>
@@ -500,15 +552,15 @@ const Products = () => {
           >
             <div className="flex flex-wrap gap-2">
               {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground py-2 animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="flex items-center gap-2 text-muted-foreground py-2" role="status" aria-live="polite">
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span className="text-xs sm:text-sm">
                     {language === 'uz' ? 'Kategoriyalar yuklanmoqda...' : language === 'ru' ? 'Загрузка категорий...' : 'Loading categories...'}
                   </span>
                 </div>
               ) : (
                 <>
-                  {visibleCategories.map((category, index) => (
+                  {visibleCategories.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => {
@@ -516,14 +568,14 @@ const Products = () => {
                         setShowFilters(false);
                       }}
                       className={cn(
-                        "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                        "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
                         selectedCategory === category.id
                           ? "bg-primary text-primary-foreground shadow-md scale-105"
                           : "bg-muted text-muted-foreground hover:bg-muted/80 hover:scale-105"
                       )}
-                      style={{ animationDelay: `${index * 50}ms` }}
                       aria-pressed={selectedCategory === category.id}
                       aria-label={`Filter by ${category.name}`}
+                      type="button"
                     >
                       {category.name}
                     </button>
@@ -531,10 +583,10 @@ const Products = () => {
                   {categories.length > 6 && (
                     <button
                       onClick={() => setShowAllCategories(!showAllCategories)}
-                      className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-all duration-300 border border-dashed border-muted-foreground/30 hover:scale-105 hover:border-solid animate-in fade-in slide-in-from-bottom-2"
-                      style={{ animationDelay: `${visibleCategories.length * 50}ms` }}
+                      className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-all duration-300 border border-dashed border-muted-foreground/30 hover:scale-105 hover:border-solid"
                       aria-expanded={showAllCategories}
                       aria-label={showAllCategories ? 'Show less categories' : 'Show more categories'}
+                      type="button"
                     >
                       {showAllCategories 
                         ? (language === 'uz' ? 'Kamroq' : language === 'ru' ? 'Меньше' : 'Less')
@@ -549,9 +601,9 @@ const Products = () => {
 
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status" aria-live="polite">
-              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" />
-              <span className="text-sm sm:text-base text-muted-foreground animate-pulse">
+            <div className="flex flex-col justify-center items-center py-16 sm:py-20 lg:py-24" role="status" aria-live="polite">
+              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary mb-4" aria-hidden="true" />
+              <span className="text-sm sm:text-base text-muted-foreground">
                 {language === 'uz' ? 'Yuklanmoqda...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
               </span>
             </div>
@@ -559,9 +611,9 @@ const Products = () => {
 
           {/* Error State */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500" role="alert">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4 animate-in zoom-in duration-300">
-                <X className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" />
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center" role="alert" aria-live="assertive">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-destructive/20 mb-4">
+                <X className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" aria-hidden="true" />
               </div>
               <p className="text-destructive font-semibold mb-2 text-base sm:text-lg">
                 {language === 'uz' ? 'Xatolik yuz berdi' : language === 'ru' ? 'Произошла ошибка' : 'An error occurred'}
@@ -570,6 +622,7 @@ const Products = () => {
               <Button 
                 onClick={() => window.location.reload()}
                 className="w-full sm:w-auto"
+                type="button"
               >
                 {language === 'uz' ? 'Qayta urinish' : language === 'ru' ? 'Попробовать снова' : 'Try again'}
               </Button>
@@ -578,8 +631,8 @@ const Products = () => {
 
           {/* Results Count */}
           {!loading && !error && totalCount > 0 && (
-            <div id="products-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6 animate-in fade-in slide-in-from-left duration-500" role="status" aria-live="polite">
-              <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div id="products-grid" className="flex items-center gap-2 text-muted-foreground mb-4 sm:mb-6" role="status" aria-live="polite">
+              <Package className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               <p className="text-sm sm:text-base font-medium">
                 {totalCount} {t("products.found")}
                 {totalCount > itemsPerPage && (
@@ -597,12 +650,11 @@ const Products = () => {
               {currentProducts.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" role="list">
-                    {currentProducts.map((product, index) => (
+                    {currentProducts.map((product) => (
                       <article 
                         key={product.id} 
                         onClick={() => handleProductClick(product.id)}
-                        className="cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
-                        style={{ animationDelay: `${index * 75}ms` }}
+                        className="cursor-pointer"
                         role="listitem"
                       >
                         <ProductCard 
@@ -616,7 +668,7 @@ const Products = () => {
                   {/* Pagination */}
                   {totalPages > 1 && (
                     <nav 
-                      className="flex justify-center items-center gap-2 mt-8 sm:mt-12 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                      className="flex justify-center items-center gap-2 mt-8 sm:mt-12"
                       aria-label="Pagination"
                     >
                       <Button
@@ -626,12 +678,25 @@ const Products = () => {
                         disabled={currentPage === 1}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Previous page"
+                        type="button"
                       >
                         {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Previous'}
                       </Button>
                       
                       <div className="flex gap-1 sm:gap-2" role="list">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                          let page;
+                          if (totalPages <= 7) {
+                            page = i + 1;
+                          } else if (currentPage <= 4) {
+                            page = i + 1;
+                          } else if (currentPage >= totalPages - 3) {
+                            page = totalPages - 6 + i;
+                          } else {
+                            page = currentPage - 3 + i;
+                          }
+                          return page;
+                        }).map((page) => (
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
@@ -643,6 +708,7 @@ const Products = () => {
                             )}
                             aria-label={`Go to page ${page}`}
                             aria-current={currentPage === page ? 'page' : undefined}
+                            type="button"
                           >
                             {page}
                           </button>
@@ -656,6 +722,7 @@ const Products = () => {
                         disabled={currentPage === totalPages}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Next page"
+                        type="button"
                       >
                         {language === 'uz' ? 'Keyingi' : language === 'ru' ? 'Далее' : 'Next'}
                       </Button>
@@ -663,9 +730,9 @@ const Products = () => {
                   )}
                 </>
               ) : (
-                <div className="text-center py-16 sm:py-20 lg:py-24 animate-in fade-in zoom-in duration-500" role="status">
+                <div className="text-center py-16 sm:py-20 lg:py-24" role="status">
                   <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted mb-4 sm:mb-6">
-                    <Package className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
+                    <Package className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" aria-hidden="true" />
                   </div>
                   <p className="text-muted-foreground text-base sm:text-lg lg:text-xl font-medium mb-2">
                     {t("products.notFound")}
