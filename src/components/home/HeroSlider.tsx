@@ -37,16 +37,12 @@ export function HeroSlider() {
         const data: Banner[] = await response.json();
         setSlides(data);
 
-        // Rasmlarni oldindan yuklash - priority bilan
+        // Rasmlarni oldindan yuklash
         data.forEach((banner, index) => {
           const img = new Image();
           img.onload = () => {
             setImagesLoaded((prev) => new Set(prev).add(index));
           };
-          // Birinchi rasmga priority
-          if (index === 0) {
-            img.fetchPriority = 'high';
-          }
           img.src = banner.image;
         });
       } catch (err) {
@@ -152,18 +148,18 @@ export function HeroSlider() {
       tabIndex={0}
     >
       {/* Preload slides - faqat keyingi slide */}
-      <link
-        rel="preload"
-        as="image"
-        href={slides[0]?.image}
-        fetchPriority="high"
-      />
+      {slides[0] && (
+        <link
+          rel="preload"
+          as="image"
+          href={slides[0].image}
+        />
+      )}
       {slides[1] && (
         <link
           rel="preload"
           as="image"
           href={slides[1].image}
-          fetchPriority="low"
         />
       )}
 
@@ -182,7 +178,6 @@ export function HeroSlider() {
           style={{ opacity: isCurrentImageLoaded ? 1 : 0 }}
           loading={currentSlide === 0 ? "eager" : "lazy"}
           decoding="async"
-          fetchPriority={currentSlide === 0 ? "high" : "low"}
           width="1920"
           height="1080"
         />
