@@ -202,7 +202,7 @@ const About = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="gradient-hero py-12 sm:py-16 lg:py-20">
+      <section className="gradient-hero py-12 sm:py-16 lg:py-12">
         <div className="container-main">
           <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-4 sm:mb-6 leading-tight">
@@ -253,7 +253,7 @@ const About = () => {
                 style={{ animationDelay: '300ms' }}
                 aria-label={language === 'uz' ? '10 yildan ortiq tajriba' : language === 'ru' ? 'более 10 лет опыта' : 'over 10 years experience'}
               >
-                <div className="text-3xl sm:text-4xl font-bold">10+</div>
+                <div className="text-3xl sm:text-4xl font-bold">18+</div>
                 <div className="text-xs sm:text-sm font-medium">{t("about.history.years")}</div>
               </div>
             </figure>

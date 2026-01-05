@@ -42,51 +42,19 @@ interface Category {
   name: string;
 }
 
-interface CacheItem<T> {
-  value: T;
-  timestamp: number;
-}
-
-// Optimized cache with better performance
-const cache = {
-  data: new Map<string, CacheItem<Category[]>>(),
-  
-  set<T extends Category[]>(key: string, value: T, ttl: number = 600000): void {
-    this.data.set(key, {
-      value,
-      timestamp: Date.now() + ttl
-    });
-  },
-  
-  get<T extends Category[]>(key: string): T | null {
-    const item = this.data.get(key);
-    if (!item) return null;
-    
-    if (Date.now() > item.timestamp) {
-      this.data.delete(key);
-      return null;
-    }
-    
-    return item.value as T;
-  },
-  
-  clear(): void {
-    this.data.clear();
-  }
-};
-
 const Products = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   
   // URL dan qiymatlarni olish
-  const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
   const categoryFromUrl = searchParams.get("category") || "all";
   const searchFromUrl = searchParams.get("search") || "";
+  const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
   
   const [searchQuery, setSearchQuery] = useState(searchFromUrl);
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -94,159 +62,32 @@ const Products = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 8;
 
-  // URL ni yangilash
-  const updateURL = useCallback((page: number, category: string, search: string) => {
-    const params = new URLSearchParams();
-    
-    if (page > 1) params.set("page", page.toString());
-    if (category !== "all") params.set("category", category);
-    if (search.trim()) params.set("search", search.trim());
-    
-    setSearchParams(params, { replace: true });
-  }, [setSearchParams]);
-
-  // State o'zgarganda URL ni yangilash
+  // URL parametrlari o'zgarganda state ni yangilash
   useEffect(() => {
-    updateURL(currentPage, selectedCategory, searchQuery);
-  }, [currentPage, selectedCategory, searchQuery, updateURL]);
+    const newCategory = searchParams.get("category") || "all";
+    const newSearch = searchParams.get("search") || "";
+    const newPage = parseInt(searchParams.get("page") || "1", 10);
+    
+    setSelectedCategory(newCategory);
+    setSearchQuery(newSearch);
+    setCurrentPage(newPage);
+  }, [searchParams]);
 
-  // Optimized image preloading with priority hints
+  // SEO metadata
   useEffect(() => {
-    if (products.length > 0) {
-      const preloadImages = (urls: string[]): void => {
-        urls.slice(0, 4).forEach((url, index) => {
-          const link = document.createElement('link');
-          link.rel = 'preload';
-          link.as = 'image';
-          link.href = url;
-          if (index === 0) link.setAttribute('fetchpriority', 'high');
-          document.head.appendChild(link);
-        });
-      };
-
-      const firstPageImages = products.slice(0, 4).map(p => p.image);
-      preloadImages(firstPageImages);
-    }
-  }, [products]);
-
-  // SEO metadata based on language
-  const seoData = useMemo(() => {
     const pageTitle = language === 'uz' 
       ? 'Mahsulotlar | Chorvador.uz'
       : language === 'ru' 
-      ? 'Продукты | Наш Магазин'
-      : 'Products | Our Store';
+      ? 'Продукты | Chorvador.uz'
+      : 'Products | Chorvador.uz';
     
-    const pageDescription = language === 'uz'
-      ? 'Yuqori sifatli mahsulotlar katalogi. Turli toifadagi mahsulotlarni ko\'ring va xarid qiling.'
-      : language === 'ru'
-      ? 'Каталог качественных продуктов. Просматривайте и покупайте товары различных категорий.'
-      : 'Browse our catalog of high-quality products across various categories.';
-
-    return { pageTitle, pageDescription };
+    document.title = pageTitle;
   }, [language]);
 
-  const selectedCategoryName = useMemo(() => {
-    const category = categories.find(cat => cat.id === selectedCategory);
-    return category?.name || '';
-  }, [selectedCategory, categories]);
-
-  // Enhanced SEO with better performance
-  useEffect(() => {
-    // Title
-    document.title = seoData.pageTitle;
-    
-    // Meta description
-    let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', seoData.pageDescription);
-
-    // Open Graph tags
-    const updateOrCreateMetaTag = (property: string, content: string): void => {
-      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    updateOrCreateMetaTag('og:title', seoData.pageTitle);
-    updateOrCreateMetaTag('og:description', seoData.pageDescription);
-    updateOrCreateMetaTag('og:type', 'website');
-    updateOrCreateMetaTag('og:url', window.location.href);
-
-    // Twitter Card tags
-    const updateOrCreateTwitterTag = (name: string, content: string): void => {
-      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', name);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    updateOrCreateTwitterTag('twitter:card', 'summary_large_image');
-    updateOrCreateTwitterTag('twitter:title', seoData.pageTitle);
-    updateOrCreateTwitterTag('twitter:description', seoData.pageDescription);
-
-    // Keywords
-    if (selectedCategoryName && selectedCategory !== 'all') {
-      const keywords = `${selectedCategoryName}, products, ${language === 'uz' ? 'mahsulotlar' : language === 'ru' ? 'продукты' : 'products'}`;
-      updateOrCreateTwitterTag('keywords', keywords);
-    }
-
-    // Canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.href = window.location.origin + window.location.pathname;
-
-    // Resource hints for performance
-    const addResourceHint = (rel: string, href: string): void => {
-      if (!document.querySelector(`link[rel="${rel}"][href="${href}"]`)) {
-        const link = document.createElement('link');
-        link.rel = rel;
-        link.href = href;
-        document.head.appendChild(link);
-      }
-    };
-
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (apiUrl) {
-      const apiDomain = new URL(apiUrl).origin;
-      addResourceHint('dns-prefetch', apiDomain);
-      addResourceHint('preconnect', apiDomain);
-    }
-
-    // Viewport meta tag
-    let viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
-    if (!viewport) {
-      viewport = document.createElement('meta');
-      viewport.setAttribute('name', 'viewport');
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0');
-      document.head.appendChild(viewport);
-    }
-
-    // Language meta tag
-    document.documentElement.lang = language;
-
-  }, [seoData, selectedCategoryName, selectedCategory, language]);
-
-  // Fetch categories with caching
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -258,15 +99,6 @@ const Products = () => {
         }
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
-        const cacheKey = `categories_${acceptLanguage}`;
-        
-        // Check cache first
-        const cachedData = cache.get<Category[]>(cacheKey);
-        if (cachedData) {
-          setCategories(cachedData);
-          setCategoriesLoading(false);
-          return;
-        }
         
         const response = await fetch(`${apiUrl}/categories/?type=product`, {
           method: 'GET',
@@ -298,10 +130,9 @@ const Products = () => {
           }))
         ];
         
-        // Cache the result
-        cache.set(cacheKey, allCategories, 600000);
         setCategories(allCategories);
       } catch (err) {
+        console.error('Categories fetch error:', err);
         setCategories([
           { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
         ]);
@@ -313,7 +144,7 @@ const Products = () => {
     fetchCategories();
   }, [language]);
 
-  // Fetch products with backend pagination
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -358,7 +189,6 @@ const Products = () => {
         const data: ProductsResponse = await response.json();
         const productsArray: ApiProduct[] = data.results || [];
         
-        // Update total count for pagination
         setTotalCount(data.count || 0);
         
         if (!Array.isArray(productsArray)) {
@@ -413,8 +243,66 @@ const Products = () => {
     navigate(`/products/${productId}`);
   }, [navigate]);
 
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setCurrentPage(1);
+    setShowFilters(false);
+    
+    // Update URL
+    const params = new URLSearchParams();
+    if (categoryId !== "all") {
+      params.set("category", categoryId);
+    }
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    
+    navigate(`/products?${params.toString()}`, { replace: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchQuery, navigate]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+    
+    // Update URL
+    const params = new URLSearchParams();
+    if (selectedCategory !== "all") {
+      params.set("category", selectedCategory);
+    }
+    if (value.trim()) {
+      params.set("search", value.trim());
+    }
+    
+    navigate(`/products?${params.toString()}`, { replace: true });
+  }, [selectedCategory, navigate]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    
+    // Update URL
+    const params = new URLSearchParams();
+    if (selectedCategory !== "all") {
+      params.set("category", selectedCategory);
+    }
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    if (page > 1) {
+      params.set("page", page.toString());
+    }
+    
+    navigate(`/products?${params.toString()}`, { replace: true });
+    
+    // Scroll to products grid
+    const element = document.getElementById('products-grid');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedCategory, searchQuery, navigate]);
+
   // Memoized pagination
-  const { totalPages, startIndex, endIndex, currentProducts } = useMemo(() => {
+  const { totalPages, startIndex, endIndex } = useMemo(() => {
     const total = Math.ceil(totalCount / itemsPerPage);
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
@@ -423,62 +311,8 @@ const Products = () => {
       totalPages: total,
       startIndex: start,
       endIndex: end,
-      currentProducts: products
     };
-  }, [totalCount, currentPage, itemsPerPage, products]);
-
-  // Enhanced structured data for SEO
-  useEffect(() => {
-    if (currentProducts.length === 0) return;
-
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      "numberOfItems": totalCount,
-      "itemListElement": currentProducts.map((product, index) => ({
-        "@type": "ListItem",
-        "position": startIndex + index + 1,
-        "item": {
-          "@type": "Product",
-          "name": product.name,
-          "description": product.description,
-          "image": product.image,
-          "offers": {
-            "@type": "Offer",
-            "price": product.price,
-            "priceCurrency": "UZS",
-            "availability": "https://schema.org/InStock"
-          }
-        }
-      }))
-    };
-
-    let scriptTag = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement | null;
-    if (!scriptTag) {
-      scriptTag = document.createElement('script');
-      scriptTag.setAttribute('type', 'application/ld+json');
-      document.head.appendChild(scriptTag);
-    }
-    scriptTag.textContent = JSON.stringify(structuredData);
-
-    return () => {
-      scriptTag?.remove();
-    };
-  }, [currentProducts, startIndex, totalCount]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchQuery, selectedCategory]);
-
-  // Smooth scroll when changing pages
-  useEffect(() => {
-    const element = document.getElementById('products-grid');
-    if (element && currentPage > 1) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [currentPage]);
+  }, [totalCount, currentPage, itemsPerPage]);
 
   const visibleCategories = useMemo(() => 
     showAllCategories ? categories : categories.slice(0, 6),
@@ -488,7 +322,7 @@ const Products = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-20">
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-15">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
@@ -512,7 +346,7 @@ const Products = () => {
               <Input
                 placeholder={t("products.search")}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
                 aria-label={t("products.search")}
                 type="search"
@@ -520,7 +354,7 @@ const Products = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
                   aria-label="Clear search"
                   type="button"
@@ -563,10 +397,7 @@ const Products = () => {
                   {visibleCategories.map((category) => (
                     <button
                       key={category.id}
-                      onClick={() => {
-                        setSelectedCategory(category.id);
-                        setShowFilters(false);
-                      }}
+                      onClick={() => handleCategoryChange(category.id)}
                       className={cn(
                         "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
                         selectedCategory === category.id
@@ -647,10 +478,10 @@ const Products = () => {
           {/* Products Grid */}
           {!loading && !error && (
             <>
-              {currentProducts.length > 0 ? (
+              {products.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" role="list">
-                    {currentProducts.map((product) => (
+                    {products.map((product) => (
                       <article 
                         key={product.id} 
                         onClick={() => handleProductClick(product.id)}
@@ -674,7 +505,7 @@ const Products = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Previous page"
@@ -699,7 +530,7 @@ const Products = () => {
                         }).map((page) => (
                           <button
                             key={page}
-                            onClick={() => setCurrentPage(page)}
+                            onClick={() => handlePageChange(page)}
                             className={cn(
                               "h-9 sm:h-10 w-9 sm:w-10 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 hover:scale-110",
                               currentPage === page
@@ -718,7 +549,7 @@ const Products = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Next page"

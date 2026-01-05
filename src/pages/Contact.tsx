@@ -208,6 +208,7 @@ const Contact = () => {
   const phoneNumbers: PhoneNumber[] = [
     { value: "+998 91 192-07-55", link: "tel:+998911920755" },
     { value: "+998 97 444 00 16", link: "tel:+998974440016" },
+    { value: "+998 97 157 16 98", link: "tel:+998971571698" },
     { value: "+998 94 647 10 03", link: "tel:+998946471003" },
   ];
 
@@ -256,7 +257,7 @@ const Contact = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="gradient-hero py-12 md:py-20">
+      <section className="gradient-hero py-12 md:py-18.5">
         <div className="container-main px-4 md:px-6">
           <h1 className="text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
             {t("contact.title")}

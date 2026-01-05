@@ -1,7 +1,6 @@
 "use client";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Button } from "@/components/ui/button";
 import { Leaf, ArrowRight } from "lucide-react";
 import { useState } from "react";
 

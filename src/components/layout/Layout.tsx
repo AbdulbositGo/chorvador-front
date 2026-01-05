@@ -15,17 +15,17 @@ interface LayoutProps {
 // Static metadata - komponent tashqarida
 const defaultMetadata = {
   uz: {
-    title: "Chorvador.uz - Qishloq xo'jaligi mahsulotlari va texnikalari",
+    title: "Chorvador.uz - Chorvachilik uskunalari va jihozlari",
     description: "O'zbekistonda qishloq xo'jaligi mahsulotlari, chorvachilik asbob-uskunalari, urug'lar, o'g'itlar va sugorish tizimlari. Eng yaxshi narxlar va sifatli xizmat.",
     keywords: "qishloq xo'jaligi, chorvachilik, urug'lar, o'g'itlar, sugorish, qishloq xo'jaligi texnikasi, chorvador, fermer, O'zbekiston",
   },
   ru: {
-    title: "Chorvador.uz - Сельскохозяйственная продукция и техника",
+    title: "Chorvador.uz - Сельскохозяйственное оборудование и принадлежности",
     description: "Сельскохозяйственная продукция в Узбекистане, оборудование для животноводства, семена, удобрения и системы орошения. Лучшие цены и качественный сервис.",
     keywords: "сельское хозяйство, животноводство, семена, удобрения, орошение, сельхозтехника, фермер, Узбекистан",
   },
   en: {
-    title: "Chorvador.uz - Agricultural Products and Equipment",
+    title: "Chorvador.uz - Livestock equipment and tools",
     description: "Agricultural products in Uzbekistan, livestock equipment, seeds, fertilizers and irrigation systems. Best prices and quality service.",
     keywords: "agriculture, livestock, seeds, fertilizers, irrigation, agricultural equipment, farmer, Uzbekistan",
   }

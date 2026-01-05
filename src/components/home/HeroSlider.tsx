@@ -189,7 +189,7 @@ export function HeroSlider() {
 
         {/* Overlay */}
         <div 
-          className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/35 to-black/60 md:bg-gradient-to-r md:from-black/60 md:via-black/40 md:to-transparent" 
+          className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/0 md:bg-gradient-to-r md:from-black/0 md:via-black/0 md:to-transparent" 
           aria-hidden="true"
         />
 

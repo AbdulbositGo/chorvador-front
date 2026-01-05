@@ -1,18 +1,30 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-const navigation = [
-  { key: "nav.home", href: "/" },
-  { key: "nav.about", href: "/about" },
-  { key: "nav.products", href: "/products" },
-  { key: "nav.services", href: "/services" },
-  { key: "nav.contact", href: "/contact" },
-];
+const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com";
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface CategoryObject {
+  id: number;
+  name?: string;
+}
+
+interface Product {
+  id: number;
+  title: string;
+  category: number | CategoryObject;
+  category_id?: number;
+}
 
 const languages: { code: Language; label: string; flag: string }[] = [
   { code: "uz", label: "O'zbekcha", flag: "https://flagcdn.com/w40/uz.png" },
@@ -25,15 +37,117 @@ export function Header() {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [productCategories, setProductCategories] = useState<Category[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [services, setServices] = useState<Product[]>([]);
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<number | null>(null);
+  const [hoveredServiceCategoryId, setHoveredServiceCategoryId] = useState<number | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const productsRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLDivElement>(null);
 
   const currentLang = useMemo(
     () => languages.find(l => l.code === language) || languages[0],
     [language]
   );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const acceptLanguage = language; 
+
+      try {
+        const headers = {
+          'Accept-Language': acceptLanguage,
+          'Content-Type': 'application/json'
+        };
+
+        const [productsRes, servicesRes, allProductsRes, allServicesRes] = await Promise.all([
+          fetch(`${apiUrl}/categories/?type=product`, { headers }),
+          fetch(`${apiUrl}/categories/?type=service`, { headers }),
+          fetch(`${apiUrl}/products/`, { headers }),
+          fetch(`${apiUrl}/services/`, { headers })
+        ]);
+        
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          setProductCategories(Array.isArray(productsData) ? productsData : []);
+        }
+        
+        if (servicesRes.ok) {
+          const servicesData = await servicesRes.json();
+          setServiceCategories(Array.isArray(servicesData) ? servicesData : []);
+        }
+
+        if (allProductsRes.ok) {
+          const allProducts = await allProductsRes.json();
+          const productsArray = Array.isArray(allProducts) ? allProducts : (allProducts.results || []);
+          setProducts(productsArray);
+        }
+
+        if (allServicesRes.ok) {
+          const allServicesData = await allServicesRes.json();
+          const servicesArray = Array.isArray(allServicesData) ? allServicesData : (allServicesData.results || []);
+          setServices(servicesArray);
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      }
+    };
+    
+    fetchData();
+  }, [language]);
+
+  const getProductsByCategory = useCallback((categoryId: number) => {
+    const categoryName = productCategories.find(c => c.id === categoryId)?.name;
+    
+    if (!categoryName) return [];
+
+    return products.filter(product => {
+      const pCat = product.category;
+      if (typeof pCat === 'string') {
+        return pCat === categoryName;
+      }
+      if (typeof pCat === 'object' && pCat !== null) {
+        return (pCat as CategoryObject).id === categoryId || pCat.name === categoryName;
+      }
+      return false;
+    });
+  }, [products, productCategories]);
+
+  const getServicesByCategory = useCallback((categoryId: number) => {
+    const categoryObject = serviceCategories.find(c => c.id === categoryId);
+    if (!categoryObject) return [];
+
+    const categoryName = categoryObject.name;
+
+    return services.filter(service => {
+      const sCat = service.category;
+      
+      if (typeof sCat === 'string') {
+        return sCat === categoryName;
+      }
+      
+      if (typeof sCat === 'object' && sCat !== null) {
+        const catObj = sCat as CategoryObject;
+        return catObj.id === categoryId || catObj.name === categoryName;
+      }
+
+      if (typeof sCat === 'number') {
+        return sCat === categoryId;
+      }
+
+      return service.category_id === categoryId;
+    });
+  }, [services, serviceCategories]);
 
   const scrollToFooter = useCallback(() => {
     const footer = document.getElementById('footer');
@@ -43,7 +157,6 @@ export function Header() {
     setMobileMenuOpen(false);
   }, []);
 
-  // Handle scroll for shadow effect - optimized with RAF
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -59,7 +172,6 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -68,19 +180,31 @@ export function Header() {
       if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target as Node)) {
         setMobileLangDropdownOpen(false);
       }
+      if (productsRef.current && !productsRef.current.contains(event.target as Node)) {
+        setProductsOpen(false);
+        setHoveredCategoryId(null);
+      }
+      if (servicesRef.current && !servicesRef.current.contains(event.target as Node)) {
+        setServicesOpen(false);
+        setHoveredServiceCategoryId(null);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
     setLangDropdownOpen(false);
     setMobileLangDropdownOpen(false);
-  }, [location.pathname]);
+    setProductsOpen(false);
+    setServicesOpen(false);
+    setMobileProductsOpen(false);
+    setMobileServicesOpen(false);
+    setHoveredCategoryId(null);
+    setHoveredServiceCategoryId(null);
+  }, [location.pathname, location.search]);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -92,7 +216,6 @@ export function Header() {
     };
   }, [mobileMenuOpen]);
 
-  // Keyboard navigation for dropdowns
   const handleLanguageKeyDown = useCallback((e: React.KeyboardEvent, langCode: Language) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -105,6 +228,39 @@ export function Header() {
     }
   }, [setLanguage]);
 
+  const handleCategoryClick = useCallback((path: string, categoryId: number) => {
+    setProductsOpen(false);
+    setServicesOpen(false);
+    setMobileProductsOpen(false);
+    setMobileServicesOpen(false);
+    setMobileMenuOpen(false);
+    setHoveredCategoryId(null);
+    setHoveredServiceCategoryId(null);
+    navigate(`${path}?category=${categoryId}`);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }, [navigate]);
+
+  // Title ni 30 belgidan keyin qirqish
+  const truncateTitle = (title: string) => {
+    return title.length > 25 ? title.substring(0, 25) + "..." : title;
+  };
+
+  const handleProductClick = useCallback((productId: number, isService: boolean = false) => {
+    setProductsOpen(false);
+    setServicesOpen(false);
+    setMobileProductsOpen(false);
+    setMobileServicesOpen(false);
+    setMobileMenuOpen(false);
+    setHoveredCategoryId(null);
+    setHoveredServiceCategoryId(null);
+    navigate(isService ? `/services/${productId}` : `/products/${productId}`);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }, [navigate]);
+
   return (
     <nav 
       className={cn(
@@ -116,7 +272,6 @@ export function Header() {
     >
       <div className="container-main">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link 
             to="/" 
             className="flex items-center gap-3 group flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
@@ -134,42 +289,294 @@ export function Header() {
             />
           </Link>
 
-          {/* Desktop navigation - centered */}
           <ul 
             className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 list-none"
             role="menubar"
             aria-label="Primary navigation"
           >
-            {navigation.map((item) => (
-              <li key={item.key} role="none">
+            <li role="none">
+              <Link
+                to="/"
+                role="menuitem"
+                aria-current={location.pathname === "/" ? "page" : undefined}
+                className={cn(
+                  "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  location.pathname === "/"
+                    ? "text-white"
+                    : "text-gray-700 hover:text-[#2980C7]"
+                )}
+                style={location.pathname === "/" ? { backgroundColor: '#2980C7' } : {}}
+              >
+                <span className="relative">{t("nav.home")}</span>
+              </Link>
+            </li>
+
+            <li role="none">
+              <Link
+                to="/about"
+                role="menuitem"
+                aria-current={location.pathname === "/about" ? "page" : undefined}
+                className={cn(
+                  "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  location.pathname === "/about"
+                    ? "text-white"
+                    : "text-gray-700 hover:text-[#2980C7]"
+                )}
+                style={location.pathname === "/about" ? { backgroundColor: '#2980C7' } : {}}
+              >
+                <span className="relative">{t("nav.about")}</span>
+              </Link>
+            </li>
+
+            {/* Products Dropdown - Desktop */}
+            <li role="none" className="relative">
+              <div 
+                ref={productsRef}
+                onMouseEnter={() => {
+                  setProductsOpen(true);
+                  setServicesOpen(false);
+                }}
+                onMouseLeave={() => {
+                  setProductsOpen(false);
+                  setHoveredCategoryId(null);
+                }}
+              >
                 <Link
-                  to={item.href}
-                  role="menuitem"
-                  aria-current={location.pathname === item.href ? "page" : undefined}
+                  to="/products"
+                  onClick={() => {
+                    setProductsOpen(false);
+                    setHoveredCategoryId(null);
+                  }}
+                  aria-expanded={productsOpen}
                   className={cn(
-                    "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                    location.pathname === item.href
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center gap-1",
+                    location.pathname.startsWith("/products")
+                      ? "text-white"
+                      : "text-gray-700 hover:text-[#2980C7]"
+                  )}
+                  style={location.pathname.startsWith("/products") ? { backgroundColor: '#2980C7' } : {}}
+                >
+                  <span className="relative">{t("nav.products")}</span>
+                  <ChevronDown 
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-300",
+                      productsOpen && "rotate-180"
+                    )} 
+                    aria-hidden="true"
+                  />
+                </Link>
+
+                <AnimatePresence>
+                  {productsOpen && productCategories.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                      className="absolute top-full mt-2 z-[70] flex gap-3"
+                      style={{ 
+                        left: '-40%',
+                        transform: 'translateX(-50%)'
+                      }}
+                    >
+                      {/* Kategoriyalar - Alohida karta */}
+                      <div className="bg-white border border-gray-200 rounded-xl shadow-2xl p-4 min-w-[300px] max-w-[350px]">
+                        <div className="flex flex-col gap-2">
+                          {productCategories.map((category) => {
+                            const productsInCategory = getProductsByCategory(category.id);
+                            const hasProducts = productsInCategory.length > 0;
+                            
+                            return (
+                              <button
+                                key={category.id}
+                                onClick={() => handleCategoryClick('/products', category.id)}
+                                onMouseEnter={() => setHoveredCategoryId(category.id)}
+                                className="w-full group relative px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 border border-transparent flex items-center justify-between"
+                                style={{
+                                  backgroundColor: hoveredCategoryId === category.id ? '#2980C7' : 'transparent',
+                                  color: hoveredCategoryId === category.id ? 'white' : '#374151'
+                                }}
+                              >
+                                <span className="relative z-10 block flex-1 text-left">{category.name}</span>
+                                {hasProducts && (
+                                  <ChevronRight 
+                                    className="h-4 w-4 ml-2 flex-shrink-0" 
+                                    style={{
+                                      color: hoveredCategoryId === category.id ? 'white' : '#9ca3af'
+                                    }}
+                                  />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Mahsulotlar ro'yxati - Alohida karta */}
+                      <AnimatePresence>
+                        {hoveredCategoryId && getProductsByCategory(hoveredCategoryId).length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.15 }}
+                            className="bg-white border border-gray-200 rounded-xl shadow-2xl p-4 min-w-[280px] max-w-[400px] max-h-[150px] min-h-[100px]"
+                            onMouseEnter={() => setHoveredCategoryId(hoveredCategoryId)}
+                          >
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">
+                              {productCategories.find(c => c.id === hoveredCategoryId)?.name}
+                            </h3>
+                            <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto">
+                              {getProductsByCategory(hoveredCategoryId).map((product) => (
+                                <button
+                                  key={product.id}
+                                  onClick={() => handleProductClick(product.id)}
+                                  className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
+                                >
+                                  {truncateTitle(product.title)}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </li>
+
+            {/* Services Dropdown - Desktop */}
+            <li role="none" className="relative">
+              <div 
+                ref={servicesRef}
+                onMouseEnter={() => {
+                  setServicesOpen(true);
+                  setProductsOpen(false);
+                }}
+                onMouseLeave={() => {
+                  setServicesOpen(false);
+                  setHoveredServiceCategoryId(null);
+                }}
+                className="py-2"
+              >
+                <Link
+                  to="/services"
+                  onClick={() => {
+                    setServicesOpen(false);
+                    setHoveredServiceCategoryId(null);
+                  }}
+                  aria-expanded={servicesOpen}
+                  className={cn(
+                    "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary flex items-center gap-1",
+                    location.pathname.startsWith("/services")
+                      ? "text-white bg-[#2980C7]"
+                      : "text-gray-700 hover:text-[#2980C7]"
                   )}
                 >
-                  <span className="relative">{t(item.key)}</span>
-                  {location.pathname === item.href && (
-                    <motion.div
-                      layoutId="navbar-indicator"
-                      className="absolute inset-0 bg-primary rounded-lg -z-10"
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      aria-hidden="true"
-                    />
-                  )}
+                  <span>{t("nav.services")}</span>
+                  <ChevronDown 
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-300",
+                      servicesOpen && "rotate-180"
+                    )} 
+                  />
                 </Link>
-              </li>
-            ))}
+
+                <AnimatePresence>
+                  {servicesOpen && serviceCategories.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-1 z-[70] flex gap-3"
+                      style={{ transform: 'translateX(-20%)' }}
+                    >
+                      {/* Kategoriyalar - Alohida karta */}
+                      <div className="bg-white border border-gray-200 rounded-xl shadow-2xl p-3 min-w-[200px] max-w-[250px] h-[110px]">
+                        <div className="flex flex-col gap-1">
+                          {serviceCategories.map((category) => (
+                            <button
+                              key={category.id}
+                              onMouseEnter={() => setHoveredServiceCategoryId(category.id)}
+                              onClick={() => handleCategoryClick('/services', category.id)}
+                              className={cn(
+                                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                                hoveredServiceCategoryId === category.id 
+                                  ? "bg-[#2980C7] text-white" 
+                                  : "text-gray-700 hover:bg-gray-100"
+                              )}
+                            >
+                              <span className="truncate mr-2">{category.name}</span>
+                              <ChevronRight className={cn(
+                                "h-4 w-4 flex-shrink-0 transition-transform",
+                                hoveredServiceCategoryId === category.id ? "translate-x-1" : "text-gray-400"
+                              )} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Xizmatlar ro'yxati - Alohida karta */}
+                      <AnimatePresence mode="wait">
+                        {hoveredServiceCategoryId && (
+                          <motion.div
+                            key={hoveredServiceCategoryId}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.15 }}
+                            className="bg-white border border-gray-200 rounded-xl shadow-2xl p-3 min-w-[240px] max-w-[320px]"
+                          >
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-1">
+                              {serviceCategories.find(c => c.id === hoveredServiceCategoryId)?.name}
+                            </h3>
+                            <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto">
+                              {getServicesByCategory(hoveredServiceCategoryId).length > 0 ? (
+                                getServicesByCategory(hoveredServiceCategoryId).map((service) => (
+                                  <button
+                                    key={service.id}
+                                    onClick={() => handleProductClick(service.id, true)}
+                                    className="w-full px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left whitespace-normal leading-tight"
+                                  >
+                                    {truncateTitle(service.title)}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="px-4 py-3 text-xs text-gray-400 italic">
+                                  {t("no_items_found")}
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </li>
+
+            <li role="none">
+              <Link
+                to="/contact"
+                role="menuitem"
+                aria-current={location.pathname === "/contact" ? "page" : undefined}
+                className={cn(
+                  "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  location.pathname === "/contact"
+                    ? "text-white"
+                    : "text-gray-700 hover:text-[#2980C7]"
+                )}
+                style={location.pathname === "/contact" ? { backgroundColor: '#2980C7' } : {}}
+              >
+                <span className="relative">{t("nav.contact")}</span>
+              </Link>
+            </li>
           </ul>
 
-          {/* Desktop right side - Language Dropdown + Contact Button */}
           <div className="hidden lg:flex items-center gap-3">
-            {/* Language Dropdown - Desktop */}
             <div className="relative z-[60]" ref={dropdownRef}>
               <button
                 onClick={() => setLangDropdownOpen(!langDropdownOpen)}
@@ -246,7 +653,6 @@ export function Header() {
               </AnimatePresence>
             </div>
 
-            {/* Contact Button */}
             <Button 
               onClick={scrollToFooter} 
               size="sm"
@@ -256,9 +662,7 @@ export function Header() {
             </Button>
           </div>
 
-          {/* Mobile/Tablet controls */}
           <div className="flex lg:hidden items-center gap-2">
-            {/* Mobile Language Dropdown */}
             <div className="relative z-[60]" ref={mobileDropdownRef}>
               <button
                 onClick={() => setMobileLangDropdownOpen(!mobileLangDropdownOpen)}
@@ -332,7 +736,6 @@ export function Header() {
               </AnimatePresence>
             </div>
             
-            {/* Mobile menu button */}
             <button
               type="button"
               className="p-2 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -368,7 +771,7 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile/Tablet menu */}
+        {/* Mobile Menu */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
@@ -383,30 +786,115 @@ export function Header() {
             >
               <nav className="py-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
                 <ul className="flex flex-col gap-2 list-none">
-                  {navigation.map((item, index) => (
-                    <motion.li
-                      key={item.key}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      role="none"
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0 }}
+                    role="none"
+                  >
+                    <Link
+                      to="/"
+                      onClick={() => setMobileMenuOpen(false)}
+                      role="menuitem"
+                      aria-current={location.pathname === "/" ? "page" : undefined}
+                      className={cn(
+                        "block px-4 py-3 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        location.pathname === "/"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
                     >
-                      <Link
-                        to={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        role="menuitem"
-                        aria-current={location.pathname === item.href ? "page" : undefined}
-                        className={cn(
-                          "block px-4 py-3 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                          location.pathname === item.href
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                        )}
-                      >
-                        {t(item.key)}
-                      </Link>
-                    </motion.li>
-                  ))}
+                      {t("nav.home")}
+                    </Link>
+                  </motion.li>
+
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                    role="none"
+                  >
+                    <Link
+                      to="/about"
+                      onClick={() => setMobileMenuOpen(false)}
+                      role="menuitem"
+                      aria-current={location.pathname === "/about" ? "page" : undefined}
+                      className={cn(
+                        "block px-4 py-3 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        location.pathname === "/about"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {t("nav.about")}
+                    </Link>
+                  </motion.li>
+
+                  {/* Mobile Products - Oddiy menyu sifatida */}
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    role="none"
+                  >
+                    <Link
+                      to="/products"
+                      onClick={() => setMobileMenuOpen(false)}
+                      role="menuitem"
+                      className={cn(
+                        "block px-4 py-3 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        location.pathname.startsWith("/products")
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {t("nav.products")}
+                    </Link>
+                  </motion.li>
+
+                  {/* Mobile Services - Oddiy menyu sifatida */}
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    role="none"
+                  >
+                    <Link
+                      to="/services"
+                      onClick={() => setMobileMenuOpen(false)}
+                      role="menuitem"
+                      className={cn(
+                        "block px-4 py-3 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        location.pathname.startsWith("/services")
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {t("nav.services")}
+                    </Link>
+                  </motion.li>
+
+                  <motion.li
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                    role="none"
+                  >
+                    <Link
+                      to="/contact"
+                      onClick={() => setMobileMenuOpen(false)}
+                      role="menuitem"
+                      aria-current={location.pathname === "/contact" ? "page" : undefined}
+                      className={cn(
+                        "block px-4 py-3 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        location.pathname === "/contact"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {t("nav.contact")}
+                    </Link>
+                  </motion.li>
                 </ul>
                 <motion.div 
                   className="mt-4 px-4"

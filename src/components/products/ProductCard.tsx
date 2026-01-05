@@ -91,7 +91,7 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
             width="400"
             height="300"
             onLoad={() => setImageLoaded(true)}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.08 }}
             transition={{ duration: 0.5 }}
           />
 

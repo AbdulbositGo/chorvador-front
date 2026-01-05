@@ -72,15 +72,16 @@ const cache = {
 const Services = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   
   // URL dan qiymatlarni olish
-  const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
   const categoryFromUrl = searchParams.get("category") || "all";
   const searchFromUrl = searchParams.get("search") || "";
+  const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
   
   const [searchQuery, setSearchQuery] = useState(searchFromUrl);
   const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [showFilters, setShowFilters] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -88,7 +89,6 @@ const Services = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 8;
 
@@ -107,21 +107,22 @@ const Services = () => {
   const currentUrl = `${siteUrl}/services${currentPage > 1 ? `?page=${currentPage}` : ''}`;
   const canonicalUrl = `${siteUrl}/services`;
 
-  // URL ni yangilash
-  const updateURL = useCallback((page: number, category: string, search: string) => {
-    const params = new URLSearchParams();
-    
-    if (page > 1) params.set("page", page.toString());
-    if (category !== "all") params.set("category", category);
-    if (search.trim()) params.set("search", search.trim());
-    
-    setSearchParams(params, { replace: true });
-  }, [setSearchParams]);
-
-  // State o'zgarganda URL ni yangilash
+  // URL parametrlari o'zgarganda state ni yangilash
   useEffect(() => {
-    updateURL(currentPage, selectedCategory, searchQuery);
-  }, [currentPage, selectedCategory, searchQuery, updateURL]);
+    const newCategory = searchParams.get("category") || "all";
+    const newSearch = searchParams.get("search") || "";
+    const newPage = parseInt(searchParams.get("page") || "1", 10);
+    
+    if (newCategory !== selectedCategory) {
+      setSelectedCategory(newCategory);
+    }
+    if (newSearch !== searchQuery) {
+      setSearchQuery(newSearch);
+    }
+    if (newPage !== currentPage) {
+      setCurrentPage(newPage);
+    }
+  }, [searchParams]);
 
   // Optimized image preloading with priority hints
   useEffect(() => {
@@ -198,6 +199,7 @@ const Services = () => {
         cache.set(cacheKey, allCategories, 600000);
         setCategories(allCategories);
       } catch (err) {
+        console.error('Categories fetch error:', err);
         setCategories([
           { id: "all", name: language === 'uz' ? 'Barchasi' : language === 'ru' ? 'Все' : 'All' },
         ]);
@@ -208,6 +210,49 @@ const Services = () => {
 
     fetchCategories();
   }, [language]);
+
+  // Handler functions for navigation
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    const params = new URLSearchParams();
+    if (categoryId !== "all") {
+      params.set("category", categoryId);
+    }
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    navigate(`/services?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchQuery, navigate]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    const params = new URLSearchParams();
+    if (selectedCategory !== "all") {
+      params.set("category", selectedCategory);
+    }
+    if (value.trim()) {
+      params.set("search", value.trim());
+    }
+    navigate(`/services?${params.toString()}`);
+  }, [selectedCategory, navigate]);
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams();
+    if (selectedCategory !== "all") {
+      params.set("category", selectedCategory);
+    }
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    if (page > 1) {
+      params.set("page", page.toString());
+    }
+    navigate(`/services?${params.toString()}`);
+    
+    const element = document.getElementById('services-grid');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedCategory, searchQuery, navigate]);
 
   // Services ni olish (with backend pagination)
   useEffect(() => {
@@ -298,7 +343,8 @@ const Services = () => {
         setServices(transformedServices);
         
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Noma\'lum xatolik');
+        const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -324,20 +370,6 @@ const Services = () => {
       currentServices: services
     };
   }, [totalCount, currentPage, itemsPerPage, services]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchQuery, selectedCategory]);
-
-  // Smooth scroll when changing pages
-  useEffect(() => {
-    const element = document.getElementById('services-grid');
-    if (element && currentPage > 1) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [currentPage]);
 
   // Display categories
   const visibleCategories = useMemo(() => 
@@ -462,7 +494,7 @@ const Services = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-20">
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-11">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
@@ -485,7 +517,7 @@ const Services = () => {
               <Input
                 placeholder={language === 'uz' ? 'Xizmatlarni qidiring...' : language === 'ru' ? 'Поиск услуг...' : 'Search services...'}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
                 aria-label={language === 'uz' ? 'Xizmatlarni qidirish' : language === 'ru' ? 'Поиск услуг' : 'Search services'}
                 type="search"
@@ -493,7 +525,7 @@ const Services = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
                   aria-label="Clear search"
                   type="button"
@@ -536,10 +568,7 @@ const Services = () => {
                   {visibleCategories.map((category) => (
                     <button
                       key={category.id}
-                      onClick={() => {
-                        setSelectedCategory(category.id);
-                        setShowFilters(false);
-                      }}
+                      onClick={() => handleCategoryChange(category.id)}
                       className={cn(
                         "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
                         selectedCategory === category.id
@@ -647,7 +676,7 @@ const Services = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Previous page"
@@ -672,7 +701,7 @@ const Services = () => {
                         }).map((page) => (
                           <button
                             key={page}
-                            onClick={() => setCurrentPage(page)}
+                            onClick={() => handlePageChange(page)}
                             className={cn(
                               "h-9 sm:h-10 w-9 sm:w-10 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 hover:scale-110",
                               currentPage === page
