@@ -50,7 +50,6 @@ export function Header() {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   
-  // Refs
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const productsRef = useRef<HTMLDivElement>(null);
@@ -64,7 +63,6 @@ export function Header() {
     [language]
   );
 
-  // Cleanup timeouts
   useEffect(() => {
     return () => {
       if (productsTimeoutRef.current) clearTimeout(productsTimeoutRef.current);
@@ -75,8 +73,7 @@ export function Header() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const acceptLanguage = language; 
-
+      const acceptLanguage = language;
       try {
         const headers = {
           'Accept-Language': acceptLanguage,
@@ -122,12 +119,9 @@ export function Header() {
   const getProductsByCategory = useCallback((categoryId: number) => {
     const categoryName = productCategories.find(c => c.id === categoryId)?.name;
     if (!categoryName) return [];
-
     return products.filter(product => {
       const pCat = product.category;
-      if (typeof pCat === 'string') {
-        return pCat === categoryName;
-      }
+      if (typeof pCat === 'string') return pCat === categoryName;
       if (typeof pCat === 'object' && pCat !== null) {
         return (pCat as CategoryObject).id === categoryId || pCat.name === categoryName;
       }
@@ -138,34 +132,22 @@ export function Header() {
   const getServicesByCategory = useCallback((categoryId: number) => {
     const categoryObject = serviceCategories.find(c => c.id === categoryId);
     if (!categoryObject) return [];
-
     const categoryName = categoryObject.name;
-
     return services.filter(service => {
       const sCat = service.category;
-      
-      if (typeof sCat === 'string') {
-        return sCat === categoryName;
-      }
-      
+      if (typeof sCat === 'string') return sCat === categoryName;
       if (typeof sCat === 'object' && sCat !== null) {
         const catObj = sCat as CategoryObject;
         return catObj.id === categoryId || catObj.name === categoryName;
       }
-
-      if (typeof sCat === 'number') {
-        return sCat === categoryId;
-      }
-
+      if (typeof sCat === 'number') return sCat === categoryId;
       return service.category_id === categoryId;
     });
   }, [services, serviceCategories]);
 
   const scrollToFooter = useCallback(() => {
     const footer = document.getElementById('footer');
-    if (footer) {
-      footer.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (footer) footer.scrollIntoView({ behavior: 'smooth' });
     setMobileMenuOpen(false);
   }, []);
 
@@ -245,9 +227,7 @@ export function Header() {
     setHoveredCategoryId(null);
     setHoveredServiceCategoryId(null);
     navigate(`${path}?category=${categoryId}`);
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
   }, [navigate]);
 
   const truncateTitle = (title: string) => {
@@ -261,16 +241,11 @@ export function Header() {
     setHoveredCategoryId(null);
     setHoveredServiceCategoryId(null);
     navigate(isService ? `/services/${productId}` : `/products/${productId}`);
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
   }, [navigate]);
 
-  // ✅ NESTED DROPDOWN HANDLERS
   const handleProductsMouseEnter = () => {
-    if (productsTimeoutRef.current) {
-      clearTimeout(productsTimeoutRef.current);
-    }
+    if (productsTimeoutRef.current) clearTimeout(productsTimeoutRef.current);
     setProductsOpen(true);
     setServicesOpen(false);
   };
@@ -283,9 +258,7 @@ export function Header() {
   };
 
   const handleServicesMouseEnter = () => {
-    if (servicesTimeoutRef.current) {
-      clearTimeout(servicesTimeoutRef.current);
-    }
+    if (servicesTimeoutRef.current) clearTimeout(servicesTimeoutRef.current);
     setServicesOpen(true);
     setProductsOpen(false);
   };
@@ -298,9 +271,7 @@ export function Header() {
   };
 
   const handleCategoryMouseEnter = (categoryId: number, isService: boolean = false) => {
-    if (categoryTimeoutRef.current) {
-      clearTimeout(categoryTimeoutRef.current);
-    }
+    if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
     if (isService) {
       setHoveredServiceCategoryId(categoryId);
     } else {
@@ -358,9 +329,7 @@ export function Header() {
                 aria-current={location.pathname === "/" ? "page" : undefined}
                 className={cn(
                   "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                  location.pathname === "/"
-                    ? "text-white"
-                    : "text-gray-700 hover:text-[#2980C7]"
+                  location.pathname === "/" ? "text-white" : "text-gray-700 hover:text-[#2980C7]"
                 )}
                 style={location.pathname === "/" ? { backgroundColor: '#2980C7' } : {}}
               >
@@ -375,9 +344,7 @@ export function Header() {
                 aria-current={location.pathname === "/about" ? "page" : undefined}
                 className={cn(
                   "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                  location.pathname === "/about"
-                    ? "text-white"
-                    : "text-gray-700 hover:text-[#2980C7]"
+                  location.pathname === "/about" ? "text-white" : "text-gray-700 hover:text-[#2980C7]"
                 )}
                 style={location.pathname === "/about" ? { backgroundColor: '#2980C7' } : {}}
               >
@@ -385,169 +352,153 @@ export function Header() {
               </Link>
             </li>
 
-{/* ✅ PRODUCTS - NESTED DROPDOWN STYLE */}
-<li role="none" className="relative">
-  <div 
-    ref={productsRef}
-    onMouseEnter={handleProductsMouseEnter}
-    onMouseLeave={handleProductsMouseLeave}
-  >
-    <Link
-      to="/products"
-      onClick={() => {
-        // Dropdown yopilmasdan sahifaga o'tadi
-        setProductsOpen(false);
-        setHoveredCategoryId(null);
-      }}
-      className={cn(
-        "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center gap-1",
-        location.pathname.startsWith("/products")
-          ? "text-white bg-[#2980C7]"
-          : "text-gray-700 hover:text-[#2980C7]"
-      )}
-    >
-      <span className="relative">{t("nav.products")}</span>
-      <ChevronDown 
-        className={cn(
-          "h-4 w-4 transition-transform duration-300",
-          productsOpen && "rotate-180"
-        )} 
-      />
-    </Link>
-
-    {productsOpen && productCategories.length > 0 && (
-      <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[240px] z-[70] animate-in fade-in slide-in-from-top-2">
-        <div className="flex flex-col gap-1">
-          {productCategories.map((category) => {
-            const productsInCategory = getProductsByCategory(category.id);
-            const hasProducts = productsInCategory.length > 0;
-            
-            return (
-              <div
-                key={category.id}
-                className="relative"
-                onMouseEnter={() => handleCategoryMouseEnter(category.id, false)}
-                onMouseLeave={() => handleCategoryMouseLeave(false)}
+            <li role="none" className="relative">
+              <div 
+                ref={productsRef}
+                onMouseEnter={handleProductsMouseEnter}
+                onMouseLeave={handleProductsMouseLeave}
               >
-                <button
-                  onClick={() => handleCategoryClick('/products', category.id)}
+                <Link
+                  to="/products"
+                  onClick={() => {
+                    setProductsOpen(false);
+                    setHoveredCategoryId(null);
+                  }}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left", // text-left qo'shildi
-                    hoveredCategoryId === category.id 
-                      ? "bg-[#2980C7] text-white" 
-                      : "text-gray-700 hover:bg-gray-100"
+                    "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center gap-1",
+                    location.pathname.startsWith("/products") ? "text-white bg-[#2980C7]" : "text-gray-700 hover:text-[#2980C7]"
                   )}
                 >
-                  <span className="truncate">{category.name}</span>
-                  {hasProducts && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
-                </button>
+                  <span className="relative">{t("nav.products")}</span>
+                  <ChevronDown 
+                    className={cn("h-4 w-4 transition-transform duration-300", productsOpen && "rotate-180")} 
+                  />
+                </Link>
 
-                {/* SUBMENU */}
-                {hoveredCategoryId === category.id && hasProducts && (
-                  <div className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[260px] max-w-[320px] z-[80]">
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-3 text-left">
-                      {category.name}
-                    </div>
-                    <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                      {productsInCategory.map((product) => (
-                        <button
-                          key={product.id}
-                          onClick={() => handleProductClick(product.id)}
-                          className="w-full px-3 py-2 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
-                        >
-                          {truncateTitle(product.title)}
-                        </button>
-                      ))}
+                {productsOpen && productCategories.length > 0 && (
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[240px] z-[70] animate-in fade-in slide-in-from-top-2">
+                    <div className="flex flex-col gap-1">
+                      {productCategories.map((category) => {
+                        const productsInCategory = getProductsByCategory(category.id);
+                        const hasProducts = productsInCategory.length > 0;
+                        
+                        return (
+                          <div
+                            key={category.id}
+                            className="relative"
+                            onMouseEnter={() => handleCategoryMouseEnter(category.id, false)}
+                            onMouseLeave={() => handleCategoryMouseLeave(false)}
+                          >
+                            <button
+                              onClick={() => handleCategoryClick('/products', category.id)}
+                              className={cn(
+                                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left",
+                                hoveredCategoryId === category.id ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
+                              )}
+                            >
+                              <span className="truncate">{category.name}</span>
+                              {hasProducts && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
+                            </button>
+
+                            {hoveredCategoryId === category.id && hasProducts && (
+                              <div className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[260px] max-w-[320px] z-[80]">
+                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-3 text-left">
+                                  {category.name}
+                                </div>
+                                <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                  {productsInCategory.map((product) => (
+                                    <button
+                                      key={product.id}
+                                      onClick={() => handleProductClick(product.id)}
+                                      className="w-full px-3 py-2 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
+                                    >
+                                      {truncateTitle(product.title)}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
               </div>
-            );
-          })}
-        </div>
-      </div>
-    )}
-  </div>
-</li>
+            </li>
 
-{/* ✅ SERVICES - NESTED DROPDOWN STYLE */}
-<li role="none" className="relative">
-  <div 
-    ref={servicesRef}
-    onMouseEnter={handleServicesMouseEnter}
-    onMouseLeave={handleServicesMouseLeave}
-  >
-    <Link
-      to="/services"
-      onClick={() => {
-        setServicesOpen(false);
-        setHoveredServiceCategoryId(null);
-      }}
-      className={cn(
-        "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1",
-        location.pathname.startsWith("/services")
-          ? "text-white bg-[#2980C7]"
-          : "text-gray-700 hover:text-[#2980C7]"
-      )}
-    >
-      <span>{t("nav.services")}</span>
-      <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
-    </Link>
-
-    {servicesOpen && serviceCategories.length > 0 && (
-      <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[220px] z-[70]">
-        <div className="flex flex-col gap-1">
-          {serviceCategories.map((category) => {
-            const servicesInCategory = getServicesByCategory(category.id);
-            const hasServices = servicesInCategory.length > 0;
-
-            return (
-              <div
-                key={category.id}
-                className="relative"
-                onMouseEnter={() => handleCategoryMouseEnter(category.id, true)}
-                onMouseLeave={() => handleCategoryMouseLeave(true)}
+            <li role="none" className="relative">
+              <div 
+                ref={servicesRef}
+                onMouseEnter={handleServicesMouseEnter}
+                onMouseLeave={handleServicesMouseLeave}
               >
-                <button
-                  onClick={() => handleCategoryClick('/services', category.id)}
+                <Link
+                  to="/services"
+                  onClick={() => {
+                    setServicesOpen(false);
+                    setHoveredServiceCategoryId(null);
+                  }}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg text-left transition-all", // text-left qo'shildi
-                    hoveredServiceCategoryId === category.id 
-                      ? "bg-[#2980C7] text-white" 
-                      : "text-gray-700 hover:bg-gray-100"
+                    "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1",
+                    location.pathname.startsWith("/services") ? "text-white bg-[#2980C7]" : "text-gray-700 hover:text-[#2980C7]"
                   )}
                 >
-                  <span className="truncate">{category.name}</span>
-                  {hasServices && <ChevronRight className="h-4 w-4 ml-2" />}
-                </button>
+                  <span>{t("nav.services")}</span>
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
+                </Link>
 
-                {/* SUBMENU */}
-                {hoveredServiceCategoryId === category.id && hasServices && (
-                  <div className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[260px] z-[80]">
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-3 text-left">
-                      {category.name}
-                    </div>
-                    <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                      {servicesInCategory.map((service) => (
-                        <button
-                          key={service.id}
-                          onClick={() => handleProductClick(service.id, true)}
-                          className="w-full px-3 py-2 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg text-left font-medium"
-                        >
-                          {truncateTitle(service.title)}
-                        </button>
-                      ))}
+                {servicesOpen && serviceCategories.length > 0 && (
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[220px] z-[70]">
+                    <div className="flex flex-col gap-1">
+                      {serviceCategories.map((category) => {
+                        const servicesInCategory = getServicesByCategory(category.id);
+                        const hasServices = servicesInCategory.length > 0;
+
+                        return (
+                          <div
+                            key={category.id}
+                            className="relative"
+                            onMouseEnter={() => handleCategoryMouseEnter(category.id, true)}
+                            onMouseLeave={() => handleCategoryMouseLeave(true)}
+                          >
+                            <button
+                              onClick={() => handleCategoryClick('/services', category.id)}
+                              className={cn(
+                                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg text-left transition-all",
+                                hoveredServiceCategoryId === category.id ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
+                              )}
+                            >
+                              <span className="truncate">{category.name}</span>
+                              {hasServices && <ChevronRight className="h-4 w-4 ml-2" />}
+                            </button>
+
+                            {hoveredServiceCategoryId === category.id && hasServices && (
+                              <div className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[260px] z-[80]">
+                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-3 text-left">
+                                  {category.name}
+                                </div>
+                                <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                  {servicesInCategory.map((service) => (
+                                    <button
+                                      key={service.id}
+                                      onClick={() => handleProductClick(service.id, true)}
+                                      className="w-full px-3 py-2 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg text-left font-medium"
+                                    >
+                                      {truncateTitle(service.title)}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
               </div>
-            );
-          })}
-        </div>
-      </div>
-    )}
-  </div>
-</li>
+            </li>
 
             <li role="none">
               <Link
@@ -556,9 +507,7 @@ export function Header() {
                 aria-current={location.pathname === "/contact" ? "page" : undefined}
                 className={cn(
                   "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                  location.pathname === "/contact"
-                    ? "text-white"
-                    : "text-gray-700 hover:text-[#2980C7]"
+                  location.pathname === "/contact" ? "text-white" : "text-gray-700 hover:text-[#2980C7]"
                 )}
                 style={location.pathname === "/contact" ? { backgroundColor: '#2980C7' } : {}}
               >
@@ -587,10 +536,77 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <ChevronDown 
-                  className={cn(
-                    "h-3 w-3 transition-transform duration-300",
-                    mobileLangDropdownOpen && "rotate-180"
-                  )} 
+                  className={cn("h-3 w-3 transition-transform duration-300", langDropdownOpen && "rotate-180")} 
+                  aria-hidden="true"
+                />
+              </button>
+              
+              <AnimatePresence>
+                {langDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    role="menu"
+                    aria-label="Language options"
+                    className="absolute right-0 top-full mt-2 bg-card border border-border rounded-lg shadow-xl min-w-[140px] overflow-hidden z-[70]"
+                  >
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code);
+                          setLangDropdownOpen(false);
+                        }}
+                        onKeyDown={(e) => handleLanguageKeyDown(e, lang.code)}
+                        role="menuitem"
+                        aria-label={`Switch to ${lang.label}`}
+                        aria-current={language === lang.code ? "true" : undefined}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary",
+                          language === lang.code ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                        )}
+                      >
+                        <img 
+                          src={lang.flag} 
+                          alt="" 
+                          className="w-5 h-4 object-cover rounded-sm"
+                          width="20"
+                          height="16"
+                          loading="lazy"
+                          aria-hidden="true"
+                        />
+                        <span className="text-xs sm:text-sm">{lang.label}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="flex lg:hidden items-center gap-3">
+            <div className="relative z-[60]" ref={mobileDropdownRef}>
+              <button
+                onClick={() => setMobileLangDropdownOpen(!mobileLangDropdownOpen)}
+                onKeyDown={(e) => e.key === 'Escape' && setMobileLangDropdownOpen(false)}
+                aria-expanded={mobileLangDropdownOpen}
+                aria-haspopup="true"
+                aria-label={`Select language. Current: ${currentLang.label}`}
+                className="flex items-center gap-2 bg-muted/50 hover:bg-muted border border-border rounded-lg px-2 py-1.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                <img 
+                  src={currentLang.flag} 
+                  alt="" 
+                  className="w-5 h-4 object-cover rounded-sm"
+                  width="20"
+                  height="16"
+                  loading="lazy"
+                  aria-hidden="true"
+                />
+                <ChevronDown 
+                  className={cn("h-3 w-3 transition-transform duration-300", mobileLangDropdownOpen && "rotate-180")} 
                   aria-hidden="true"
                 />
               </button>
@@ -619,9 +635,7 @@ export function Header() {
                         aria-current={language === lang.code ? "true" : undefined}
                         className={cn(
                           "w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary",
-                          language === lang.code 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-foreground hover:bg-muted"
+                          language === lang.code ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
                         )}
                       >
                         <img 
@@ -676,7 +690,6 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
@@ -819,7 +832,6 @@ export function Header() {
         </AnimatePresence>
       </div>
 
-      {/* ✅ CSS Animations */}
       <style>{`
         @keyframes fadeIn {
           from {
@@ -864,4 +876,3 @@ export function Header() {
     </nav>
   );
 }
-        
