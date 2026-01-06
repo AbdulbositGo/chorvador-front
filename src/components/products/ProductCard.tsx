@@ -70,8 +70,8 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
         transition={{ type: "spring", stiffness: 400 }}
         className="h-full flex flex-col"
       >
-        {/* Image Section */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+        {/* Image Section - Kvadrat, kesimsiz */}
+        <div className="relative w-full pb-[85%] overflow-hidden bg-muted">
           {/* Placeholder */}
           {!imageLoaded && (
             <div 
@@ -83,15 +83,13 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
           <motion.img
             src={product.image}
             alt={`${product.name} - ${product.category}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
+            className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             loading="lazy"
             decoding="async"
-            width="400"
-            height="300"
             onLoad={() => setImageLoaded(true)}
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.5 }}
           />
 
@@ -99,7 +97,7 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
           {badgeInfo && (
             <span
               className={cn(
-                "absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold shadow-md",
+                "absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold shadow-md z-10",
                 badgeInfo.className
               )}
               role="status"
@@ -111,7 +109,7 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
 
           {/* Hover Overlay */}
           <div 
-            className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center pb-4 gap-2"
+            className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center pb-4 gap-2 z-10"
             aria-hidden="true"
           >
             <Button
@@ -130,7 +128,7 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
         </div>
 
         {/* Content Section */}
-        <div className="p-5 flex flex-col flex-grow">
+        <div className="p-4 flex flex-col flex-grow">
           {/* Category */}
           <span 
             className="text-xs text-muted-foreground uppercase tracking-wide"
@@ -147,24 +145,24 @@ export function ProductCard({ product, hidePrice = false, showPrice = true }: Pr
           >
             <h3 
               id={`product-${product.id}-title`}
-              className="font-heading font-semibold text-foreground mt-1 mb-2 line-clamp-2 group-hover:text-primary transition-colors"
+              className="font-heading font-semibold text-foreground mt-1 mb-2 line-clamp-2 group-hover:text-primary transition-colors min-h-[2.5rem] text-sm"
             >
               {product.name}
             </h3>
           </Link>
 
           {/* Price Section */}
-          <div className="mt-auto">
+          <div className="mt-auto pt-1">
             {shouldShowPrice ? (
               <span 
-                className="text-xl font-bold text-primary"
+                className="text-lg font-bold text-primary"
                 aria-label={`Price: ${formatPrice(product.price!)}`}
               >
                 {formatPrice(product.price!)}
               </span>
             ) : !hidePrice && showPrice && product.price === null ? (
               <span 
-                className="text-sm text-muted-foreground font-medium"
+                className="text-xs text-muted-foreground font-medium"
                 role="status"
               >
                 {t("products.priceOnRequest") || "Narx so'raladi"}

@@ -1,6 +1,4 @@
-// ServiceDetail.tsx - Performance optimized version (57 → 95+)
-// Replace your existing file with this optimized version
-
+// ServiceDetail.tsx - Image fixed version
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -39,7 +37,6 @@ const ServiceDetail = () => {
     const siteName = "Chorvador.uz";
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : "https://yourwebsite.com";
 
-    // ✅ OPTIMIZATION 1: Memoized SEO data
     const seoData = useMemo(() => {
         if (!service) return null;
         return {
@@ -50,7 +47,6 @@ const ServiceDetail = () => {
         };
     }, [service, language, siteUrl, id]);
 
-    // ✅ OPTIMIZATION 2: Memoized benefits (prevent recreation on every render)
     const benefits: Benefit[] = useMemo(() => [
         {
             icon: Shield,
@@ -69,7 +65,6 @@ const ServiceDetail = () => {
         }
     ], [language]);
 
-    // ✅ OPTIMIZATION 3: Intersection Observer for lazy animations
     useEffect(() => {
         if (!service) return;
         
@@ -93,14 +88,12 @@ const ServiceDetail = () => {
         }
     }, [service]);
 
-    // ✅ OPTIMIZATION 4: Image preload check
     useEffect(() => {
         if (imgRef.current?.complete) {
             setImageLoaded(true);
         }
     }, [service]);
 
-    // ✅ OPTIMIZATION 5: useCallback for image error handler
     const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
         const target = e.target as HTMLImageElement;
         target.src = 'https://placehold.co/800x600/8b5cf6/ffffff?text=Service';
@@ -185,7 +178,6 @@ const ServiceDetail = () => {
 
     return (
         <Layout>
-            {/* ✅ OPTIMIZATION 6: Helmet for SEO */}
             {seoData && (
                 <Helmet>
                     <html lang={language} />
@@ -193,14 +185,12 @@ const ServiceDetail = () => {
                     <meta name="description" content={seoData.pageDescription} />
                     <link rel="canonical" href={seoData.currentUrl} />
                     
-                    {/* Open Graph */}
                     <meta property="og:title" content={`${seoData.pageTitle} | ${siteName}`} />
                     <meta property="og:description" content={seoData.pageDescription} />
                     <meta property="og:url" content={seoData.currentUrl} />
                     <meta property="og:type" content="article" />
                     <meta property="og:image" content={seoData.imageUrl} />
                     
-                    {/* Twitter Card */}
                     <meta name="twitter:card" content="summary_large_image" />
                     <meta name="twitter:title" content={`${seoData.pageTitle} | ${siteName}`} />
                     <meta name="twitter:description" content={seoData.pageDescription} />
@@ -208,7 +198,6 @@ const ServiceDetail = () => {
                 </Helmet>
             )}
 
-            {/* ✅ OPTIMIZATION 7: Add performance styles */}
             <style>{`
                 .lazy-animate {
                     opacity: 0;
@@ -247,7 +236,6 @@ const ServiceDetail = () => {
             {/* Hero Section with Image */}
             <section className="relative pt-20 md:pt-24">
                 <div className="container-main px-4">
-                    {/* ✅ OPTIMIZATION 8: Add lazy-animate class */}
                     <div className="mb-6 lazy-animate translate-x-[-10px]">
                         <Button
                             variant="ghost"
@@ -278,22 +266,27 @@ const ServiceDetail = () => {
                             </div>
                         </div>
 
-                        {/* ✅ OPTIMIZATION 9: Optimized image loading */}
+                        {/* ✅ FIXED: Image container - o'lcham sozlanadi */}
                         <div className="lg:col-span-2 lazy-animate scale-95">
-                            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
-                                <div className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
-                                    <img
-                                        ref={imgRef}
-                                        src={service.image}
-                                        alt={service.title}
-                                        loading="eager"
-                                        decoding="async"
-                                        fetchPriority="high"
-                                        className="w-full h-full object-cover will-change-transform"
-                                        onLoad={() => setImageLoaded(true)}
-                                        onError={handleImageError}
-                                    />
-                                </div>
+                            <div className="relative w-full pb-[85%] rounded-2xl overflow-hidden shadow-xl bg-muted">
+                                {/* Placeholder */}
+                                {!imageLoaded && (
+                                    <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 animate-pulse" />
+                                )}
+                                
+                                <img
+                                    ref={imgRef}
+                                    src={service.image}
+                                    alt={service.title}
+                                    loading="eager"
+                                    decoding="async"
+                                    fetchPriority="high"
+                                    className={`absolute top-0 left-0 w-full h-full object-cover will-change-transform transition-opacity duration-500 ${
+                                        imageLoaded ? 'opacity-100' : 'opacity-0'
+                                    }`}
+                                    onLoad={() => setImageLoaded(true)}
+                                    onError={handleImageError}
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                             </div>
                         </div>
