@@ -367,7 +367,7 @@ const translations: Record<Language, Record<string, string>> = {
     "common.tryAgain": "Попробовать снова",
     "common.home": "Главная",
 
-    "seo.home.title": "Chorvadon - Животноводческие Товары и Услуги",
+    "seo.home.title": "Chorvadon - Продукция и услуги животноводства",
     "seo.home.description":
       "Chorvadon - высококачественные товары и профессиональные услуги для животноводства. Корма, лекарства, оборудование и многое другое.",
     "seo.home.keywords":

@@ -67,33 +67,25 @@ const ProductDetail = () => {
     };
   }, [product, currentImageIndex, language]);
 
-  // ✅ OPTIMIZATION 2: Memoized video URL - FIXED FOR YOUTUBE
+  // ✅ OPTIMIZATION 2: Memoized video URL
   const videoData = useMemo(() => {
     if (!product?.video) return { videoUrl: null, isYouTube: false, hasVideo: false };
 
     const getEmbedUrl = (url: string): string | null => {
       if (!url) return null;
       
-      // YouTube URL pattern matching
-      const patterns = [
-        /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/,  // watch?v=ID
-        /(?:youtu\.be\/)([a-zA-Z0-9_-]+)/,              // youtu.be/ID
-        /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/     // embed/ID
-      ];
+      const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/;
+      const match = url.match(youtubeRegex);
       
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match && match[1]) {
-          return `https://www.youtube.com/embed/${match[1]}`;
-        }
+      if (match && match[1]) {
+        return `https://www.youtube.com/embed/${match[1]}`;
       }
       
-      // If not YouTube, return original URL
       return url;
     };
 
-    const isYouTube = product.video.includes('youtube.com') || product.video.includes('youtu.be');
     const videoUrl = getEmbedUrl(product.video);
+    const isYouTube = product.video.includes('youtube.com') || product.video.includes('youtu.be');
     const hasVideo = videoUrl && !videoError;
 
     return { videoUrl, isYouTube, hasVideo };
@@ -257,6 +249,40 @@ const ProductDetail = () => {
 
     fetchProductDetail();
   }, [id, language]);
+
+
+const getYouTubeEmbedUrl = (url: string) => {
+  if (!url) return "";
+
+  // 👉 SHORTS
+  if (url.includes("/shorts/")) {
+    const id = url.split("/shorts/")[1].split("?")[0];
+    return `https://www.youtube.com/embed/${id}`;
+    // agar watch kerak bo‘lsa:
+    // return `https://www.youtube.com/watch?v=${id}`;
+  }
+
+  // 👉 watch?v=ID
+  if (url.includes("watch?v=")) {
+    const id = url.split("watch?v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+
+  // 👉 youtu.be/ID
+  if (url.includes("youtu.be/")) {
+    const id = url.split("youtu.be/")[1].split("?")[0];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+
+  // 👉 already embed
+  if (url.includes("/embed/")) {
+    return url;
+  }
+
+  return "";
+};
+
+
 
   if (loading) {
     return (
@@ -519,30 +545,31 @@ const ProductDetail = () => {
                   </div>
                 ) : showVideo && videoData.hasVideo ? (
                   <div className="w-full h-full bg-black flex items-center justify-center">
-                    {videoData.isYouTube ? (
-                      <iframe
-                        src={videoData.videoUrl || ""}
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        title={product.title}
-                        loading="lazy"
-                        onError={handleVideoError}
-                      />
-                    ) : (
-                      <video
-                        key={videoData.videoUrl}
-                        controls
-                        controlsList="nodownload"
-                        playsInline
-                        className="w-full h-full"
-                        style={{ objectFit: "contain" }}
-                        onError={handleVideoError}
-                        preload="metadata"
-                      >
-                        <source src={videoData.videoUrl || ""} type="video/mp4" />
-                      </video>
-                    )}
+{videoData.isYouTube ? (
+  <iframe
+    src={getYouTubeEmbedUrl(videoData.videoUrl || "")}
+    className="w-full h-full"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+    title={product.title}
+    loading="lazy"
+    onError={handleVideoError}
+  />
+) : (
+  <video
+    key={videoData.videoUrl}
+    controls
+    controlsList="nodownload"
+    playsInline
+    className="w-full h-full"
+    style={{ objectFit: "contain" }}
+    onError={handleVideoError}
+    preload="metadata"
+  >
+    <source src={videoData.videoUrl || ""} type="video/mp4" />
+  </video>
+)}
+
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -690,7 +717,7 @@ const ProductDetail = () => {
             </div>
                           {/* Description */}
               {product.description && (
-                <div className="border-tpt-6">
+                <div className="pt-6">
                   <h2 className="text-xl font-bold mb-4 text-foreground">
                     {language === 'uz' ? 'Tavsif' : language === 'ru' ? 'Описание' : 'Description'}
                   </h2>
