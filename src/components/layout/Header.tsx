@@ -63,8 +63,9 @@ export function Header({
     return services.filter(s => s.categoryId === categoryId);
   }, [services]);
 
-  const truncateTitle = (title: string, maxLength: number = 20) => {
-    return title.length > maxLength ? title.substring(0, maxLength) + "..." : title;
+const truncateTitle = (title: string, maxLength: number = 10) => {
+  if (!title) return '';
+  return title.length > maxLength ? title.substring(0, maxLength) + "..." : title;
   };
 
   useEffect(() => {
@@ -317,168 +318,186 @@ export function Header({
                   />
                 </Link>
 
-                {productsOpen && productCategories.length > 0 && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[240px] max-w-[280px] z-[70]">
-                    <div 
-                      className={cn(
-                        "flex flex-col gap-1",
-                        // productCategories.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
-                      )}
-                      // style={{ 
-                      //   maxHeight: productCategories.length > 10 ? '400px' : 'auto'
-                      // }}
-                    >
-                      {productCategories.map((categoryName, index) => {
-                        const product = products.find(p => p.category === categoryName);
-                        const categoryId = product?.categoryId || categoryName;
-                        const productsInCategory = getProductsByCategoryId(categoryId);
-                        const hasProducts = productsInCategory.length > 0;
-                        
-                        return (
-                          <div key={index} className="relative">
-                            <div
-                              onMouseEnter={() => handleCategoryMouseEnter(categoryName, false)}
-                              onMouseLeave={() => handleCategoryMouseLeave(false)}
-                            >
-                              <button
-                                onClick={() => handleCategoryClick('/products', categoryName)}
-                                className={cn(
-                                  "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left",
-                                  hoveredCategory === categoryName ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
-                                )}
-                              >
-                                <span className="truncate">{truncateTitle(categoryName, 25)}</span>
-                                {hasProducts && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
-                              </button>
+{productsOpen && productCategories.length > 0 && (
+  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl min-w-[240px] max-w-[280px] z-[70]">
+    <div 
+      className="flex flex-col gap-1 p-2 max-h-[450px] overflow-y-auto hide-scrollbar"
+      style={{ 
+        overflowX: 'visible'
+      }}
+    >
+      {productCategories.map((categoryName, index) => {
+        const product = products.find(p => p.category === categoryName);
+        const categoryId = product?.categoryId || categoryName;
+        const productsInCategory = getProductsByCategoryId(categoryId);
+        const hasProducts = productsInCategory.length > 0;
+        
+        return (
+          <div key={index} className="relative group">
+            <button
+              onClick={() => handleCategoryClick('/products', categoryName)}
+              onMouseEnter={() => handleCategoryMouseEnter(categoryName, false)}
+              onMouseLeave={() => handleCategoryMouseLeave(false)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left",
+                hoveredCategory === categoryName ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              <span>{truncateTitle(categoryName, 25)}</span>
+              {hasProducts && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
+            </button>
+          </div>
+        );
+      })}
+    </div>
 
-                              {hoveredCategory === categoryName && hasProducts && (
-                                <div 
-                                  className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-[280px] z-[90]"
-                                  onMouseEnter={() => handleCategoryMouseEnter(categoryName, false)}
-                                  onMouseLeave={() => handleCategoryMouseLeave(false)}
-                                >
-                                  <div 
-                                    className={cn(
-                                      "flex flex-col gap-1",
-                                      // productsInCategory.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
-                                    )}
-                                    // style={{ 
-                                    //   maxHeight: productsInCategory.length > 10 ? '400px' : 'auto'
-                                    // }}
-                                  >
-                                    {productsInCategory.map((product) => (
-                                      <button
-                                        key={product.id}
-                                        onClick={() => handleProductClick(product.id)}
-                                        className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
-                                      >
-                                        <div className="truncate">{product.title}</div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </li>
+    {/* Nested dropdown */}
+    {hoveredCategory && productCategories.map((categoryName, index) => {
+      const product = products.find(p => p.category === categoryName);
+      const categoryId = product?.categoryId || categoryName;
+      const productsInCategory = getProductsByCategoryId(categoryId);
+      const hasProducts = productsInCategory.length > 0;
 
-            <li role="none" className="relative">
-              <div 
-                ref={servicesRef}
-                onMouseEnter={handleServicesMouseEnter}
-                onMouseLeave={handleServicesMouseLeave}
+      if (hoveredCategory !== categoryName || !hasProducts) return null;
+
+      return (
+        <div
+          key={`nested-${index}`}
+          className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100]"
+          style={{
+            marginTop: `${8 + index * 45}px`
+          }}
+          onMouseEnter={() => handleCategoryMouseEnter(categoryName, false)}
+          onMouseLeave={() => handleCategoryMouseLeave(false)}
+        >
+          <div 
+            className={cn(
+              "flex flex-col gap-1 p-3",
+              productsInCategory.length > 8 && "hide-scrollbar overflow-y-auto"
+            )}
+            style={{ 
+              maxHeight: '460px',
+              minWidth: '280px'
+            }}
+          >
+            {productsInCategory.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => handleProductClick(product.id)}
+                className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
               >
-                <Link
-                  to="/services"
-                  onClick={() => {
-                    setServicesOpen(false);
-                    setHoveredServiceCategory(null);
-                  }}
-                  className={cn(
-                    "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1",
-                    location.pathname.startsWith("/services") ? "text-white bg-[#2980C7]" : "text-gray-700 hover:text-[#2980C7]"
-                  )}
-                >
-                  <span>{t("nav.services")}</span>
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
-                </Link>
-
-                {servicesOpen && serviceCategories.length > 0 && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[220px] max-w-[260px] z-[70]">
-                    <div 
-                      className={cn(
-                        "flex flex-col gap-1",
-                        // serviceCategories.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
-                      )}
-                      // style={{ 
-                      //   maxHeight: serviceCategories.length > 10 ? '400px' : 'auto'
-                      // }}
-                    >
-                      {serviceCategories.map((categoryName, index) => {
-                        const service = services.find(s => s.category === categoryName);
-                        const categoryId = service?.categoryId || categoryName;
-                        const servicesInCategory = getServicesByCategoryId(categoryId);
-                        const hasServices = servicesInCategory.length > 0;
-
-                        return (
-                          <div key={index} className="relative">
-                            <div
-                              onMouseEnter={() => handleCategoryMouseEnter(categoryName, true)}
-                              onMouseLeave={() => handleCategoryMouseLeave(true)}
-                            >
-                              <button
-                                onClick={() => handleCategoryClick('/services', categoryName)}
-                                className={cn(
-                                  "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg text-left transition-all",
-                                  hoveredServiceCategory === categoryName ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
-                                )}
-                              >
-                                <span className="truncate">{truncateTitle(categoryName, 25)}</span>
-                                {hasServices && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
-                              </button>
-
-                              {hoveredServiceCategory === categoryName && hasServices && (
-                                <div 
-                                  className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-[280px] z-[90]"
-                                  onMouseEnter={() => handleCategoryMouseEnter(categoryName, true)}
-                                  onMouseLeave={() => handleCategoryMouseLeave(true)}
-                                >
-                                  <div 
-                                    className={cn(
-                                      "flex flex-col gap-1",
-                                      // servicesInCategory.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
-                                    )}
-                                    // style={{ 
-                                    //   maxHeight: servicesInCategory.length > 10 ? '400px' : 'auto'
-                                    // }}
-                                  >
-                                    {servicesInCategory.map((service) => (
-                                      <button
-                                        key={service.id}
-                                        onClick={() => handleProductClick(service.id, true)}
-                                        className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
-                                      >
-                                        <div className="truncate">{service.title}</div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {truncateTitle(product.title, 20)}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}
               </div>
             </li>
+
+<li role="none" className="relative">
+  <div 
+    ref={servicesRef}
+    onMouseEnter={handleServicesMouseEnter}
+    onMouseLeave={handleServicesMouseLeave}
+  >
+    <Link
+      to="/services"
+      onClick={() => {
+        setServicesOpen(false);
+        setHoveredServiceCategory(null);
+      }}
+      className={cn(
+        "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1",
+        location.pathname.startsWith("/services") ? "text-white bg-[#2980C7]" : "text-gray-700 hover:text-[#2980C7]"
+      )}
+    >
+      <span>{t("nav.services")}</span>
+      <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
+    </Link>
+
+{servicesOpen && serviceCategories.length > 0 && (
+  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl min-w-[240px] max-w-[280px] z-[70]">
+    <div 
+      className="flex flex-col gap-1 p-2 max-h-[450px] overflow-y-auto hide-scrollbar"
+      style={{ 
+        overflowX: 'visible'
+      }}
+    >
+      {serviceCategories.map((categoryName, index) => {
+        const service = services.find(s => s.category === categoryName);
+        const categoryId = service?.categoryId || categoryName;
+        const servicesInCategory = getServicesByCategoryId(categoryId);
+        const hasServices = servicesInCategory.length > 0;
+
+        return (
+          <div key={index} className="relative group">
+            <button
+              onClick={() => handleCategoryClick('/services', categoryName)}
+              onMouseEnter={() => handleCategoryMouseEnter(categoryName, true)}
+              onMouseLeave={() => handleCategoryMouseLeave(true)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left",
+                hoveredServiceCategory === categoryName ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              <span>{truncateTitle(categoryName, 25)}</span>
+              {hasServices && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Nested dropdown */}
+    {hoveredServiceCategory && serviceCategories.map((categoryName, index) => {
+      const service = services.find(s => s.category === categoryName);
+      const categoryId = service?.categoryId || categoryName;
+      const servicesInCategory = getServicesByCategoryId(categoryId);
+      const hasServices = servicesInCategory.length > 0;
+
+      if (hoveredServiceCategory !== categoryName || !hasServices) return null;
+
+      return (
+        <div
+          key={`nested-service-${index}`}
+          className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100]"
+          style={{
+            marginTop: `${8 + index * 45}px`
+          }}
+          onMouseEnter={() => handleCategoryMouseEnter(categoryName, true)}
+          onMouseLeave={() => handleCategoryMouseLeave(true)}
+        >
+          <div 
+            className={cn(
+              "flex flex-col gap-1 p-3",
+              servicesInCategory.length > 8 && "hide-scrollbar overflow-y-auto"
+            )}
+            style={{ 
+              maxHeight: '460px',
+              minWidth: '200px'
+            }}
+          >
+            {servicesInCategory.map((service) => (
+              <button
+                key={service.id}
+                onClick={() => handleProductClick(service.id, true)}
+                className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
+              >
+                {truncateTitle(service.title, 15)}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}
+  </div>
+</li>
 
             <li role="none">
               <Link

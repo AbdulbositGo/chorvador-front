@@ -121,8 +121,6 @@ export function Layout({ children }: LayoutProps) {
         setProductCategories(uniqueProductCategories);
         setServiceCategories(uniqueServiceCategories);
 
-        console.log('Layout products loaded:', transformedProducts.length);
-        console.log('Layout services loaded:', transformedServices.length);
 
       } catch (error) {
         console.error('Layout data fetch error:', error);
