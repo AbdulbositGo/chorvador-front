@@ -43,18 +43,18 @@ export function StatsSection() {
   );
 
   return (
-    // Paddinglar 30% ga kamaytirildi (py-2 -> py-1.5, md:py-5 -> md:py-3.5)
+    // Paddinglar 30% oshirildi (py-1.5 -> py-2, md:py-3.5 -> py-4.5)
     <section 
-      className="py-1.5 sm:py-2 md:py-3.5 gradient-hero relative overflow-hidden"
+      className="py-2 sm:py-2.5 md:py-4.5 gradient-hero relative overflow-hidden"
       aria-labelledby="stats-heading"
       role="region"
     >
       <h2 id="stats-heading" className="sr-only">Company Statistics</h2>
 
-      {/* Orqa fon bezaklari ham kichraytirildi */}
+      {/* Orqa fon bezaklari ham kattalashtirildi */}
       <div className="absolute inset-0 opacity-10" aria-hidden="true">
         <motion.div
-          className="absolute top-0 left-0 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-primary-foreground/20 -translate-x-1/2 -translate-y-1/2"
+          className="absolute top-0 left-0 w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-full bg-primary-foreground/20 -translate-x-1/2 -translate-y-1/2"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -63,8 +63,8 @@ export function StatsSection() {
       <div className="container-main relative">
         <div role="list" aria-label="Company statistics">
           <StaggerContainer
-            // Gap (masofa) 30% ga qisqartirildi
-            className="grid grid-cols-4 gap-1 sm:gap-1.5 md:gap-3"
+            // Gap (masofa) 30% oshirildi
+            className="grid grid-cols-4 gap-1.5 sm:gap-2 md:gap-4"
             staggerDelay={0.1}
           >
             {translatedStats.map((stat) => (
@@ -74,19 +74,19 @@ export function StatsSection() {
                     className="text-center text-primary-foreground group cursor-default"
                     whileHover={{ scale: 1.05 }}
                   >
-                    {/* Ikonka konteyneri kichraytirildi (w-9 -> w-7) */}
+                    {/* Ikonka konteyneri kattalashtirildi (w-7 -> w-9) */}
                     <motion.div
-                      className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 mx-auto mb-0.5 sm:mb-1 rounded-md bg-primary-foreground/10 backdrop-blur-sm flex items-center justify-center"
+                      className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 mx-auto mb-1 sm:mb-1.5 rounded-md bg-primary-foreground/10 backdrop-blur-sm flex items-center justify-center"
                       whileHover={{ rotate: [0, -10, 10, 0] }}
                       transition={{ duration: 0.5 }}
                     >
-                      {/* Ikonka o'zi kichraytirildi */}
-                      <stat.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+                      {/* Ikonka o'zi kattalashtirildi */}
+                      <stat.icon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                     </motion.div>
 
-                    {/* Sonlar (Value) o'lchami kichraytirildi (text-2xl -> text-xl) */}
+                    {/* Sonlar (Value) o'lchami kattalashtirildi (text-xl -> text-2xl) */}
                     <motion.div
-                      className="text-sm sm:text-base md:text-xl font-bold mb-0 leading-none"
+                      className="text-base sm:text-lg md:text-2xl font-bold mb-0 leading-none"
                       initial={{ opacity: 0, scale: 0 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
@@ -94,8 +94,8 @@ export function StatsSection() {
                       {stat.value}
                     </motion.div>
 
-                    {/* Matn (Label) o'lchami kichraytirildi */}
-                    <div className="text-[7px] sm:text-[8px] md:text-[10px] text-primary-foreground/80 font-medium leading-tight mt-0.5">
+                    {/* Matn (Label) o'lchami kattalashtirildi */}
+                    <div className="text-[9px] sm:text-[10px] md:text-[13px] text-primary-foreground/80 font-medium leading-tight mt-0.5">
                       {stat.label}
                     </div>
 

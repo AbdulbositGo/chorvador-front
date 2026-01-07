@@ -10,15 +10,10 @@ interface Value {
   description: string;
 }
 
-interface StructuredDataObject {
-  "@context": string;
-  "@type": string;
-  [key: string]: unknown;
-}
-
 const About = () => {
   const { t, language } = useLanguage();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const siteName = "Chorvador.uz";
@@ -36,9 +31,8 @@ const About = () => {
       : "about us, company, services, professional, quality, trust";
 
     return { pageTitle, pageDescription, currentUrl, keywords };
-  }, [  t, language, siteUrl]);
+  }, [t, language, siteUrl]);
 
-  // Memoized values
   const values: Value[] = useMemo(() => [
     {
       icon: CheckCircle,
@@ -91,6 +85,13 @@ const About = () => {
     }
   }), [seoData, siteName, siteUrl, language]);
 
+  // Show content immediately when language changes
+  useEffect(() => {
+    setIsVisible(false);
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, [language]);
+
   // Optimized resource hints
   useEffect(() => {
     const addResourceHint = (rel: string, href: string, crossorigin?: boolean): void => {
@@ -103,13 +104,11 @@ const About = () => {
       }
     };
 
-    // Critical resource hints
     addResourceHint('dns-prefetch', 'https://fonts.googleapis.com');
     addResourceHint('dns-prefetch', 'https://images.unsplash.com');
     addResourceHint('preconnect', 'https://fonts.googleapis.com');
     addResourceHint('preconnect', 'https://fonts.gstatic.com', true);
     
-    // Preload critical image with priority
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
@@ -122,29 +121,6 @@ const About = () => {
     };
   }, []);
 
-  // Lazy load animations only when visible
-  useEffect(() => {
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('animate-visible');
-            }
-          });
-        },
-        { threshold: 0.1, rootMargin: '50px' }
-      );
-
-      document.querySelectorAll('.lazy-animate').forEach((el) => {
-        observer.observe(el);
-      });
-
-      return () => observer.disconnect();
-    }
-  }, []);
-
-  // Image optimization with native lazy loading
   useEffect(() => {
     if (imgRef.current?.complete) {
       setImageLoaded(true);
@@ -154,22 +130,18 @@ const About = () => {
   return (
     <Layout>
       <Helmet>
-        {/* Basic Meta Tags */}
         <html lang={language} />
         <title>{seoData.pageTitle} | {siteName}</title>
         <meta name="description" content={seoData.pageDescription} />
         <meta name="keywords" content={seoData.keywords} />
         
-        {/* Canonical URL */}
         <link rel="canonical" href={seoData.currentUrl} />
         
-        {/* Alternate Languages */}
         <link rel="alternate" hrefLang="uz" href={`${siteUrl}/uz/about`} />
         <link rel="alternate" hrefLang="ru" href={`${siteUrl}/ru/about`} />
         <link rel="alternate" hrefLang="en" href={`${siteUrl}/en/about`} />
         <link rel="alternate" hrefLang="x-default" href={`${siteUrl}/uz/about`} />
         
-        {/* Open Graph Tags */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content={seoData.currentUrl} />
         <meta property="og:title" content={`${seoData.pageTitle} | ${siteName}`} />
@@ -180,19 +152,16 @@ const About = () => {
         <meta property="og:site_name" content={siteName} />
         <meta property="og:locale" content={language === 'uz' ? 'uz_UZ' : language === 'ru' ? 'ru_RU' : 'en_US'} />
         
-        {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={seoData.currentUrl} />
         <meta name="twitter:title" content={`${seoData.pageTitle} | ${siteName}`} />
         <meta name="twitter:description" content={seoData.pageDescription} />
         <meta name="twitter:image" content={imageUrl} />
         
-        {/* Additional SEO Tags */}
         <meta name="robots" content="index, follow, max-image-preview:large" />
         <meta name="author" content={siteName} />
         <meta name="revisit-after" content="7 days" />
         
-        {/* Structured Data */}
         <script type="application/ld+json">
           {JSON.stringify(structuredData.organization)}
         </script>
@@ -202,25 +171,27 @@ const About = () => {
       </Helmet>
 
       {/* Hero Section */}
-<section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-6 sm:py-8 lg:py-10">
-  <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-    <div className="max-w-3xl">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
-        {seoData.pageTitle}
-      </h1>
-      <p className="text-base sm:text-lg text-primary-foreground/90 leading-relaxed line-clamp-2 min-h-[3.5rem]">
-        {seoData.pageDescription}
-      </p>
-    </div>
-  </div>
-</section>
-
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-6 sm:py-8 lg:py-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="max-w-3xl">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
+              {seoData.pageTitle}
+            </h1>
+            <p className="text-base sm:text-lg text-primary-foreground/90 leading-relaxed line-clamp-2 min-h-[3.5rem]">
+              {seoData.pageDescription}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Company Description */}
       <section className="section-padding">
         <div className="container-main">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <article className="lazy-animate opacity-0 translate-x-[-20px] transition-all duration-700">
+          <div className={`grid lg:grid-cols-2 gap-8 lg:gap-12 items-center transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+            <article className="transform transition-all duration-700" style={{
+              transform: isVisible ? 'translateX(0)' : 'translateX(-20px)',
+              opacity: isVisible ? 1 : 0
+            }}>
               <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
                 {t("about.history.badge")}
               </span>
@@ -234,7 +205,10 @@ const About = () => {
               </div>
             </article>
             
-            <figure className="relative lazy-animate opacity-0 translate-x-[20px] transition-all duration-700">
+            <figure className="relative transform transition-all duration-700" style={{
+              transform: isVisible ? 'translateX(0)' : 'translateX(20px)',
+              opacity: isVisible ? 1 : 0
+            }}>
               <div className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
                 <img
                   ref={imgRef}
@@ -244,15 +218,19 @@ const About = () => {
                   decoding="async"
                   width="600"
                   height="400"
-                  className="rounded-2xl shadow-hero w-full object-cover will-change-transform"
+                  className="rounded-2xl shadow-hero w-full object-cover"
                   fetchPriority="high"
                   onLoad={() => setImageLoaded(true)}
                 />
               </div>
               <div 
-                className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-secondary text-secondary-foreground p-4 sm:p-6 rounded-2xl shadow-lg lazy-animate opacity-0"
-                style={{ animationDelay: '300ms' }}
-                aria-label={language === 'uz' ? '18 yildan ziyod tajriba' : language === 'ru' ? 'более 18 лет опыта' : 'over 10 years experience'}
+                className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-secondary text-secondary-foreground p-4 sm:p-6 rounded-2xl shadow-lg"
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible ? 'scale(1)' : 'scale(0.9)',
+                  transition: 'all 0.7s ease 300ms'
+                }}
+                aria-label={language === 'uz' ? '18 yildan ziyod tajriba' : language === 'ru' ? 'более 18 лет опыта' : 'over 18 years experience'}
               >
                 <div className="text-3xl sm:text-4xl font-bold">18</div>
                 <div className="text-xs sm:text-sm font-medium">{t("about.history.years")}</div>
@@ -265,7 +243,10 @@ const About = () => {
       {/* Values Section */}
       <section className="section-padding bg-muted/30" aria-labelledby="values-heading">
         <div className="container-main">
-          <header className="text-center mb-8 sm:mb-12 lazy-animate opacity-0 translate-y-[-15px] transition-all duration-700">
+          <header className="text-center mb-8 sm:mb-12 transform transition-all duration-700" style={{
+            transform: isVisible ? 'translateY(0)' : 'translateY(-15px)',
+            opacity: isVisible ? 1 : 0
+          }}>
             <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-3">
               {t("about.values.badge")}
             </span>
@@ -277,11 +258,12 @@ const About = () => {
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {values.map((value, index) => (
               <article 
-                key={value.title} 
-                className="text-center p-6 bg-background rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 lazy-animate opacity-0 translate-y-[20px]"
-                style={{ 
-                  transitionDelay: `${index * 100}ms`,
-                  animationDelay: `${index * 100}ms`
+                key={`${value.title}-${language}`}
+                className="text-center p-6 bg-background rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
+                style={{
+                  transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+                  opacity: isVisible ? 1 : 0,
+                  transition: `all 0.7s ease ${index * 100}ms`
                 }}
               >
                 <div 
@@ -303,39 +285,21 @@ const About = () => {
       </section>
 
       <style>{`
-        /* Performance optimization styles */
-        .lazy-animate.animate-visible {
-          opacity: 1 !important;
-          transform: translateY(0) translateX(0) !important;
-        }
-
-        .will-change-transform {
-          will-change: transform;
+        .gradient-hero {
           transform: translateZ(0);
           backface-visibility: hidden;
         }
 
-        /* GPU acceleration for animations */
-        .gradient-hero,
-        .lazy-animate,
-        img {
-          transform: translateZ(0);
-          backface-visibility: hidden;
-        }
-
-        /* Optimize font rendering */
         body {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
           text-rendering: optimizeLegibility;
         }
 
-        /* Content visibility for better performance */
         img {
           content-visibility: auto;
         }
 
-        /* Reduce motion for users who prefer it */
         @media (prefers-reduced-motion: reduce) {
           * {
             animation-duration: 0.01ms !important;

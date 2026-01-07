@@ -4,11 +4,12 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function LocationSection() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   const contactItems = [
     { 
@@ -33,6 +34,13 @@ export function LocationSection() {
       ariaLabel: "Send us an email"
     }
   ];
+
+  // Reset visibility on language change
+  useEffect(() => {
+    setIsVisible(false);
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, [language]);
 
   const handleContactClick = (href: string) => {
     if (href.startsWith('mailto:') || href.startsWith('tel:')) {
@@ -77,17 +85,20 @@ export function LocationSection() {
         </ScrollReveal>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Map Section */}
-          <ScrollReveal variant="fadeLeft">
+          {/* Map Section - WITH KEY TO FORCE RE-RENDER */}
+          <ScrollReveal variant="fadeLeft" key={`map-${language}`}>
             <motion.div 
-              className="rounded-2xl overflow-hidden h-[400px] shadow-lg relative" 
-              whileHover={{ scale: 1.02 }} 
-              transition={{ type: "spring", stiffness: 300 }}
+              className="rounded-2xl overflow-hidden h-[400px] shadow-lg relative"
+              style={{
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible ? 'translateX(0)' : 'translateX(-20px)',
+                transition: 'all 0.7s ease'
+              }}
             >
               {/* Placeholder */}
               {!mapLoaded && (
                 <div 
-                  className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center"
+                  className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center z-10"
                   aria-hidden="true"
                 >
                   <div className="text-center">
@@ -97,8 +108,9 @@ export function LocationSection() {
                 </div>
               )}
 
-<iframe 
-                src="https://maps.google.com/maps?q=Chorvador+uz,Tashkent&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+              {/* FIXED: Use proper Google Maps Embed URL */}
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1497.542603852809!2d69.26199674606329!3d41.35050164413911!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8d118e2bc4cf%3A0x374c51e289606a41!2sChorvador%20uz!5e0!3m2!1suz!2s!4v1766405927730!5m2!1suz!2s"
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 
@@ -108,18 +120,25 @@ export function LocationSection() {
                 title="Chorvador office location in Tashkent, Uzbekistan"
                 aria-label="Interactive map showing Chorvador office location"
                 onLoad={() => setMapLoaded(true)}
-                className={mapLoaded ? 'opacity-100' : 'opacity-0'}
+                className={`transition-opacity duration-500 ${mapLoaded ? 'opacity-100' : 'opacity-0'}`}
               />
             </motion.div>
           </ScrollReveal>
 
-          {/* Contact Information */}
-          <ScrollReveal variant="fadeRight" delay={0.2}>
-            <div className="flex flex-col justify-center h-full space-y-6">
+          {/* Contact Information - WITH KEY */}
+          <ScrollReveal variant="fadeRight" delay={0.2} key={`contact-${language}`}>
+            <div 
+              className="flex flex-col justify-center h-full space-y-6"
+              style={{
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible ? 'translateX(0)' : 'translateX(20px)',
+                transition: 'all 0.7s ease 200ms'
+              }}
+            >
               <nav aria-label="Contact information">
                 <ul className="space-y-6 list-none">
                   {contactItems.map((item, i) => (
-                    <li key={i}>
+                    <li key={`${item.title}-${language}`}>
                       <motion.article
                         className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border group cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 transition-shadow" 
                         whileHover={{ x: 10, boxShadow: "0 10px 30px -10px hsl(207 66% 47% / 0.15)" }} 
@@ -129,6 +148,11 @@ export function LocationSection() {
                         tabIndex={0}
                         role="button"
                         aria-label={item.ariaLabel}
+                        style={{
+                          opacity: isVisible ? 1 : 0,
+                          transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+                          transition: `all 0.7s ease ${(i + 1) * 100}ms`
+                        }}
                       >
                         <div 
                           className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
@@ -154,6 +178,10 @@ export function LocationSection() {
                 className="pt-4" 
                 whileHover={{ scale: 1.02 }} 
                 whileTap={{ scale: 0.98 }}
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transition: 'all 0.7s ease 400ms'
+                }}
               >
                 <Button 
                   asChild 

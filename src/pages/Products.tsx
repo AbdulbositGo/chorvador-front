@@ -134,7 +134,6 @@ const Products = () => {
         
         setCategories(allCategories);
         
-        console.log('Categories loaded:', allCategories);
       } catch (err) {
         console.error('Categories fetch error:', err);
         setCategories([
@@ -175,8 +174,6 @@ const Products = () => {
 
         const url = `${apiUrl}/products/?${params.toString()}`;
         
-        console.log('Fetching products from:', url);
-        console.log('Selected Category ID:', selectedCategory);
 
         const response = await fetch(url, {
           method: 'GET',
