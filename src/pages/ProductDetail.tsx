@@ -250,6 +250,30 @@ const ProductDetail = () => {
     fetchProductDetail();
   }, [id, language]);
 
+  const getYouTubeEmbedUrl = (url: string) => {
+  if (!url) return "";
+
+  // watch?v=ID
+  if (url.includes("watch?v=")) {
+    const id = url.split("watch?v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+
+  // youtu.be/ID
+  if (url.includes("youtu.be/")) {
+    const id = url.split("youtu.be/")[1];
+    return `https://www.youtube.com/embed/${id}`;
+  }
+
+  // already embed
+  if (url.includes("/embed/")) {
+    return url;
+  }
+
+  return "";
+};
+
+
   if (loading) {
     return (
       <Layout>
@@ -511,30 +535,31 @@ const ProductDetail = () => {
                   </div>
                 ) : showVideo && videoData.hasVideo ? (
                   <div className="w-full h-full bg-black flex items-center justify-center">
-                    {videoData.isYouTube ? (
-                      <iframe
-                        src={videoData.videoUrl || ''}
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        title={product.title}
-                        loading="lazy"
-                        onError={handleVideoError}
-                      />
-                    ) : (
-                      <video
-                        key={videoData.videoUrl}
-                        controls
-                        controlsList="nodownload"
-                        playsInline
-                        className="w-full h-full"
-                        style={{ objectFit: 'contain' }}
-                        onError={handleVideoError}
-                        preload="metadata"
-                      >
-                        <source src={videoData.videoUrl || ''} type="video/mp4" />
-                      </video>
-                    )}
+{videoData.isYouTube ? (
+  <iframe
+    src={getYouTubeEmbedUrl(videoData.videoUrl || "")}
+    className="w-full h-full"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+    title={product.title}
+    loading="lazy"
+    onError={handleVideoError}
+  />
+) : (
+  <video
+    key={videoData.videoUrl}
+    controls
+    controlsList="nodownload"
+    playsInline
+    className="w-full h-full"
+    style={{ objectFit: "contain" }}
+    onError={handleVideoError}
+    preload="metadata"
+  >
+    <source src={videoData.videoUrl || ""} type="video/mp4" />
+  </video>
+)}
+
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
