@@ -77,7 +77,7 @@ const truncateTitle = (title: string, maxLength: number = 10) => {
   }, []);
 
   const scrollToFooter = useCallback(() => {
-    const footer = document.getElementById('footer');
+    const footer = document.querySelector('footer');
     if (footer) footer.scrollIntoView({ behavior: 'smooth' });
     setMobileMenuOpen(false);
   }, []);
@@ -818,13 +818,6 @@ const truncateTitle = (title: string, maxLength: number = 10) => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Button 
-                    className="w-full" 
-                    onClick={scrollToFooter}
-                    aria-label="Scroll to contact section"
-                  >
-                    {t("nav.contact")}
-                  </Button>
                 </motion.div>
               </nav>
             </motion.div>
