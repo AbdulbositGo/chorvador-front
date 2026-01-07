@@ -22,7 +22,7 @@ const translations: Record<Language, Record<string, string>> = {
       "Chorvador.uz - Qishloq xo'jaligi mahsulotlari | Traktor, Urug', O'g'it",
     "meta.home.description":
       "O'zbekistonda qishloq xo'jaligi texnikasi, urug'lar, o'g'itlar va chorvachilik mahsulotlarining ishonchli yetkazib beruvchisi. 18 yildan ziyod tajriba.",
-    "meta.about.title": "Biz haqimizda - Chorvador.uz | 18+ Yildan Ziyod Tajriba",
+    "meta.about.title": "Biz haqimizda - Chorvador.uz | 18 Yildan Ziyod Tajriba",
     "meta.about.description":
       "Chorvador.uz 2004-yildan beri O'zbekiston fermerlariga xizmat qiladi. Sifatli mahsulotlar va professional xizmat.",
     "meta.products.title":
@@ -98,7 +98,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     "stats.customers": "Mamnun mijozlar",
     "stats.products": "Mahsulot turlari",
-    "stats.experience": "Yillik tajriba",
+    "stats.experience": "Yildan ziyod tajriba",
     "stats.regions": "Viloyatlarga xizmat",
 
     "products.badge": "Mahsulotlar",
@@ -208,14 +208,14 @@ const translations: Record<Language, Record<string, string>> = {
     "about.subtitle":
       "Chorvador.uz — O'zbekiston bo'ylab qishloq xo'jaligi va chorvachilik mahsulotlarining ishonchli yetkazib beruvchisi",
     "about.history.badge": "Kompaniya tarixi",
-    "about.history.title": "18+ yildan ziyod tajriba va ishonch",
+    "about.history.title": "18 yildan ziyod tajriba va ishonch",
     "about.history.p1":
       "Oilaviy korxona brendi bo'lib, o'z faoliyatini 2008 yilda xorijdan mobil sigir sog'ish apparatlarini import qilish va ularga texnik xizmat ko'rsatish bilan boshlagan.",
     "about.history.p2":
       "Hozirgi kunda chorvachilik majmualarini loyihalashdan boshlab, sut ishlab chiqarish bilan bog'liq barcha asbob-uskuna va jihozlarni taklif etadi.",
     "about.history.p3":
       "Korxona dunyoning yetakchi bir qancha sut ishlab chiqarish va uni qayta ishlash bilan bog'liq barcha jarayon uskunalarni ishlab chiqaruvchi kompaniyalarining O'zbekistondagi rasmiy dileri va hamkori hisoblanadi.",
-    "about.history.years": "Yillik tajriba",
+    "about.history.years": "Yildan ziyod tajriba",
     "about.mission.title": "Bizning missiyamiz",
     "about.mission.desc":
       "O'zbekiston fermerlarini eng sifatli qishloq xo'jaligi mahsulotlari va zamonaviy texnologiyalar bilan ta'minlash, ularga professional maslahat va xizmatlar ko'rsatish orqali mamlakatimiz qishloq xo'jaligining barqaror rivojlanishiga hissa qo'shish.",
@@ -229,7 +229,7 @@ const translations: Record<Language, Record<string, string>> = {
       "Faqat sertifikatlangan va yuqori sifatli mahsulotlarni taqdim etamiz",
     "about.values.reliability.title": "Ishonchlilik",
     "about.values.reliability.desc":
-      "18+ yildan ziyod tajriba va minglab mamnun mijozlar",
+      "18 yildan ziyod tajriba va minglab mamnun mijozlar",
     "about.values.professionalism.title": "Professionallik",
     "about.values.professionalism.desc":
       "Malakali mutaxassislar jamoasi va professional xizmat ko'rsatish",
@@ -305,7 +305,7 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.contact.title": "Aloqa",
     "footer.contact.address":
       "Ahmad Donish ko'chasi, 22 UY, 100057, Toshkent, Oʻzbekiston",
-    "footer.copyright": "© 2024 Chorvador.uz. Barcha huquqlar himoyalangan.",
+    "footer.copyright": " Chorvador.uz. Barcha huquqlar himoyalangan.",
     "footer.privacy": "Maxfiylik siyosati",
     "footer.terms": "Foydalanish shartlari",
 
@@ -315,8 +315,8 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.home.title":
       "Chorvador.uz - Сельхозпродукция | Трактор, Семена, Удобрения",
     "meta.home.description":
-      "Надёжный поставщик сельскохозяйственной техники, семян, удобрений в Узбекистане. Опыт 18+ лет.",
-    "meta.about.title": "О нас - Chorvador.uz | 18+ Лет Опыта",
+      "Надежный поставщик сельскохозяйственной техники, семян и удобрений в Узбекистане. Более 18 лет опыта.",
+    "meta.about.title": "О нас - Chorvador.uz | Более 18 лет опыта",
     "meta.about.description":
       "Chorvador.uz обслуживает фермеров Узбекистана с 2004 года. Качественная продукция и профессиональный сервис.",
     "meta.products.title":
@@ -342,7 +342,7 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.slide1.title": "Надёжный партнёр сельского хозяйства",
     "hero.slide1.subtitle": "Качественная техника и оборудование",
     "hero.slide1.description":
-      "18+ лет опыта и 1000+ довольных клиентов. Служим фермерам Узбекистана",
+      "Более 18 лет опыта и более 1000 довольных клиентов. Мы обслуживаем фермеров Узбекистана",
     "hero.slide1.cta": "Смотреть продукты",
     "hero.slide2.title": "Высококачественные семена",
     "hero.slide2.subtitle": "Повысьте урожайность",
@@ -391,7 +391,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     "stats.customers": "Довольных клиентов",
     "stats.products": "Видов продукции",
-    "stats.experience": "Лет опыта",
+    "stats.experience": "Более года опыта",
     "stats.regions": "Регионов обслуживания",
 
     "products.badge": "Продукты",
@@ -499,14 +499,14 @@ const translations: Record<Language, Record<string, string>> = {
       "Chorvador.uz — надёжный поставщик сельскохозяйственной и животноводческой продукции по всему Узбекистану",
 
     "about.history.badge": "История компании",
-    "about.history.title": "Более 10 лет опыта и доверия",
+    "about.history.title": "Более 18 лет опыта и доверия",
     "about.history.p1":
       "Семейный бренд предприятия, начавший свою деятельность в 2008 году с импорта мобильных доильных аппаратов из-за рубежа и предоставления технического обслуживания для них.",
     "about.history.p2":
       "В настоящее время предлагает все оборудование и устройства, связанные с производством молока, начиная с проектирования животноводческих комплексов.",
     "about.history.p3":
       "Предприятие является официальным дилером и партнером в Узбекистане нескольких ведущих мировых компаний-производителей оборудования для всех технологических процессов, связанных с производством и переработкой молока.",
-    "about.history.years": "Лет опыта",
+    "about.history.years": "Более года опыта",
 
     "about.mission.title": "Наша миссия",
     "about.mission.desc":
@@ -525,7 +525,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     "about.values.reliability.title": "Надёжность",
     "about.values.reliability.desc":
-      "Более 10 лет опыта и тысячи довольных клиентов",
+      "Более 18 лет опыта и тысячи довольных клиентов",
 
     "about.values.professionalism.title": "Профессионализм",
     "about.values.professionalism.desc":
@@ -602,7 +602,7 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.contact.title": "Контакты",
     "footer.contact.address":
       "ул. Ахмад Дониш, 22 ДОМ, 100057, Tashkent, Oʻzbekiston",
-    "footer.copyright": "© 2024 Chorvador.uz. Все права защищены.",
+    "footer.copyright": " Chorvador.uz. Все права защищены.",
     "footer.privacy": "Политика конфиденциальности",
     "footer.terms": "Условия использования",
 
@@ -612,8 +612,8 @@ const translations: Record<Language, Record<string, string>> = {
     "meta.home.title":
       "Chorvador.uz - Agricultural Products | Tractor, Seeds, Fertilizers",
     "meta.home.description":
-      "Reliable supplier of agricultural machinery, seeds, fertilizers in Uzbekistan. 18+ years of experience.",
-    "meta.about.title": "About Us - Chorvador.uz | 18+ Years Experience",
+      "A reliable supplier of agricultural machinery, seeds, and fertilizers in Uzbekistan. Over 18 years of experience.",
+    "meta.about.title": "About Us - Chorvador.uz | Over 18 Years Experience",
     "meta.about.description":
       "Chorvador.uz has been serving Uzbekistan farmers since 2004. Quality products and professional service.",
     "meta.products.title":
@@ -640,7 +640,7 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.slide1.title": "Reliable Partner in Agriculture",
     "hero.slide1.subtitle": "Quality Equipment & Machinery",
     "hero.slide1.description":
-      "18+ years of experience and 1000+ satisfied customers serving farmers in Uzbekistan",
+      "Over 18 years of experience serving farmers in Uzbekistan and 1000+ satisfied customers",
     "hero.slide1.cta": "View Products",
     "hero.slide2.title": "High Quality Seeds",
     "hero.slide2.subtitle": "Increase Your Yield",
@@ -661,7 +661,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     "stats.customers": "Happy Customers",
     "stats.products": "Product Types",
-    "stats.experience": "Years Experience",
+    "stats.experience": "More than a year of experience",
     "stats.regions": "Regions Served",
 
     "common.loading": "Loading",
@@ -796,14 +796,14 @@ const translations: Record<Language, Record<string, string>> = {
       "Chorvador.uz is a trusted supplier of agricultural and livestock products across Uzbekistan",
 
     "about.history.badge": "Company History",
-    "about.history.title": "18+ Years of Experience and Trust",
+    "about.history.title": "Over 18 Years of Experience and Trust",
     "about.history.p1":
       "Is a family business brand that started its activities in 2008 by importing mobile milking machines from abroad and providing technical service for them.",
     "about.history.p2":
       "Currently offers all equipment and devices related to milk production, starting from the design of livestock complexes.",
     "about.history.p3":
       "The company is an official dealer and partner in Uzbekistan of several leading global manufacturers of equipment for all technological processes related to milk production and processing.",
-    "about.history.years": "Years of Experience",
+    "about.history.years": "More than a year of experience",
 
     "about.mission.title": "Our Mission",
     "about.mission.desc":
@@ -822,7 +822,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     "about.values.reliability.title": "Reliability",
     "about.values.reliability.desc":
-      "Over 10 years of experience and thousands of satisfied clients",
+      "Over 18 years of experience and thousands of satisfied clients",
 
     "about.values.professionalism.title": "Professionalism",
     "about.values.professionalism.desc":
@@ -897,7 +897,7 @@ const translations: Record<Language, Record<string, string>> = {
     "footer.contact.title": "Contact",
     "footer.contact.address":
       "Ahmad Donish Street, 22 Home, 100057, Tashkent, Uzbekistan",
-    "footer.copyright": "© 2024 Chorvador.uz. All rights reserved.",
+    "footer.copyright": " Chorvador.uz. All rights reserved.",
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Terms of Use",
 

@@ -202,18 +202,19 @@ const About = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="gradient-hero py-12 sm:py-16 lg:py-12">
-        <div className="container-main">
-          <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-4 sm:mb-6 leading-tight">
-              {seoData.pageTitle}
-            </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 leading-relaxed">
-              {seoData.pageDescription}
-            </p>
-          </div>
-        </div>
-      </section>
+<section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-6 sm:py-8 lg:py-10">
+  <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+    <div className="max-w-3xl">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
+        {seoData.pageTitle}
+      </h1>
+      <p className="text-base sm:text-lg text-primary-foreground/90 leading-relaxed line-clamp-2 min-h-[3.5rem]">
+        {seoData.pageDescription}
+      </p>
+    </div>
+  </div>
+</section>
+
 
       {/* Company Description */}
       <section className="section-padding">
@@ -251,9 +252,9 @@ const About = () => {
               <div 
                 className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-secondary text-secondary-foreground p-4 sm:p-6 rounded-2xl shadow-lg lazy-animate opacity-0"
                 style={{ animationDelay: '300ms' }}
-                aria-label={language === 'uz' ? '10 yildan ortiq tajriba' : language === 'ru' ? 'более 10 лет опыта' : 'over 10 years experience'}
+                aria-label={language === 'uz' ? '18 yildan ziyod tajriba' : language === 'ru' ? 'более 18 лет опыта' : 'over 10 years experience'}
               >
-                <div className="text-3xl sm:text-4xl font-bold">18+</div>
+                <div className="text-3xl sm:text-4xl font-bold">18</div>
                 <div className="text-xs sm:text-sm font-medium">{t("about.history.years")}</div>
               </div>
             </figure>

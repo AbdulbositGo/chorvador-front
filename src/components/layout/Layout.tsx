@@ -1,190 +1,160 @@
-import { ReactNode, useEffect, useMemo } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-interface LayoutProps {
-  children: ReactNode;
-  title?: string;
-  description?: string;
-  keywords?: string;
+export interface ProductItem {
+  id: number;
+  title: string;
+  category: string;
+  categoryId: string;
   image?: string;
-  canonical?: string;
+  price?: number;
+  short_description?: string;
+  has_discount?: boolean;
 }
 
-// Static metadata - komponent tashqarida
-const defaultMetadata = {
-  uz: {
-    title: "Chorvador.uz - Chorvachilik uskunalari va jihozlari",
-    description: "O'zbekistonda qishloq xo'jaligi mahsulotlari, chorvachilik asbob-uskunalari, urug'lar, o'g'itlar va sugorish tizimlari. Eng yaxshi narxlar va sifatli xizmat.",
-    keywords: "qishloq xo'jaligi, chorvachilik, urug'lar, o'g'itlar, sugorish, qishloq xo'jaligi texnikasi, chorvador, fermer, O'zbekiston",
-  },
-  ru: {
-    title: "Chorvador.uz - Сельскохозяйственное оборудование и принадлежности",
-    description: "Сельскохозяйственная продукция в Узбекистане, оборудование для животноводства, семена, удобрения и системы орошения. Лучшие цены и качественный сервис.",
-    keywords: "сельское хозяйство, животноводство, семена, удобрения, орошение, сельхозтехника, фермер, Узбекистан",
-  },
-  en: {
-    title: "Chorvador.uz - Livestock equipment and tools",
-    description: "Agricultural products in Uzbekistan, livestock equipment, seeds, fertilizers and irrigation systems. Best prices and quality service.",
-    keywords: "agriculture, livestock, seeds, fertilizers, irrigation, agricultural equipment, farmer, Uzbekistan",
-  }
-} as const;
+interface LayoutProps {
+  children: ReactNode;
+}
 
-// Locale mapping
-const localeMap = {
-  uz: 'uz_UZ',
-  ru: 'ru_RU',
-  en: 'en_US'
-} as const;
+interface ApiProductResponse {
+  id: number;
+  title: string;
+  image?: string;
+  price?: number;
+  short_description?: string;
+  has_discount?: boolean;
+  category: string;
+  category_id: number; // Backend dan kelgan category ID
+}
 
-export function Layout({ 
-  children, 
-  title,
-  description,
-  keywords,
-  image = "/og-image2.png",
-  canonical
-}: LayoutProps) {
+interface ApiServiceResponse {
+  id: number;
+  title: string;
+  short_description?: string;
+  image?: string;
+  category: string;
+  category_id: number; // Backend dan kelgan category ID
+}
+
+export function Layout({ children }: LayoutProps) {
   const { language } = useLanguage();
-
-  // Memoized metadata
-  const metadata = useMemo(() => {
-    const currentLang = defaultMetadata[language as keyof typeof defaultMetadata] || defaultMetadata.uz;
-    const pageTitle = title ? `${title} | Chorvador.uz` : currentLang.title;
-    const pageDescription = description || currentLang.description;
-    const pageKeywords = keywords || currentLang.keywords;
-    const locale = localeMap[language as keyof typeof localeMap] || localeMap.uz;
-
-    return {
-      title: pageTitle,
-      description: pageDescription,
-      keywords: pageKeywords,
-      locale,
-      image: image.startsWith('http') ? image : `${window.location.origin}${image}`,
-      url: canonical || window.location.href
-    };
-  }, [language, title, description, keywords, image, canonical]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [services, setServices] = useState<ProductItem[]>([]);
+  const [productCategories, setProductCategories] = useState<string[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Document title
-    document.title = metadata.title;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const apiUrl = import.meta.env.VITE_API_URL;
+        
+        if (!apiUrl) {
+          throw new Error("API URL topilmadi");
+        }
 
-    // HTML attributes
-    document.documentElement.lang = language;
-    document.documentElement.dir = language === 'uz' || language === 'ru' ? 'ltr' : 'ltr';
+        const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
 
-    // Meta tags ni yangilash yoki yaratish
-    const updateMetaTag = (name: string, content: string, isProperty = false) => {
-      const attr = isProperty ? 'property' : 'name';
-      let meta = document.querySelector(`meta[${attr}="${name}"]`);
-      
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute(attr, name);
-        document.head.appendChild(meta);
+        // Fetch products
+        const productsResponse = await fetch(`${apiUrl}/products-list/`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Accept-Language': acceptLanguage,
+          },
+        });
+
+        // Fetch services
+        const servicesResponse = await fetch(`${apiUrl}/services-list/`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Accept-Language': acceptLanguage,
+          },
+        });
+
+        if (!productsResponse.ok || !servicesResponse.ok) {
+          throw new Error("Ma'lumotlarni yuklashda xatolik");
+        }
+
+        const productsData = await productsResponse.json() as ApiProductResponse[];
+        const servicesData = await servicesResponse.json() as ApiServiceResponse[];
+
+        // Transform products data - backend dan kelgan category_id ni ishlatamiz
+        const transformedProducts: ProductItem[] = productsData.map((item) => ({
+          id: item.id,
+          title: item.title,
+          category: item.category,
+          categoryId: item.category_id?.toString() || '', // Backend dan kelgan category_id
+          image: item.image,
+          price: item.price,
+          short_description: item.short_description,
+          has_discount: item.has_discount,
+        }));
+
+        // Transform services data - backend dan kelgan category_id ni ishlatamiz
+        const transformedServices: ProductItem[] = servicesData.map((item) => ({
+          id: item.id,
+          title: item.title,
+          category: item.category,
+          categoryId: item.category_id?.toString() || '', // Backend dan kelgan category_id
+          image: item.image,
+          short_description: item.short_description,
+        }));
+
+        // Extract unique categories
+        const uniqueProductCategories = Array.from(
+          new Set(transformedProducts.map(p => p.category).filter(Boolean))
+        );
+
+        const uniqueServiceCategories = Array.from(
+          new Set(transformedServices.map(s => s.category).filter(Boolean))
+        );
+
+        setProducts(transformedProducts);
+        setServices(transformedServices);
+        setProductCategories(uniqueProductCategories);
+        setServiceCategories(uniqueServiceCategories);
+
+        console.log('Layout products loaded:', transformedProducts.length);
+        console.log('Layout services loaded:', transformedServices.length);
+
+      } catch (error) {
+        console.error('Layout data fetch error:', error);
+        setProducts([]);
+        setServices([]);
+        setProductCategories([]);
+        setServiceCategories([]);
+      } finally {
+        setLoading(false);
       }
-      
-      meta.setAttribute('content', content);
     };
 
-    // Canonical link
-    const updateCanonicalLink = (url: string) => {
-      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-      
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'canonical';
-        document.head.appendChild(link);
-      }
-      
-      link.href = url;
-    };
-
-    // Basic meta tags
-    updateMetaTag('description', metadata.description);
-    updateMetaTag('keywords', metadata.keywords);
-    updateMetaTag('author', 'Chorvador.uz');
-    updateMetaTag('viewport', 'width=device-width, initial-scale=1.0');
-    updateMetaTag('theme-color', '#2D79C4');
-    
-    // Open Graph tags
-    updateMetaTag('og:title', metadata.title, true);
-    updateMetaTag('og:description', metadata.description, true);
-    updateMetaTag('og:image', metadata.image, true);
-    updateMetaTag('og:image:width', '1200', true);
-    updateMetaTag('og:image:height', '630', true);
-    updateMetaTag('og:image:alt', metadata.title, true);
-    updateMetaTag('og:type', 'website', true);
-    updateMetaTag('og:url', metadata.url, true);
-    updateMetaTag('og:site_name', 'Chorvador.uz', true);
-    updateMetaTag('og:locale', metadata.locale, true);
-    
-    // Twitter tags
-    updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', metadata.title);
-    updateMetaTag('twitter:description', metadata.description);
-    updateMetaTag('twitter:image', metadata.image);
-    updateMetaTag('twitter:image:alt', metadata.title);
-
-    // Additional SEO
-    updateMetaTag('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
-    updateMetaTag('language', language);
-    updateMetaTag('revisit-after', '7 days');
-    updateMetaTag('rating', 'general');
-
-    // Canonical URL
-    updateCanonicalLink(metadata.url);
-
-    // Alternate language links
-    const updateAlternateLinks = () => {
-      // Remove existing alternate links
-      document.querySelectorAll('link[rel="alternate"]').forEach(link => link.remove());
-
-      // Add new alternate links
-      const languages = ['uz', 'ru', 'en'];
-      languages.forEach(lang => {
-        const link = document.createElement('link');
-        link.rel = 'alternate';
-        link.hreflang = lang;
-        link.href = `${window.location.origin}${window.location.pathname}?lang=${lang}`;
-        document.head.appendChild(link);
-      });
-
-      // Add x-default
-      const defaultLink = document.createElement('link');
-      defaultLink.rel = 'alternate';
-      defaultLink.hreflang = 'x-default';
-      defaultLink.href = `${window.location.origin}${window.location.pathname}`;
-      document.head.appendChild(defaultLink);
-    };
-
-    updateAlternateLinks();
-
-  }, [metadata, language]);
+    fetchData();
+  }, [language]);
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Skip to main content link - accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-lg"
-      >
-        Skip to main content
-      </a>
-
-      <Header />
-      
-      <main 
-        id="main-content"
-        className="flex-1"
-        role="main"
-        aria-label="Main content"
-      >
+      <Header
+        products={products}
+        services={services}
+        productCategories={productCategories}
+        serviceCategories={serviceCategories}
+        loading={loading}
+      />
+      <main className="flex-1">
         {children}
       </main>
-      
-      <Footer />
+      <Footer 
+        products={products}
+        services={services}
+        loading={loading}
+      />
     </div>
   );
 }

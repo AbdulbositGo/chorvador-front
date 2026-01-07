@@ -113,15 +113,9 @@ const Services = () => {
     const newSearch = searchParams.get("search") || "";
     const newPage = parseInt(searchParams.get("page") || "1", 10);
     
-    if (newCategory !== selectedCategory) {
-      setSelectedCategory(newCategory);
-    }
-    if (newSearch !== searchQuery) {
-      setSearchQuery(newSearch);
-    }
-    if (newPage !== currentPage) {
-      setCurrentPage(newPage);
-    }
+    setSelectedCategory(newCategory);
+    setSearchQuery(newSearch);
+    setCurrentPage(newPage);
   }, [searchParams]);
 
   // Optimized image preloading with priority hints
@@ -213,6 +207,10 @@ const Services = () => {
 
   // Handler functions for navigation
   const handleCategoryChange = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setCurrentPage(1);
+    setShowFilters(false);
+    
     const params = new URLSearchParams();
     if (categoryId !== "all") {
       params.set("category", categoryId);
@@ -220,11 +218,16 @@ const Services = () => {
     if (searchQuery.trim()) {
       params.set("search", searchQuery.trim());
     }
-    navigate(`/services?${params.toString()}`);
+    
+    const newUrl = `/services${params.toString() ? '?' + params.toString() : ''}`;
+    navigate(newUrl, { replace: true });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchQuery, navigate]);
 
   const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+    
     const params = new URLSearchParams();
     if (selectedCategory !== "all") {
       params.set("category", selectedCategory);
@@ -232,10 +235,14 @@ const Services = () => {
     if (value.trim()) {
       params.set("search", value.trim());
     }
-    navigate(`/services?${params.toString()}`);
+    
+    const newUrl = `/services${params.toString() ? '?' + params.toString() : ''}`;
+    navigate(newUrl, { replace: true });
   }, [selectedCategory, navigate]);
 
   const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    
     const params = new URLSearchParams();
     if (selectedCategory !== "all") {
       params.set("category", selectedCategory);
@@ -246,7 +253,9 @@ const Services = () => {
     if (page > 1) {
       params.set("page", page.toString());
     }
-    navigate(`/services?${params.toString()}`);
+    
+    const newUrl = `/services${params.toString() ? '?' + params.toString() : ''}`;
+    navigate(newUrl, { replace: true });
     
     const element = document.getElementById('services-grid');
     if (element) {
@@ -254,7 +263,7 @@ const Services = () => {
     }
   }, [selectedCategory, searchQuery, navigate]);
 
-  // Services ni olish (with backend pagination)
+  // Services ni olish (with backend pagination) - FIXED WARNINGS
   useEffect(() => {
     if (categoriesLoading) return;
 
@@ -494,13 +503,13 @@ const Services = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-11">
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-6 sm:py-8 lg:py-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="max-w-3xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
               {pageTitle}
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 leading-relaxed">
+            <p className="text-base sm:text-lg text-primary-foreground/90 leading-relaxed line-clamp-2 min-h-[3.5rem]">
               {pageDescription}
             </p>
           </div>
@@ -510,7 +519,7 @@ const Services = () => {
       <section className="py-8 sm:py-12 lg:py-16 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           
-          {/* Search & Filter Controls */}
+          {/* Search & Filter Controls - OPTIMIZED */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
@@ -518,20 +527,22 @@ const Services = () => {
                 placeholder={language === 'uz' ? 'Xizmatlarni qidiring...' : language === 'ru' ? 'Поиск услуг...' : 'Search services...'}
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
+                className="pl-10 sm:pl-12 pr-10 sm:pr-12 h-11 sm:h-12 text-sm sm:text-base"
                 aria-label={language === 'uz' ? 'Xizmatlarni qidirish' : language === 'ru' ? 'Поиск услуг' : 'Search services'}
-                type="search"
+                type="text"
                 autoComplete="off"
               />
               {searchQuery && (
-                <button
+                <Button
                   onClick={() => handleSearchChange("")}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-full transition-colors"
                   aria-label="Clear search"
                   type="button"
                 >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" aria-hidden="true" />
-                </button>
+                  <X className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                </Button>
               )}
             </div>
             <Button
@@ -720,7 +731,7 @@ const Services = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
                         className="h-9 sm:h-10 px-3 sm:px-4 transition-all duration-300 hover:scale-105"
                         aria-label="Next page"
@@ -750,8 +761,8 @@ const Services = () => {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setSearchQuery("");
-                        setSelectedCategory("all");
+                        handleSearchChange("");
+                        handleCategoryChange("all");
                       }}
                       className="mt-4"
                       type="button"

@@ -4,9 +4,84 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MapPin, Phone, Mail, Clock, Send, Loader2 } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Send, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { Helmet } from "react-helmet-async";
+
+// Phone validation patterns for top 10 countries
+const PHONE_PATTERNS = {
+  UZ: { pattern: /^(\+998|998)?\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2}$/, format: '+998 XX XXX XX XX' },
+  US: { pattern: /^(\+1|1)?\s*\(?\d{3}\)?\s*\d{3}\s*\d{4}$/, format: '+1 (XXX) XXX-XXXX' },
+  CN: { pattern: /^(\+86|86)?\s*1\d{10}$/, format: '+86 1XX XXXX XXXX' },
+  IN: { pattern: /^(\+91|91)?\s*[6-9]\d{9}$/, format: '+91 XXXXX XXXXX' },
+  RU: { pattern: /^(\+7|7|8)?\s*\(?\d{3}\)?\s*\d{3}\s*\d{2}\s*\d{2}$/, format: '+7 (XXX) XXX-XX-XX' },
+  BR: { pattern: /^(\+55|55)?\s*\(?\d{2}\)?\s*9?\d{4}\s*\d{4}$/, format: '+55 (XX) 9XXXX-XXXX' },
+  GB: { pattern: /^(\+44|44)?\s*\d{4}\s*\d{6}$/, format: '+44 XXXX XXXXXX' },
+  TR: { pattern: /^(\+90|90)?\s*\(?\d{3}\)?\s*\d{3}\s*\d{2}\s*\d{2}$/, format: '+90 (XXX) XXX XX XX' },
+  DE: { pattern: /^(\+49|49)?\s*\d{3,4}\s*\d{7,8}$/, format: '+49 XXX XXXXXXXX' },
+  KZ: { pattern: /^(\+7|7)?\s*\(?\d{3}\)?\s*\d{3}\s*\d{2}\s*\d{2}$/, format: '+7 (XXX) XXX-XX-XX' }
+};
+
+const detectCountry = (phone: string): string | null => {
+  const cleaned = phone.replace(/\D/g, '');
+  
+  if (cleaned.startsWith('998')) return 'UZ';
+  if (cleaned.startsWith('1')) return 'US';
+  if (cleaned.startsWith('86')) return 'CN';
+  if (cleaned.startsWith('91')) return 'IN';
+  if (cleaned.startsWith('7')) return 'RU';
+  if (cleaned.startsWith('55')) return 'BR';
+  if (cleaned.startsWith('44')) return 'GB';
+  if (cleaned.startsWith('90')) return 'TR';
+  if (cleaned.startsWith('49')) return 'DE';
+  
+  return null;
+};
+
+const formatPhoneNumber = (phone: string, country: string | null): string => {
+  if (!country || !PHONE_PATTERNS[country]) return phone;
+  
+  const cleaned = phone.replace(/\D/g, '');
+  
+  if (country === 'UZ') {
+    const match = cleaned.match(/^(998)?(\d{2})(\d{3})(\d{2})(\d{2})$/);
+    if (match) return `+998 ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
+  } else if (country === 'US') {
+    const match = cleaned.match(/^(1)?(\d{3})(\d{3})(\d{4})$/);
+    if (match) return `+1 (${match[2]}) ${match[3]}-${match[4]}`;
+  } else if (country === 'CN') {
+    const match = cleaned.match(/^(86)?(1\d{2})(\d{4})(\d{4})$/);
+    if (match) return `+86 ${match[2]} ${match[3]} ${match[4]}`;
+  } else if (country === 'IN') {
+    const match = cleaned.match(/^(91)?([6-9]\d{4})(\d{5})$/);
+    if (match) return `+91 ${match[2]} ${match[3]}`;
+  } else if (country === 'RU' || country === 'KZ') {
+    const match = cleaned.match(/^(7)?(\d{3})(\d{3})(\d{2})(\d{2})$/);
+    if (match) return `+7 (${match[2]}) ${match[3]}-${match[4]}-${match[5]}`;
+  } else if (country === 'BR') {
+    const match = cleaned.match(/^(55)?(\d{2})(9?\d{4})(\d{4})$/);
+    if (match) return `+55 (${match[2]}) ${match[3]}-${match[4]}`;
+  } else if (country === 'GB') {
+    const match = cleaned.match(/^(44)?(\d{4})(\d{6})$/);
+    if (match) return `+44 ${match[2]} ${match[3]}`;
+  } else if (country === 'TR') {
+    const match = cleaned.match(/^(90)?(\d{3})(\d{3})(\d{2})(\d{2})$/);
+    if (match) return `+90 (${match[2]}) ${match[3]} ${match[4]} ${match[5]}`;
+  } else if (country === 'DE') {
+    const match = cleaned.match(/^(49)?(\d{3,4})(\d{7,8})$/);
+    if (match) return `+49 ${match[2]} ${match[3]}`;
+  }
+  
+  return phone;
+};
+
+const validatePhone = (phone: string): boolean => {
+  const country = detectCountry(phone);
+  if (!country || !PHONE_PATTERNS[country]) return false;
+  
+  const cleaned = phone.replace(/\D/g, '');
+  return PHONE_PATTERNS[country].pattern.test(phone) || PHONE_PATTERNS[country].pattern.test(cleaned);
+};
 
 interface PhoneNumber {
   value: string;
@@ -69,7 +144,7 @@ const ContactInfoCard = memo(({ item, index, phoneNumbers }: ContactInfoCardProp
               <a
                 key={phoneIdx}
                 href={phone.link}
-                className="flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:text-white transition-all p-3 rounded-lg border border-border hover:border-[#2D79C4] hover:bg-[#2D79C4] hover:shadow-md"
+                className="flex items-center justify-center gap-2 text-sm font-medium text-foreground hover:text-white transition-all p-3 rounded-lg border border-border hover:border-primary hover:bg-primary hover:shadow-md"
               >
                 <Phone className="w-4 h-4" />
                 {phone.value}
@@ -103,6 +178,8 @@ const Contact = () => {
     text: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneValid, setPhoneValid] = useState<boolean | null>(null);
+  const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -144,21 +221,69 @@ const Contact = () => {
     return () => observer.disconnect();
   }, [mapLoaded]);
 
-  const validatePhone = useCallback((number: string) => {
-    const digitsOnly = number.replace(/\D/g, "");
-    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
-  }, []);
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const country = detectCountry(value);
+    
+    setDetectedCountry(country);
+    
+    if (value.length > 3) {
+      const isValid = validatePhone(value);
+      setPhoneValid(isValid);
+    } else {
+      setPhoneValid(null);
+    }
+    
+    setFormData({ ...formData, phone: value });
+  };
+
+  const handlePhoneBlur = () => {
+    if (formData.phone && detectedCountry) {
+      const formatted = formatPhoneNumber(formData.phone, detectedCountry);
+      setFormData({ ...formData, phone: formatted });
+    }
+  };
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.full_name.trim()) {
+      toast.error(
+        language === 'uz' 
+          ? "Iltimos, ismingizni kiriting" 
+          : language === 'ru'
+          ? "Пожалуйста, введите ваше имя"
+          : "Please enter your name",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
+      return;
+    }
+
     if (!validatePhone(formData.phone)) {
       toast.error(
         language === 'uz' 
-          ? "Iltimos, telefon raqamini to'g'ri formatda kiriting" 
+          ? "Telefon raqamini to'g'ri formatda kiriting" 
           : language === 'ru'
-          ? "Пожалуйста, введите номер телефона в правильном формате"
+          ? "Введите номер телефона в правильном формате"
           : "Please enter phone number in correct format",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
+      return;
+    }
+
+    if (!formData.text.trim()) {
+      toast.error(
+        language === 'uz' 
+          ? "Iltimos, xabar matnini kiriting" 
+          : language === 'ru'
+          ? "Пожалуйста, введите текст сообщения"
+          : "Please enter message text",
         {
           position: "top-right",
           autoClose: 3000,
@@ -189,6 +314,8 @@ const Contact = () => {
           { position: "top-right", autoClose: 5000 }
         );
         setFormData({ full_name: "", phone: "", text: "" });
+        setPhoneValid(null);
+        setDetectedCountry(null);
       })
       .catch(() => {
         toast.error(
@@ -203,7 +330,7 @@ const Contact = () => {
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [formData, language, validatePhone]);
+  }, [formData, language]);
 
   const phoneNumbers: PhoneNumber[] = [
     { value: "+998 91 192-07-55", link: "tel:+998911920755" },
@@ -257,14 +384,16 @@ const Contact = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="gradient-hero py-12 md:py-18.5">
-        <div className="container-main px-4 md:px-6">
-          <h1 className="text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
-            {t("contact.title")}
-          </h1>
-          <p className="text-base md:text-lg text-primary-foreground/90 max-w-2xl leading-relaxed">
-            {t("contact.subtitle")}
-          </p>
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-6 sm:py-8 lg:py-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="max-w-3xl">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
+              {t("contact.title")}
+            </h1>
+            <p className="text-base sm:text-lg text-primary-foreground/90 leading-relaxed line-clamp-2 min-h-[3.5rem]">
+              {t("contact.subtitle")}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -297,14 +426,35 @@ const Contact = () => {
                     <label className="text-sm font-medium text-muted-foreground">
                       {t("contact.form.phone")} *
                     </label>
-                    <Input
-                      required
-                      type="tel"
-                      placeholder="+998 97 444 00 16"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="h-12 bg-background border-border focus:ring-1 focus:ring-primary transition-all"
-                    />
+                    <div className="relative">
+                      <Input
+                        required
+                        type="tel"
+                        placeholder="+998 97 444 00 16"
+                        value={formData.phone}
+                        onChange={handlePhoneChange}
+                        onBlur={handlePhoneBlur}
+                        className={`h-12 bg-background border-border focus:ring-1 transition-all pr-10 ${
+                          phoneValid === true ? 'border-green-500 focus:ring-green-500' : 
+                          phoneValid === false ? 'border-red-500 focus:ring-red-500' : 
+                          'focus:ring-primary'
+                        }`}
+                      />
+                      {phoneValid !== null && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {phoneValid ? (
+                            <CheckCircle2 className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-red-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {detectedCountry && (
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'uz' ? 'Format:' : language === 'ru' ? 'Формат:' : 'Format:'} {PHONE_PATTERNS[detectedCountry]?.format}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">

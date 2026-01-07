@@ -1,11 +1,9 @@
-// ProductDetail.tsx - Performance optimized version (57 → 95+)
-// Replace your existing file with this optimized version
-
+// ProductDetail.tsx - Performance optimized version with unified breadcrumb
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package, X } from "lucide-react";
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Image as ImageIcon, Video, Tag, Package, X, Home } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Helmet } from "react-helmet-async";
 
@@ -297,7 +295,7 @@ const ProductDetail = () => {
 
   return (
     <Layout>
-      {/* ✅ OPTIMIZATION 8: Helmet for SEO */}
+      {/* ✅ SEO */}
       {seoData && (
         <Helmet>
           <html lang={language} />
@@ -305,14 +303,12 @@ const ProductDetail = () => {
           <meta name="description" content={seoData.pageDescription} />
           <link rel="canonical" href={seoData.currentUrl} />
           
-          {/* Open Graph */}
           <meta property="og:title" content={`${seoData.pageTitle} | ${siteName}`} />
           <meta property="og:description" content={seoData.pageDescription} />
           <meta property="og:url" content={seoData.currentUrl} />
           <meta property="og:type" content="product" />
           <meta property="og:image" content={seoData.imageUrl} />
           
-          {/* Product Schema */}
           {productData.hasPrice && (
             <script type="application/ld+json">
               {JSON.stringify({
@@ -332,7 +328,7 @@ const ProductDetail = () => {
         </Helmet>
       )}
 
-      {/* ✅ OPTIMIZATION 9: Add performance styles */}
+      {/* ✅ Performance styles */}
       <style>{`
         .lazy-animate {
           opacity: 0;
@@ -377,7 +373,7 @@ const ProductDetail = () => {
         }
       `}</style>
 
-      {/* Zoomed Image Modal - Keep as is but add lazy loading */}
+      {/* Zoomed Image Modal */}
       {isImageZoomed && hasImages && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4" onClick={handleCloseZoom}>
           <button
@@ -422,42 +418,38 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* REST OF THE COMPONENT - Add lazy-animate classes and optimized image loading */}
-      {/* Continue with your existing JSX but add these changes: */}
-      {/* 1. Add lazy-animate class to main sections */}
-      {/* 2. Add loading="lazy" to thumbnail images */}
-      {/* 3. Add decoding="async" to images */}
-      {/* 4. Use memoized values: productData, videoData, specsData */}
-      {/* 5. Add fetchPriority="high" to main product image */}
-
-      {/* Breadcrumb - Keep as is */}
-      <section className="bg-gradient-to-b from-muted/30 to-background py-4 md:py-6 lg:py-8 border-b">
+      {/* ✅ UNIFIED BREADCRUMB - Professional style */}
+      <section className="relative pt-20 md:pt-24 pb-6">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/products")}
-            className="mb-3 md:mb-4 hover:bg-muted/50 transition-colors text-sm md:text-base"
-            size="sm"
-          >
-            <ArrowLeft className="w-3 h-3 md:w-4 md:h-4 mr-2" />
-            {t("product.backToProducts")}
-          </Button>
-          <nav className="flex items-center gap-2 text-xs md:text-sm flex-wrap">
+          <div className="mb-6 lazy-animate translate-x-[-10px]">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/products")}
+              className="hover:bg-muted transition-colors"
+              size="sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Back'}
+            </Button>
+          </div>
+
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground lazy-animate translate-y-2">
             <button 
               onClick={() => navigate("/")}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="hover:text-primary transition-colors flex items-center gap-1"
             >
+              <Home className="w-4 h-4" />
               {t("nav.home")}
             </button>
-            <span className="text-muted-foreground">/</span>
+            <span>/</span>
             <button 
               onClick={() => navigate("/products")}
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="hover:text-primary transition-colors"
             >
               {t("nav.products")}
             </button>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-foreground font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-none">
+            <span>/</span>
+            <span className="text-foreground font-medium truncate max-w-[200px] md:max-w-none">
               {product.title}
             </span>
           </nav>
@@ -465,42 +457,42 @@ const ProductDetail = () => {
       </section>
 
       {/* Product Detail Section */}
-      <section className="py-6 md:py-10 lg:py-16">
+      <section className="pb-12 md:pb-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 xl:gap-16">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
             
-            {/* Media Gallery - Add lazy-animate */}
-            <div className="space-y-3 md:space-y-4 lazy-animate translate-x-[-10px]">
+            {/* Media Gallery */}
+            <div className="space-y-4 lazy-animate translate-x-[-10px]">
               {/* Media Type Tabs */}
               {videoData.hasVideo && hasImages && (
-                <div className="flex gap-2 mb-3">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setShowVideo(false)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       !showVideo
                         ? 'bg-primary text-primary-foreground shadow-lg'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
-                    <ImageIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <ImageIcon className="w-4 h-4" />
                     <span>{language === 'uz' ? 'Rasmlar' : language === 'ru' ? 'Изображения' : 'Images'}</span>
                   </button>
                   <button
                     onClick={() => setShowVideo(true)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       showVideo
                         ? 'bg-primary text-primary-foreground shadow-lg'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
-                    <Video className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Video className="w-4 h-4" />
                     <span>{language === 'uz' ? 'Video' : language === 'ru' ? 'Видео' : 'Video'}</span>
                   </button>
                 </div>
               )}
 
-              {/* Main Media Display - Optimized */}
-              <div className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted shadow-lg">
+              {/* Main Media Display */}
+              <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-xl">
                 {!showVideo && hasImages ? (
                   <div className={`w-full h-full transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
                     <img
@@ -547,49 +539,49 @@ const ProductDetail = () => {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                     <div className="text-center">
-                      <Package className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm md:text-base">
+                      <Package className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                      <p className="text-base">
                         {language === 'uz' ? 'Media topilmadi' : language === 'ru' ? 'Медиа не найдено' : 'No media found'}
                       </p>
                     </div>
                   </div>
                 )}
                 
-                {/* Counter and Navigation - Keep as is */}
+                {/* Navigation buttons */}
                 {!showVideo && product.images.length > 1 && (
                   <>
-                    <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-black/70 text-white text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-full font-medium backdrop-blur-sm">
+                    <div className="absolute top-4 right-4 bg-black/70 text-white text-sm px-3 py-1.5 rounded-full font-medium backdrop-blur-sm">
                       {currentImageIndex + 1} / {product.images.length}
                     </div>
                     <button
                       onClick={handlePrevImage}
-                      className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 active:scale-95 hover:scale-110"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110"
                       aria-label="Previous"
                     >
-                      <ChevronLeft className="w-4 h-4 md:w-6 md:h-6" />
+                      <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
                       onClick={handleNextImage}
-                      className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-1.5 md:p-2 shadow-lg transition-all duration-300 active:scale-95 hover:scale-110"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-foreground rounded-full p-2 shadow-lg transition-all duration-300 hover:scale-110"
                       aria-label="Next"
                     >
-                      <ChevronRight className="w-4 h-4 md:w-6 md:h-6" />
+                      <ChevronRight className="w-6 h-6" />
                     </button>
                   </>
                 )}
               </div>
 
-              {/* Thumbnail Gallery - Add lazy loading */}
+              {/* Thumbnail Gallery */}
               {!showVideo && product.images.length > 1 && (
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide pt-2 pl-2">
+                <div className="flex gap-3 overflow-x-auto pb-2 p-2 scrollbar-hide">
                   {product.images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => { setCurrentImageIndex(index); setImageLoaded(false); }}
-                      className={`relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-md md:rounded-lg overflow-hidden transition-all duration-300 ${
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden transition-all duration-300 ${
                         currentImageIndex === index 
                           ? 'ring-2 ring-primary ring-offset-2 scale-105' 
-                          : 'ring-1 ring-border opacity-70 hover:opacity-100 hover:scale-105 active:scale-95'
+                          : 'ring-1 ring-border opacity-70 hover:opacity-100 hover:scale-105'
                       }`}
                     >
                       <img
@@ -606,51 +598,51 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Product Info - Add lazy-animate and use memoized data */}
-            <div className="space-y-4 md:space-y-6 lazy-animate translate-x-[10px]">
-              <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary text-xs md:text-sm font-semibold">
-                <Tag className="w-3 h-3 md:w-4 md:h-4" />
+            {/* Product Info */}
+            <div className="space-y-6 lazy-animate translate-x-[10px]">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold">
+                <Tag className="w-4 h-4" />
                 {product.category}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                 {product.title}
               </h1>
 
               {product.short_description && (
-                <p className="text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed">
+                <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
                   {product.short_description}
                 </p>
               )}
 
-              {/* Price - Use memoized data */}
+              {/* Price */}
               {productData.hasPrice && (
-                <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 md:p-6">
+                <div className="space-y-2 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-6">
                   {productData.hasValidDiscount && productData.formattedRealPrice ? (
                     <>
                       <div className="flex items-center gap-3">
-                        <span className="text-xl md:text-2xl text-muted-foreground line-through">
+                        <span className="text-2xl text-muted-foreground line-through">
                           {productData.formattedPrice}
                         </span>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs md:text-sm font-bold">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-sm font-bold">
                           -{productData.discountPercent}%
                         </span>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                        <span className="text-4xl lg:text-5xl font-bold text-primary">
                           {productData.formattedRealPrice}
                         </span>
-                        <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                        <span className="text-lg lg:text-xl text-muted-foreground">
                           {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
                         </span>
                       </div>
                     </>
                   ) : (
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary">
+                      <span className="text-4xl lg:text-5xl font-bold text-primary">
                         {productData.formattedPrice}
                       </span>
-                      <span className="text-base md:text-lg lg:text-xl text-muted-foreground">
+                      <span className="text-lg lg:text-xl text-muted-foreground">
                         {language === 'uz' ? 'so\'m' : language === 'ru' ? 'сум' : 'UZS'}
                       </span>
                     </div>
@@ -658,25 +650,25 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Specs - Use memoized data */}
+              {/* Specs */}
               {specsData.hasSpecs && specsData.specsObject && (
-                <div className="border-t pt-4 md:pt-6">
-                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground flex items-center gap-2">
+                <div className="border-t pt-6">
+                  <h2 className="text-xl font-bold mb-4 text-foreground flex items-center gap-2">
                     <Package className="w-5 h-5" />
                     {language === 'uz' ? 'Xususiyatlar' : language === 'ru' ? 'Характеристики' : 'Specifications'}
                   </h2>
-                  <div className="bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl border border-border overflow-hidden">
+                  <div className="bg-muted/30 rounded-xl border border-border overflow-hidden">
                     <div className="divide-y divide-border">
                       {Object.entries(specsData.specsObject).map(([key, value], index) => (
                         <div
                           key={key}
-                          className="flex items-center justify-between px-4 md:px-6 py-3 hover:bg-primary/5 transition-colors group lazy-animate translate-y-2"
+                          className="flex items-center justify-between px-6 py-3 hover:bg-primary/5 transition-colors group lazy-animate translate-y-2"
                           style={{ transitionDelay: `${index * 30}ms` }}
                         >
-                          <span className="text-xs md:text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                          <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                             {key}
                           </span>
-                          <span className="text-sm md:text-base font-semibold text-foreground text-right ml-4">
+                          <span className="text-base font-semibold text-foreground text-right ml-4">
                             {value}
                           </span>
                         </div>
@@ -686,19 +678,20 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Description */}
+
+            </div>
+                          {/* Description */}
               {product.description && (
-                <div>
-                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-foreground">
+                <div className="pt-6">
+                  <h2 className="text-xl font-bold mb-4 text-foreground">
                     {language === 'uz' ? 'Tavsif' : language === 'ru' ? 'Описание' : 'Description'}
                   </h2>
                   <div 
-                    className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm max-w-none"
+                    className="text-sm md:text-base text-muted-foreground leading-relaxed prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: product.description }}
                   />
                 </div>
               )}
-            </div>
           </div>
         </div>
       </section>

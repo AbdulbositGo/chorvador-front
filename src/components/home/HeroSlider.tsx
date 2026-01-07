@@ -113,7 +113,7 @@ export function HeroSlider() {
         aria-label="Loading banners"
       >
         <Loader2 className="w-12 h-12 animate-spin text-white" aria-hidden="true" />
-        <span className="sr-only">Loading banners...</span>
+        <span className="sr-only">{t("products.page.loading")}</span>
       </section>
     );
   }
@@ -209,7 +209,7 @@ export function HeroSlider() {
                     font-bold
                     leading-snug
                     mb-2 sm:mb-3 md:mb-4
-                    drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]
+                    drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]
                   "
                 >
                   {slide.title}
@@ -219,17 +219,18 @@ export function HeroSlider() {
               {/* Description */}
               {slide.description && slide.description !== "null" && (
                 <p
-                  className="
-                    text-xs
-                    sm:text-sm
-                    md:text-base
-                    lg:text-lg
-                    font-light
-                    leading-relaxed
-                    mb-3 sm:mb-4 md:mb-6
-                    line-clamp-3 sm:line-clamp-none
-                    drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]
-                  "
+className="
+  text-xs
+  sm:text-sm
+  md:text-base
+  lg:text-lg
+  font-light
+  leading-relaxed
+  mb-3 sm:mb-4 md:mb-6
+  line-clamp-3 sm:line-clamp-none
+  drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)]
+"
+
                 >
                   {slide.description}
                 </p>
@@ -293,7 +294,7 @@ export function HeroSlider() {
                 "h-1.5 sm:h-2 rounded-full transition-all duration-500 shadow-lg active:scale-95 focus:outline-none focus:ring-1 focus:ring-white/90 ",
                 index === currentSlide
                   ? "w-6 sm:w-8 md:w-10 bg-[#2D79C4] "
-                  : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/60"
+                  : "w-1.5 sm:w-2 bg-black/30 hover:bg-white/60"
               )}
             />
           ))}

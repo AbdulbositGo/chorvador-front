@@ -23,6 +23,7 @@ interface ApiProduct {
   short_description: string;
   has_discount: boolean;
   category: string;
+  category_id: number;
 }
 
 interface Product {
@@ -37,6 +38,11 @@ interface Product {
   hasDiscount: boolean;
 }
 
+interface ApiCategory {
+  id: number;
+  name: string;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -47,7 +53,6 @@ const Products = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // URL dan qiymatlarni olish
   const categoryFromUrl = searchParams.get("category") || "all";
   const searchFromUrl = searchParams.get("search") || "";
   const pageFromUrl = parseInt(searchParams.get("page") || "1", 10);
@@ -65,7 +70,6 @@ const Products = () => {
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 8;
 
-  // URL parametrlari o'zgarganda state ni yangilash
   useEffect(() => {
     const newCategory = searchParams.get("category") || "all";
     const newSearch = searchParams.get("search") || "";
@@ -76,7 +80,6 @@ const Products = () => {
     setCurrentPage(newPage);
   }, [searchParams]);
 
-  // SEO metadata
   useEffect(() => {
     const pageTitle = language === 'uz' 
       ? 'Mahsulotlar | Chorvador.uz'
@@ -87,7 +90,6 @@ const Products = () => {
     document.title = pageTitle;
   }, [language]);
 
-  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -113,7 +115,7 @@ const Products = () => {
           throw new Error(`HTTP xatolik! Status: ${response.status}`);
         }
         
-        const data = await response.json();
+        const data = await response.json() as ApiCategory[];
         
         if (!Array.isArray(data)) {
           throw new Error("Categories data array formatida emas");
@@ -131,6 +133,8 @@ const Products = () => {
         ];
         
         setCategories(allCategories);
+        
+        console.log('Categories loaded:', allCategories);
       } catch (err) {
         console.error('Categories fetch error:', err);
         setCategories([
@@ -144,7 +148,6 @@ const Products = () => {
     fetchCategories();
   }, [language]);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -159,7 +162,6 @@ const Products = () => {
 
         const acceptLanguage = language === 'uz' ? 'uz' : language === 'ru' ? 'ru' : 'en';
         
-        // Build URL with pagination and filters
         const params = new URLSearchParams();
         params.append('page', currentPage.toString());
         
@@ -172,6 +174,9 @@ const Products = () => {
         }
 
         const url = `${apiUrl}/products/?${params.toString()}`;
+        
+        console.log('Fetching products from:', url);
+        console.log('Selected Category ID:', selectedCategory);
 
         const response = await fetch(url, {
           method: 'GET',
@@ -186,7 +191,7 @@ const Products = () => {
           throw new Error(`HTTP xatolik! Status: ${response.status}`);
         }
         
-        const data: ProductsResponse = await response.json();
+        const data = await response.json() as ProductsResponse;
         const productsArray: ApiProduct[] = data.results || [];
         
         setTotalCount(data.count || 0);
@@ -196,25 +201,12 @@ const Products = () => {
         }
 
         const transformedProducts: Product[] = productsArray.map(product => {
-          let categoryId = 'all';
-          const categoryName = product.category || '';
-          
-          const foundCategory = categories.find(cat => 
-            cat.name.toLowerCase() === categoryName.toLowerCase()
-          );
-          
-          if (foundCategory && foundCategory.id !== 'all') {
-            categoryId = foundCategory.id;
-          } else if (categoryName) {
-            categoryId = categoryName;
-          }
-          
           return {
             id: product.id.toString(),
             name: product.title,
-            category: product.category,
-            categoryId: categoryId,
-            categoryName: categoryName,
+            category: product.category || '',
+            categoryId: product.category_id?.toString() || 'all',
+            categoryName: product.category || '',
             price: product.price,
             image: product.image.startsWith('http') 
               ? product.image 
@@ -228,6 +220,7 @@ const Products = () => {
         
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Noma\'lum xatolik';
+        console.error('Products fetch error:', err);
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -244,11 +237,11 @@ const Products = () => {
   }, [navigate]);
 
   const handleCategoryChange = useCallback((categoryId: string) => {
+    console.log('Category changed to ID:', categoryId);
     setSelectedCategory(categoryId);
     setCurrentPage(1);
     setShowFilters(false);
     
-    // Update URL
     const params = new URLSearchParams();
     if (categoryId !== "all") {
       params.set("category", categoryId);
@@ -257,7 +250,9 @@ const Products = () => {
       params.set("search", searchQuery.trim());
     }
     
-    navigate(`/products?${params.toString()}`, { replace: true });
+    const newUrl = `/products${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('Navigating to:', newUrl);
+    navigate(newUrl, { replace: true });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchQuery, navigate]);
 
@@ -265,7 +260,6 @@ const Products = () => {
     setSearchQuery(value);
     setCurrentPage(1);
     
-    // Update URL
     const params = new URLSearchParams();
     if (selectedCategory !== "all") {
       params.set("category", selectedCategory);
@@ -274,13 +268,13 @@ const Products = () => {
       params.set("search", value.trim());
     }
     
-    navigate(`/products?${params.toString()}`, { replace: true });
+    const newUrl = `/products${params.toString() ? '?' + params.toString() : ''}`;
+    navigate(newUrl, { replace: true });
   }, [selectedCategory, navigate]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     
-    // Update URL
     const params = new URLSearchParams();
     if (selectedCategory !== "all") {
       params.set("category", selectedCategory);
@@ -292,16 +286,15 @@ const Products = () => {
       params.set("page", page.toString());
     }
     
-    navigate(`/products?${params.toString()}`, { replace: true });
+    const newUrl = `/products${params.toString() ? '?' + params.toString() : ''}`;
+    navigate(newUrl, { replace: true });
     
-    // Scroll to products grid
     const element = document.getElementById('products-grid');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [selectedCategory, searchQuery, navigate]);
 
-  // Memoized pagination
   const { totalPages, startIndex, endIndex } = useMemo(() => {
     const total = Math.ceil(totalCount / itemsPerPage);
     const start = (currentPage - 1) * itemsPerPage;
@@ -322,13 +315,13 @@ const Products = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-12 sm:py-16 lg:py-15">
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/80 py-6 sm:py-8 lg:py-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="max-w-3xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
               {t("products.page.title")}
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 leading-relaxed">
+            <p className="text-base sm:text-lg text-primary-foreground/90 leading-relaxed line-clamp-2 min-h-[3.5rem]">
               {t("products.page.subtitle")}
             </p>
           </div>
@@ -339,7 +332,7 @@ const Products = () => {
       <section className="py-8 sm:py-12 lg:py-16 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           
-          {/* Search & Filter Toggle */}
+          {/* Search & Filter Toggle - OPTIMIZED */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div className="relative flex-1">
               <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
@@ -347,20 +340,22 @@ const Products = () => {
                 placeholder={t("products.search")}
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base"
+                className="pl-10 sm:pl-12 pr-10 sm:pr-12 h-11 sm:h-12 text-sm sm:text-base"
                 aria-label={t("products.search")}
-                type="search"
+                type="text"
                 autoComplete="off"
               />
               {searchQuery && (
-                <button
+                <Button
                   onClick={() => handleSearchChange("")}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 hover:bg-muted rounded-full p-1 transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted rounded-full transition-colors"
                   aria-label="Clear search"
                   type="button"
                 >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-foreground" aria-hidden="true" />
-                </button>
+                  <X className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                </Button>
               )}
             </div>
             <Button

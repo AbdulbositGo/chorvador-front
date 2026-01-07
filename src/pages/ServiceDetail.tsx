@@ -1,11 +1,11 @@
-// ServiceDetail.tsx - Image fixed version
+// ServiceDetail.tsx - Unified breadcrumb version
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Clock, Shield, Award } from "lucide-react";
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Clock, Shield, Award, Home } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Helmet } from "react-helmet-async";
 
@@ -210,7 +210,7 @@ const ServiceDetail = () => {
                 }
 
                 .will-change-transform {
-                    will-change: transform;
+                    will-change-transform;
                     transform: translateZ(0);
                     backface-visibility: hidden;
                 }
@@ -233,22 +233,49 @@ const ServiceDetail = () => {
                 }
             `}</style>
 
-            {/* Hero Section with Image */}
-            <section className="relative pt-20 md:pt-24">
-                <div className="container-main px-4">
+            {/* ✅ UNIFIED BREADCRUMB - Professional style */}
+            <section className="relative pt-20 md:pt-24 pb-6">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <div className="mb-6 lazy-animate translate-x-[-10px]">
                         <Button
                             variant="ghost"
                             onClick={() => navigate("/services")}
-                            className="hover:bg-muted"
+                            className="hover:bg-muted transition-colors"
+                            size="sm"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             {language === 'uz' ? 'Orqaga' : language === 'ru' ? 'Назад' : 'Back'}
                         </Button>
                     </div>
 
+                    <nav className="flex items-center gap-2 text-sm text-muted-foreground lazy-animate translate-y-2">
+                        <button 
+                            onClick={() => navigate("/")}
+                            className="hover:text-primary transition-colors flex items-center gap-1"
+                        >
+                            <Home className="w-4 h-4" />
+                            {t("nav.home")}
+                        </button>
+                        <span>/</span>
+                        <button 
+                            onClick={() => navigate("/services")}
+                            className="hover:text-primary transition-colors"
+                        >
+                            {t("nav.services")}
+                        </button>
+                        <span>/</span>
+                        <span className="text-foreground font-medium truncate max-w-[200px] md:max-w-none">
+                            {service.title}
+                        </span>
+                    </nav>
+                </div>
+            </section>
+
+            {/* Hero Section with Image */}
+            <section className="pb-12">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     {/* Hero Content */}
-                    <div className="grid lg:grid-cols-5 gap-8 pb-12">
+                    <div className="grid lg:grid-cols-5 gap-8">
                         {/* Left Content - 3 columns */}
                         <div className="lg:col-span-3 space-y-6 lazy-animate translate-y-5">
                             <div className="space-y-4">
@@ -266,10 +293,9 @@ const ServiceDetail = () => {
                             </div>
                         </div>
 
-                        {/* ✅ FIXED: Image container - o'lcham sozlanadi */}
+                        {/* Image container */}
                         <div className="lg:col-span-2 lazy-animate scale-95">
                             <div className="relative w-full pb-[85%] rounded-2xl overflow-hidden shadow-xl bg-muted">
-                                {/* Placeholder */}
                                 {!imageLoaded && (
                                     <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 animate-pulse" />
                                 )}
@@ -296,7 +322,7 @@ const ServiceDetail = () => {
 
             {/* Benefits Section */}
             <section className="py-8 bg-muted/30">
-                <div className="container-main px-4">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <div className="grid md:grid-cols-3 gap-6">
                         {benefits.map((benefit, index) => (
                             <div
@@ -325,7 +351,7 @@ const ServiceDetail = () => {
 
             {/* Main Content */}
             <section className="py-12 md:py-16">
-                <div className="container-main px-4">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <div className="grid lg:grid-cols-3 gap-8">
                         {/* Description - 2 columns */}
                         <div className="lg:col-span-2 lazy-animate translate-y-5">

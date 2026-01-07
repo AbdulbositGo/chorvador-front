@@ -85,28 +85,13 @@ const Index = () => {
     fetchDashboardData();
   }, [language]);
 
-  if (loading) {
-    return (
-      <Layout>
-        <Helmet>
-          <title>{t("loading")} | Chorvador</title>
-          <meta name="robots" content="noindex, nofollow" />
-        </Helmet>
-        <div className="flex flex-col justify-center items-center min-h-screen">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <span className="mt-4 text-lg text-muted-foreground">
-            {t("loading")}...
-          </span>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <>
       <Helmet>
         <html lang={language} />
-        <title>{t("seo.home.title")}</title>
+        <title>
+          {loading ? `${t("loading")} | Chorvador` : t("seo.home.title")}
+        </title>
         <meta name="description" content={t("seo.home.description")} />
         <meta name="keywords" content={t("seo.home.keywords")} />
 
@@ -120,24 +105,35 @@ const Index = () => {
         />
 
         {/* SEO */}
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content={loading ? "noindex, nofollow" : "index, follow"} />
         <meta name="author" content="Chorvador" />
       </Helmet>
 
       <Layout>
-        <HeroSlider />
-        <StatsSection />
-        <About />
-        <FeaturedProducts
-          products={dashboardData?.products || []}
-          isLoading={false}
-        />
-        <ServicesSection
-          services={dashboardData?.services || []}
-          isLoading={false}
-        />
-        <PartnersSection />
-        <LocationSection />
+        {loading ? (
+          <div className="flex flex-col justify-center items-center min-h-screen">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <span className="mt-4 text-lg text-muted-foreground">
+              {t("products.page.loading")}
+            </span>
+          </div>
+        ) : (
+          <>
+            <HeroSlider />
+            <StatsSection />
+            <About />
+            <FeaturedProducts
+              products={dashboardData?.products || []}
+              isLoading={false}
+            />
+            <ServicesSection
+              services={dashboardData?.services || []}
+              isLoading={false}
+            />
+            <PartnersSection />
+            <LocationSection />
+          </>
+        )}
       </Layout>
     </>
   );

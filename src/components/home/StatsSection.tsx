@@ -19,9 +19,9 @@ const stats = [
   },
   { 
     icon: Award, 
-    value: "18+", 
+    value: "18", 
     labelKey: "stats.experience",
-    ariaLabel: "Over 10 years of experience"
+    ariaLabel: "Over 18 years of experience"
   },
   { 
     icon: MapPin, 

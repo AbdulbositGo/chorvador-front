@@ -5,46 +5,37 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
+import type { ProductItem } from "./Layout";
 
-const apiUrl = import.meta.env.VITE_API_URL || "https://api.example.com";
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
+interface HeaderProps {
+  products: ProductItem[];
+  services: ProductItem[];
+  productCategories: string[];
+  serviceCategories: string[];
+  loading?: boolean;
 }
 
-interface CategoryObject {
-  id: number;
-  name?: string;
-}
-
-interface Product {
-  id: number;
-  title: string;
-  category: number | CategoryObject;
-  category_id?: number;
-}
-
-const languages: { code: Language; label: string; flag: string }[] = [
-  { code: "uz", label: "O'zbekcha", flag: "https://flagcdn.com/w40/uz.png" },
-  { code: "ru", label: "Русский", flag: "https://flagcdn.com/w40/ru.png" },
-  { code: "en", label: "English", flag: "https://flagcdn.com/w40/gb.png" },
+const languages: { code: Language; nativeName: string; label: string; flag: string }[] = [
+  { code: "uz", nativeName: 'O\'zbekcha', label: "O'zbekcha", flag: "https://flagcdn.com/w40/uz.png" },
+  { code: "ru", nativeName: 'Русский', label: "Русский", flag: "https://flagcdn.com/w40/ru.png" },
+  { code: "en", nativeName: 'English', label: "English", flag: "https://flagcdn.com/w40/gb.png" },
 ];
 
-export function Header() {
+export function Header({ 
+  products, 
+  services, 
+  productCategories,
+  serviceCategories,
+  loading = false 
+}: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
-  const [productCategories, setProductCategories] = useState<Category[]>([]);
-  const [serviceCategories, setServiceCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [services, setServices] = useState<Product[]>([]);
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<number | null>(null);
-  const [hoveredServiceCategoryId, setHoveredServiceCategoryId] = useState<number | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [hoveredServiceCategory, setHoveredServiceCategory] = useState<string | null>(null);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,6 +54,19 @@ export function Header() {
     [language]
   );
 
+  // CategoryId bo'yicha mahsulotlarni topish
+  const getProductsByCategoryId = useCallback((categoryId: string) => {
+    return products.filter(p => p.categoryId === categoryId);
+  }, [products]);
+
+  const getServicesByCategoryId = useCallback((categoryId: string) => {
+    return services.filter(s => s.categoryId === categoryId);
+  }, [services]);
+
+  const truncateTitle = (title: string, maxLength: number = 20) => {
+    return title.length > maxLength ? title.substring(0, maxLength) + "..." : title;
+  };
+
   useEffect(() => {
     return () => {
       if (productsTimeoutRef.current) clearTimeout(productsTimeoutRef.current);
@@ -70,80 +74,6 @@ export function Header() {
       if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const acceptLanguage = language;
-      try {
-        const headers = {
-          'Accept-Language': acceptLanguage,
-          'Content-Type': 'application/json'
-        };
-
-        const [productsRes, servicesRes, allProductsRes, allServicesRes] = await Promise.all([
-          fetch(`${apiUrl}/categories/?type=product`, { headers }),
-          fetch(`${apiUrl}/categories/?type=service`, { headers }),
-          fetch(`${apiUrl}/products/`, { headers }),
-          fetch(`${apiUrl}/services/`, { headers })
-        ]);
-        
-        if (productsRes.ok) {
-          const productsData = await productsRes.json();
-          setProductCategories(Array.isArray(productsData) ? productsData : []);
-        }
-        
-        if (servicesRes.ok) {
-          const servicesData = await servicesRes.json();
-          setServiceCategories(Array.isArray(servicesData) ? servicesData : []);
-        }
-
-        if (allProductsRes.ok) {
-          const allProducts = await allProductsRes.json();
-          const productsArray = Array.isArray(allProducts) ? allProducts : (allProducts.results || []);
-          setProducts(productsArray);
-        }
-
-        if (allServicesRes.ok) {
-          const allServicesData = await allServicesRes.json();
-          const servicesArray = Array.isArray(allServicesData) ? allServicesData : (allServicesData.results || []);
-          setServices(servicesArray);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
-    
-    fetchData();
-  }, [language]);
-
-  const getProductsByCategory = useCallback((categoryId: number) => {
-    const categoryName = productCategories.find(c => c.id === categoryId)?.name;
-    if (!categoryName) return [];
-    return products.filter(product => {
-      const pCat = product.category;
-      if (typeof pCat === 'string') return pCat === categoryName;
-      if (typeof pCat === 'object' && pCat !== null) {
-        return (pCat as CategoryObject).id === categoryId || pCat.name === categoryName;
-      }
-      return false;
-    });
-  }, [products, productCategories]);
-
-  const getServicesByCategory = useCallback((categoryId: number) => {
-    const categoryObject = serviceCategories.find(c => c.id === categoryId);
-    if (!categoryObject) return [];
-    const categoryName = categoryObject.name;
-    return services.filter(service => {
-      const sCat = service.category;
-      if (typeof sCat === 'string') return sCat === categoryName;
-      if (typeof sCat === 'object' && sCat !== null) {
-        const catObj = sCat as CategoryObject;
-        return catObj.id === categoryId || catObj.name === categoryName;
-      }
-      if (typeof sCat === 'number') return sCat === categoryId;
-      return service.category_id === categoryId;
-    });
-  }, [services, serviceCategories]);
 
   const scrollToFooter = useCallback(() => {
     const footer = document.getElementById('footer');
@@ -176,11 +106,11 @@ export function Header() {
       }
       if (productsRef.current && !productsRef.current.contains(event.target as Node)) {
         setProductsOpen(false);
-        setHoveredCategoryId(null);
+        setHoveredCategory(null);
       }
       if (servicesRef.current && !servicesRef.current.contains(event.target as Node)) {
         setServicesOpen(false);
-        setHoveredServiceCategoryId(null);
+        setHoveredServiceCategory(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -193,8 +123,8 @@ export function Header() {
     setMobileLangDropdownOpen(false);
     setProductsOpen(false);
     setServicesOpen(false);
-    setHoveredCategoryId(null);
-    setHoveredServiceCategoryId(null);
+    setHoveredCategory(null);
+    setHoveredServiceCategory(null);
   }, [location.pathname, location.search]);
 
   useEffect(() => {
@@ -220,26 +150,32 @@ export function Header() {
     }
   }, [setLanguage]);
 
-  const handleCategoryClick = useCallback((path: string, categoryId: number) => {
+  // TUZATILGAN - categoryId ni topib yuborish
+  const handleCategoryClick = useCallback((path: string, categoryName: string) => {
+    // Category name bo'yicha categoryId ni topish
+    const allProducts = path === '/products' ? products : services;
+    const product = allProducts.find(p => p.category === categoryName);
+    const categoryId = product?.categoryId || categoryName;
+    
+    console.log('Category clicked:', categoryName, 'ID:', categoryId);
+    
     setProductsOpen(false);
     setServicesOpen(false);
     setMobileMenuOpen(false);
-    setHoveredCategoryId(null);
-    setHoveredServiceCategoryId(null);
+    setHoveredCategory(null);
+    setHoveredServiceCategory(null);
+    
+    // Kategoriya ID sini yuborish
     navigate(`${path}?category=${categoryId}`);
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-  }, [navigate]);
-
-  const truncateTitle = (title: string) => {
-    return title.length > 22 ? title.substring(0, 22) + "..." : title;
-  };
+  }, [navigate, products, services]);
 
   const handleProductClick = useCallback((productId: number, isService: boolean = false) => {
     setProductsOpen(false);
     setServicesOpen(false);
     setMobileMenuOpen(false);
-    setHoveredCategoryId(null);
-    setHoveredServiceCategoryId(null);
+    setHoveredCategory(null);
+    setHoveredServiceCategory(null);
     navigate(isService ? `/services/${productId}` : `/products/${productId}`);
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
   }, [navigate]);
@@ -253,7 +189,7 @@ export function Header() {
   const handleProductsMouseLeave = () => {
     productsTimeoutRef.current = setTimeout(() => {
       setProductsOpen(false);
-      setHoveredCategoryId(null);
+      setHoveredCategory(null);
     }, 200);
   };
 
@@ -266,25 +202,25 @@ export function Header() {
   const handleServicesMouseLeave = () => {
     servicesTimeoutRef.current = setTimeout(() => {
       setServicesOpen(false);
-      setHoveredServiceCategoryId(null);
+      setHoveredServiceCategory(null);
     }, 200);
   };
 
-  const handleCategoryMouseEnter = (categoryId: number, isService: boolean = false) => {
+  const handleCategoryMouseEnter = (categoryName: string, isService: boolean = false) => {
     if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
     if (isService) {
-      setHoveredServiceCategoryId(categoryId);
+      setHoveredServiceCategory(categoryName);
     } else {
-      setHoveredCategoryId(categoryId);
+      setHoveredCategory(categoryName);
     }
   };
 
   const handleCategoryMouseLeave = (isService: boolean = false) => {
     categoryTimeoutRef.current = setTimeout(() => {
       if (isService) {
-        setHoveredServiceCategoryId(null);
+        setHoveredServiceCategory(null);
       } else {
-        setHoveredCategoryId(null);
+        setHoveredCategory(null);
       }
     }, 200);
   };
@@ -298,6 +234,12 @@ export function Header() {
       role="navigation"
       aria-label="Main navigation"
     >
+      {loading && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200 overflow-hidden">
+          <div className="h-full bg-primary w-1/2 animate-pulse"></div>
+        </div>
+      )}
+      
       <div className="container-main">
         <div className="flex h-16 items-center justify-between">
           <Link 
@@ -362,7 +304,7 @@ export function Header() {
                   to="/products"
                   onClick={() => {
                     setProductsOpen(false);
-                    setHoveredCategoryId(null);
+                    setHoveredCategory(null);
                   }}
                   className={cn(
                     "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center gap-1",
@@ -376,48 +318,67 @@ export function Header() {
                 </Link>
 
                 {productsOpen && productCategories.length > 0 && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[240px] z-[70] animate-in fade-in slide-in-from-top-2">
-                    <div className="flex flex-col gap-1">
-                      {productCategories.map((category) => {
-                        const productsInCategory = getProductsByCategory(category.id);
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[240px] max-w-[280px] z-[70]">
+                    <div 
+                      className={cn(
+                        "flex flex-col gap-1",
+                        // productCategories.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
+                      )}
+                      // style={{ 
+                      //   maxHeight: productCategories.length > 10 ? '400px' : 'auto'
+                      // }}
+                    >
+                      {productCategories.map((categoryName, index) => {
+                        const product = products.find(p => p.category === categoryName);
+                        const categoryId = product?.categoryId || categoryName;
+                        const productsInCategory = getProductsByCategoryId(categoryId);
                         const hasProducts = productsInCategory.length > 0;
                         
                         return (
-                          <div
-                            key={category.id}
-                            className="relative"
-                            onMouseEnter={() => handleCategoryMouseEnter(category.id, false)}
-                            onMouseLeave={() => handleCategoryMouseLeave(false)}
-                          >
-                            <button
-                              onClick={() => handleCategoryClick('/products', category.id)}
-                              className={cn(
-                                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left",
-                                hoveredCategoryId === category.id ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
-                              )}
+                          <div key={index} className="relative">
+                            <div
+                              onMouseEnter={() => handleCategoryMouseEnter(categoryName, false)}
+                              onMouseLeave={() => handleCategoryMouseLeave(false)}
                             >
-                              <span className="truncate">{category.name}</span>
-                              {hasProducts && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
-                            </button>
+                              <button
+                                onClick={() => handleCategoryClick('/products', categoryName)}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-left",
+                                  hoveredCategory === categoryName ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
+                                )}
+                              >
+                                <span className="truncate">{truncateTitle(categoryName, 25)}</span>
+                                {hasProducts && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
+                              </button>
 
-                            {hoveredCategoryId === category.id && hasProducts && (
-                              <div className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[260px] max-w-[320px] z-[80]">
-                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-3 text-left">
-                                  {category.name}
+                              {hoveredCategory === categoryName && hasProducts && (
+                                <div 
+                                  className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-[280px] z-[90]"
+                                  onMouseEnter={() => handleCategoryMouseEnter(categoryName, false)}
+                                  onMouseLeave={() => handleCategoryMouseLeave(false)}
+                                >
+                                  <div 
+                                    className={cn(
+                                      "flex flex-col gap-1",
+                                      // productsInCategory.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
+                                    )}
+                                    // style={{ 
+                                    //   maxHeight: productsInCategory.length > 10 ? '400px' : 'auto'
+                                    // }}
+                                  >
+                                    {productsInCategory.map((product) => (
+                                      <button
+                                        key={product.id}
+                                        onClick={() => handleProductClick(product.id)}
+                                        className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
+                                      >
+                                        <div className="truncate">{product.title}</div>
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                                  {productsInCategory.map((product) => (
-                                    <button
-                                      key={product.id}
-                                      onClick={() => handleProductClick(product.id)}
-                                      className="w-full px-3 py-2 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
-                                    >
-                                      {truncateTitle(product.title)}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -437,7 +398,7 @@ export function Header() {
                   to="/services"
                   onClick={() => {
                     setServicesOpen(false);
-                    setHoveredServiceCategoryId(null);
+                    setHoveredServiceCategory(null);
                   }}
                   className={cn(
                     "relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1",
@@ -449,48 +410,67 @@ export function Header() {
                 </Link>
 
                 {servicesOpen && serviceCategories.length > 0 && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[220px] z-[70]">
-                    <div className="flex flex-col gap-1">
-                      {serviceCategories.map((category) => {
-                        const servicesInCategory = getServicesByCategory(category.id);
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[220px] max-w-[260px] z-[70]">
+                    <div 
+                      className={cn(
+                        "flex flex-col gap-1",
+                        // serviceCategories.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
+                      )}
+                      // style={{ 
+                      //   maxHeight: serviceCategories.length > 10 ? '400px' : 'auto'
+                      // }}
+                    >
+                      {serviceCategories.map((categoryName, index) => {
+                        const service = services.find(s => s.category === categoryName);
+                        const categoryId = service?.categoryId || categoryName;
+                        const servicesInCategory = getServicesByCategoryId(categoryId);
                         const hasServices = servicesInCategory.length > 0;
 
                         return (
-                          <div
-                            key={category.id}
-                            className="relative"
-                            onMouseEnter={() => handleCategoryMouseEnter(category.id, true)}
-                            onMouseLeave={() => handleCategoryMouseLeave(true)}
-                          >
-                            <button
-                              onClick={() => handleCategoryClick('/services', category.id)}
-                              className={cn(
-                                "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg text-left transition-all",
-                                hoveredServiceCategoryId === category.id ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
-                              )}
+                          <div key={index} className="relative">
+                            <div
+                              onMouseEnter={() => handleCategoryMouseEnter(categoryName, true)}
+                              onMouseLeave={() => handleCategoryMouseLeave(true)}
                             >
-                              <span className="truncate">{category.name}</span>
-                              {hasServices && <ChevronRight className="h-4 w-4 ml-2" />}
-                            </button>
+                              <button
+                                onClick={() => handleCategoryClick('/services', categoryName)}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg text-left transition-all",
+                                  hoveredServiceCategory === categoryName ? "bg-[#2980C7] text-white" : "text-gray-700 hover:bg-gray-100"
+                                )}
+                              >
+                                <span className="truncate">{truncateTitle(categoryName, 25)}</span>
+                                {hasServices && <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0" />}
+                              </button>
 
-                            {hoveredServiceCategoryId === category.id && hasServices && (
-                              <div className="absolute left-full top-0 ml-1 bg-white border border-gray-200 rounded-xl shadow-2xl p-2 min-w-[260px] z-[80]">
-                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-3 text-left">
-                                  {category.name}
+                              {hoveredServiceCategory === categoryName && hasServices && (
+                                <div 
+                                  className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-[280px] z-[90]"
+                                  onMouseEnter={() => handleCategoryMouseEnter(categoryName, true)}
+                                  onMouseLeave={() => handleCategoryMouseLeave(true)}
+                                >
+                                  <div 
+                                    className={cn(
+                                      "flex flex-col gap-1",
+                                      // servicesInCategory.length > 10 ? "custom-scrollbar overflow-y-auto" : ""
+                                    )}
+                                    // style={{ 
+                                    //   maxHeight: servicesInCategory.length > 10 ? '400px' : 'auto'
+                                    // }}
+                                  >
+                                    {servicesInCategory.map((service) => (
+                                      <button
+                                        key={service.id}
+                                        onClick={() => handleProductClick(service.id, true)}
+                                        className="w-full px-3 py-2.5 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg transition-all duration-200 text-left font-medium"
+                                      >
+                                        <div className="truncate">{service.title}</div>
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto custom-scrollbar">
-                                  {servicesInCategory.map((service) => (
-                                    <button
-                                      key={service.id}
-                                      onClick={() => handleProductClick(service.id, true)}
-                                      className="w-full px-3 py-2 text-sm text-gray-700 hover:text-white hover:bg-[#2980C7] rounded-lg text-left font-medium"
-                                    >
-                                      {truncateTitle(service.title)}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -523,7 +503,7 @@ export function Header() {
                 onKeyDown={(e) => e.key === 'Escape' && setLangDropdownOpen(false)}
                 aria-expanded={langDropdownOpen}
                 aria-haspopup="true"
-                aria-label={`Select language. Current: ${currentLang.label}`}
+                aria-label={`Select language. Current: ${currentLang.nativeName}`}
                 className="flex items-center gap-2 bg-muted/50 hover:bg-muted border border-border rounded-lg px-3 py-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <img 
@@ -535,6 +515,7 @@ export function Header() {
                   loading="lazy"
                   aria-hidden="true"
                 />
+                <span className="text-sm font-medium">{currentLang.nativeName}</span>
                 <ChevronDown 
                   className={cn("h-3 w-3 transition-transform duration-300", langDropdownOpen && "rotate-180")} 
                   aria-hidden="true"
@@ -550,7 +531,7 @@ export function Header() {
                     transition={{ duration: 0.2 }}
                     role="menu"
                     aria-label="Language options"
-                    className="absolute right-0 top-full mt-2 bg-card border border-border rounded-lg shadow-xl min-w-[140px] overflow-hidden z-[70]"
+                    className="absolute right-0 top-full mt-2 bg-card border border-border rounded-lg shadow-xl min-w-[160px] overflow-hidden z-[70]"
                   >
                     {languages.map((lang) => (
                       <button
@@ -561,7 +542,7 @@ export function Header() {
                         }}
                         onKeyDown={(e) => handleLanguageKeyDown(e, lang.code)}
                         role="menuitem"
-                        aria-label={`Switch to ${lang.label}`}
+                        aria-label={`Switch to ${lang.nativeName}`}
                         aria-current={language === lang.code ? "true" : undefined}
                         className={cn(
                           "w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary",
@@ -577,7 +558,7 @@ export function Header() {
                           loading="lazy"
                           aria-hidden="true"
                         />
-                        <span className="text-xs sm:text-sm">{lang.label}</span>
+                        <span className="text-xs sm:text-sm font-medium">{lang.nativeName}</span>
                       </button>
                     ))}
                   </motion.div>
@@ -833,6 +814,10 @@ export function Header() {
       </div>
 
       <style>{`
+        body {
+          overflow-x: hidden;
+        }
+        
         @keyframes fadeIn {
           from {
             opacity: 0;
