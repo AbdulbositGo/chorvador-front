@@ -125,7 +125,7 @@ const ProductDetail = () => {
 
     return {
       pageTitle: product.title,
-      pageDescription: product.short_description || product.title,
+      pageDescription: product.description.slice(0, 350) || product.title,
       currentUrl: `${siteUrl}/${language}/products/${id}`,
       imageUrl: product.images?.[0] || ''
     };
