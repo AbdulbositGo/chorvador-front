@@ -10,6 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./components/ScrollToTop";
 import { HelmetProvider } from "react-helmet-async";
 import { Loader2 } from "lucide-react";
+import GAListener from "./GAListeaner";
 
 const Index = lazy(() => import("./pages/Index"));
 const About = lazy(() => import("./pages/About"));
@@ -35,11 +36,11 @@ const SimpleLoadingFallback = () => (
 // Loading component with language support (used inside Router)
 const LoadingFallback = () => {
   const { language } = useLanguage();
-  
+
   const loadingText = {
     uz: "Yuklanmoqda...",
     ru: "Загрузка...",
-    en: "Loading..."
+    en: "Loading...",
   };
 
   return (
@@ -82,6 +83,7 @@ const App = () => (
           v7_relativeSplatPath: true,
         }}
       >
+        <GAListener />
         <LanguageProvider>
           <TooltipProvider>
             <Toaster />
